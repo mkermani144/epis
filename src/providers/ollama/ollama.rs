@@ -1,4 +1,5 @@
-use crate::providers::llm::LLM;
+use crate::providers::llm::{Conversation, LLM};
+use crate::providers::ollama::ollama_conversation::OllamaConversation;
 use anyhow::Result;
 use ollama_rs::{
     Ollama as OllamaRs,
@@ -10,8 +11,8 @@ use ollama_rs::{
 use schemars::JsonSchema;
 
 pub struct Ollama<'a> {
-    instance: OllamaRs,
-    model: &'a str,
+    pub instance: OllamaRs,
+    pub model: &'a str,
 }
 impl<'a> Ollama<'a> {
     pub fn new(model: &'a str) -> Self {
@@ -33,5 +34,9 @@ impl<'a> LLM for Ollama<'a> {
         let generation_response = self.instance.generate(generation_request).await?;
 
         Ok(generation_response.response)
+    }
+
+    fn start_conversation(&self, system_prompt: Option<&str>) -> impl Conversation {
+        OllamaConversation::new(&self, system_prompt)
     }
 }

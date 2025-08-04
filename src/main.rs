@@ -2,13 +2,15 @@ use anyhow::Result;
 use categorizer::categorizer::Categorizer;
 use config::Config;
 use inquire::Text;
-use providers::ollama::Ollama;
+use providers::ollama::ollama::Ollama;
 
 mod categorizer;
 mod config;
+mod lingoo;
 mod providers;
+mod types;
 
-use crate::config::Provider;
+use crate::{categorizer::categorizer::Category, config::Provider, lingoo::lingoo::Lingoo};
 
 const KNOWLEDGE_TYPES: [&str; 1] = ["languages"];
 
@@ -28,7 +30,14 @@ async fn main() -> Result<()> {
     };
     let category = Categorizer::new(&llm).categorize(&user_input).await?;
 
-    println!("Category: {category:?}");
+    match category {
+        Category::Languages => {
+            Lingoo::new(&llm).start_conversation(&user_input).await?;
+        }
+        Category::Invalid => {
+            println!("Invalid category");
+        }
+    }
 
-    todo!("Invoke the appropriate agent based on the category")
+    Ok(())
 }
