@@ -1,7 +1,7 @@
 [package]
 name = "epis"
 version = "0.1.0"
-edition = "2025"
+edition = "2024"
 authors = ["Mohammad Kermani <mkermani144@gmail.com>"]
 description = "An extensible assistant helping you learn anything"
 repository = "https://github.com/mkermani144/epis"
