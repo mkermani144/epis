@@ -1,3 +1,9 @@
+//! Lingoo - Language learning assistant module
+//!
+//! This module provides an interactive language learning assistant that uses
+//! LLM-powered conversations to help users learn languages through various
+//! techniques like mnemonics, word roots, and contextual learning.
+
 use anyhow::Result;
 use inquire::Text;
 
@@ -19,17 +25,22 @@ You may utilize these tools to help the user:
 - encouraging the user to use the word in the communication
 ";
 
+/// Language learning assistant powered by LLM
 pub struct Lingoo<'a, T: LLM> {
     llm: &'a T,
 }
 
 impl<'a, T: LLM> Lingoo<'a, T> {
+    /// Creates a new Lingoo language learning assistant
     pub fn new(llm: &'a T) -> Self {
         Self { llm }
     }
+
+    /// Starts an interactive language learning conversation
     pub async fn start_conversation(&mut self, initial_message: &str) -> Result<()> {
         let mut conversation = self.llm.start_conversation(Some(LINGOO_SYSTEM_PROMPT));
         let mut user_input = initial_message.to_string();
+
         loop {
             let response = conversation.send_message(&user_input).await?;
 

@@ -1,3 +1,8 @@
+//! Epis - A knowledge growth assistant
+//!
+//! This application provides an interactive interface for learning and knowledge acquisition,
+//! currently supporting language learning through LLM-powered conversations.
+
 use anyhow::Result;
 use categorizer::categorizer::Categorizer;
 use config::Config;
@@ -14,6 +19,7 @@ use crate::{categorizer::categorizer::Category, config::Provider, lingoo::lingoo
 
 const KNOWLEDGE_TYPES: [&str; 1] = ["languages"];
 
+/// Main entry point for the Epis application
 #[tokio::main]
 async fn main() -> Result<()> {
     let config = Config::init()?;
@@ -28,6 +34,7 @@ async fn main() -> Result<()> {
     let llm = match config.provider {
         Provider::Ollama => Ollama::new(&config.model),
     };
+
     let category = Categorizer::new(&llm).categorize(&user_input).await?;
 
     match category {
