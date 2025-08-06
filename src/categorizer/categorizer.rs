@@ -16,35 +16,35 @@ pub const CATEGORY_SYSTEM_PROMPT: &str = "User sends you a request.
 /// Supported knowledge categories for user requests
 #[derive(JsonSchema, Debug, Serialize, Deserialize)]
 pub enum Category {
-    Languages,
-    Invalid,
+  Languages,
+  Invalid,
 }
 
 #[derive(JsonSchema, Debug, Serialize, Deserialize)]
 struct CategoryResponse {
-    category: Category,
+  category: Category,
 }
 
 /// Categorizer for classifying user input into knowledge domains
 pub struct Categorizer<'a, T: LLM> {
-    llm: &'a T,
+  llm: &'a T,
 }
 
 impl<'a, T: LLM> Categorizer<'a, T> {
-    /// Creates a new categorizer with the specified LLM
-    pub fn new(llm: &'a T) -> Self {
-        Self { llm }
-    }
+  /// Creates a new categorizer with the specified LLM
+  pub fn new(llm: &'a T) -> Self {
+    Self { llm }
+  }
 
-    /// Categorizes user input into a knowledge domain
-    pub async fn categorize(&self, prompt: &str) -> Result<Category> {
-        let response = self
-            .llm
-            .ask::<CategoryResponse>(prompt, CATEGORY_SYSTEM_PROMPT)
-            .await?;
+  /// Categorizes user input into a knowledge domain
+  pub async fn categorize(&self, prompt: &str) -> Result<Category> {
+    let response = self
+      .llm
+      .ask::<CategoryResponse>(prompt, CATEGORY_SYSTEM_PROMPT)
+      .await?;
 
-        let category: Category = serde_json::from_str::<CategoryResponse>(&response)?.category;
+    let category: Category = serde_json::from_str::<CategoryResponse>(&response)?.category;
 
-        Ok(category)
-    }
+    Ok(category)
+  }
 }

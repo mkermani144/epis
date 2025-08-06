@@ -22,29 +22,29 @@ const KNOWLEDGE_TYPES: [&str; 1] = ["languages"];
 /// Main entry point for the Epis application
 #[tokio::main]
 async fn main() -> Result<()> {
-    let config = Config::init()?;
+  let config = Config::init()?;
 
-    println!("Hey, let's grow our knowledge! Currently, I can help you with:");
-    for knowledge_type in KNOWLEDGE_TYPES {
-        println!("- {knowledge_type}");
+  println!("Hey, let's grow our knowledge! Currently, I can help you with:");
+  for knowledge_type in KNOWLEDGE_TYPES {
+    println!("- {knowledge_type}");
+  }
+
+  let user_input = Text::new("What can I help you with?").prompt()?;
+
+  let llm = match config.provider {
+    Provider::Ollama => Ollama::new(&config.model),
+  };
+
+  let category = Categorizer::new(&llm).categorize(&user_input).await?;
+
+  match category {
+    Category::Languages => {
+      Lingoo::new(&llm).start_conversation(&user_input).await?;
     }
-
-    let user_input = Text::new("What can I help you with?").prompt()?;
-
-    let llm = match config.provider {
-        Provider::Ollama => Ollama::new(&config.model),
-    };
-
-    let category = Categorizer::new(&llm).categorize(&user_input).await?;
-
-    match category {
-        Category::Languages => {
-            Lingoo::new(&llm).start_conversation(&user_input).await?;
-        }
-        Category::Invalid => {
-            println!("Invalid category");
-        }
+    Category::Invalid => {
+      println!("Invalid category");
     }
+  }
 
-    Ok(())
+  Ok(())
 }

@@ -21,7 +21,25 @@ Epis is an extensible assistant designed to help you learn anything.
 
 3. **Follow the prompts** to start a conversation.
 
-## Requirements
+## Development
 
-- Rust (edition 2025)
+### Prerequisites
+
+- Rust (edition 2024)
 - [Ollama](https://github.com/ollama/ollama) running locally (for LLM features)
+
+### Development Commands
+
+```sh
+# Format code
+cargo fmt
+
+# Run linter
+cargo clippy
+
+# Run tests
+cargo test
+
+# Build
+cargo build
+```

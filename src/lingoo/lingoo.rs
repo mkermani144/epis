@@ -27,26 +27,26 @@ You may utilize these tools to help the user:
 
 /// Language learning assistant powered by LLM
 pub struct Lingoo<'a, T: LLM> {
-    llm: &'a T,
+  llm: &'a T,
 }
 
 impl<'a, T: LLM> Lingoo<'a, T> {
-    /// Creates a new Lingoo language learning assistant
-    pub fn new(llm: &'a T) -> Self {
-        Self { llm }
+  /// Creates a new Lingoo language learning assistant
+  pub fn new(llm: &'a T) -> Self {
+    Self { llm }
+  }
+
+  /// Starts an interactive language learning conversation
+  pub async fn start_conversation(&mut self, initial_message: &str) -> Result<()> {
+    let mut conversation = self.llm.start_conversation(Some(LINGOO_SYSTEM_PROMPT));
+    let mut user_input = initial_message.to_string();
+
+    loop {
+      let response = conversation.send_message(&user_input).await?;
+
+      println!("{response}");
+
+      user_input = Text::new(">").prompt()?;
     }
-
-    /// Starts an interactive language learning conversation
-    pub async fn start_conversation(&mut self, initial_message: &str) -> Result<()> {
-        let mut conversation = self.llm.start_conversation(Some(LINGOO_SYSTEM_PROMPT));
-        let mut user_input = initial_message.to_string();
-
-        loop {
-            let response = conversation.send_message(&user_input).await?;
-
-            println!("{response}");
-
-            user_input = Text::new(">").prompt()?;
-        }
-    }
+  }
 }

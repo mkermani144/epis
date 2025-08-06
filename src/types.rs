@@ -9,19 +9,19 @@ pub struct Message(pub String);
 /// Represents the role of a participant in a chat conversation
 #[derive(Debug, Clone)]
 pub enum ChatMessageRole {
-    /// Messages sent by the user
-    User,
-    /// Messages sent by the AI assistant
-    AI,
-    /// System messages (prompts, instructions, etc.)
-    System,
+  /// Messages sent by the user
+  User,
+  /// Messages sent by the AI assistant
+  AI,
+  /// System messages (prompts, instructions, etc.)
+  System,
 }
 
 /// A complete chat message with role and content
 #[derive(Debug, Clone)]
 pub struct ChatMessage {
-    /// The role of the message sender
-    pub role: ChatMessageRole,
-    /// The actual message content
-    pub message: Message,
+  /// The role of the message sender
+  pub role: ChatMessageRole,
+  /// The actual message content
+  pub message: Message,
 }
