@@ -9,7 +9,9 @@ keywords = ["ai", "learning"]
 
 [dependencies]
 anyhow = "1.0.98"
+env_logger = "0.11.3"
 inquire = "0.7.5"
+log = "0.4.20"
 ollama-rs = "0.3.2"
 schemars = "1.0.4"
 serde = "1.0.219"

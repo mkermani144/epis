@@ -4,6 +4,7 @@
 //! Configuration is loaded from environment variables.
 
 use anyhow::Result;
+use log::LevelFilter;
 
 /// Supported LLM providers for the application
 #[derive(Debug)]
@@ -30,6 +31,8 @@ pub struct Config {
   pub provider: Provider,
   /// The specific model name to use with the provider
   pub model: String,
+  /// The logging level for the application
+  pub log_level: LevelFilter,
 }
 
 impl Config {
@@ -38,10 +41,16 @@ impl Config {
   /// # Required Environment Variables
   /// * `PROVIDER` - The LLM provider to use (e.g., "ollama")
   /// * `MODEL` - The model name to use (e.g., "llama2")
+  ///
+  /// # Optional Environment Variables
+  /// * `RUST_LOG` - The logging level (e.g., "info", "debug", "warn")
   pub fn init() -> Result<Self> {
     Ok(Self {
       provider: std::env::var("PROVIDER")?.try_into()?,
       model: std::env::var("MODEL")?,
+      log_level: std::env::var("LOG_LEVEL")
+        .unwrap_or("info".to_string())
+        .parse()?,
     })
   }
 }

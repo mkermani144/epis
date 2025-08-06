@@ -24,6 +24,11 @@ const KNOWLEDGE_TYPES: [&str; 1] = ["languages"];
 async fn main() -> Result<()> {
   let config = Config::init()?;
 
+  // Initialize logging with the configured log level
+  env_logger::Builder::new()
+    .filter_level(config.log_level)
+    .init();
+
   println!("Hey, let's grow our knowledge! Currently, I can help you with:");
   for knowledge_type in KNOWLEDGE_TYPES {
     println!("- {knowledge_type}");
