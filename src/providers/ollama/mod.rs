@@ -5,3 +5,4 @@
 
 pub mod ollama;
 pub mod ollama_conversation;
+pub mod ollama_models;

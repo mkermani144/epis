@@ -8,6 +8,7 @@ use categorizer::categorizer::Categorizer;
 use config::Config;
 use inquire::Text;
 use providers::ollama::ollama::Ollama;
+use providers::ollama::ollama_models::OllamaModels;
 
 mod categorizer;
 mod config;
@@ -36,8 +37,10 @@ async fn main() -> Result<()> {
 
   let user_input = Text::new("What can I help you with?").prompt()?;
 
+  let models = OllamaModels::new(config.generation_model, config.embedding_model);
+
   let llm = match config.provider {
-    Provider::Ollama => Ollama::new(&config.model),
+    Provider::Ollama => Ollama::new(&models),
   };
 
   let category = Categorizer::new(&llm).categorize(&user_input).await?;

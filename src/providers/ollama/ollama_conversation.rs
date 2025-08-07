@@ -5,7 +5,7 @@
 
 use crate::{
   providers::{llm::Conversation, ollama::ollama::Ollama},
-  types::{ChatMessage, ChatMessageRole, Message},
+  types::common::{ChatMessage, ChatMessageRole, Message},
 };
 use anyhow::Result;
 use ollama_rs::generation::chat::{
@@ -60,7 +60,7 @@ impl<'a> Conversation for OllamaConversation<'a> {
     });
 
     let ollama_messages = self.build_ollama_messages();
-    let request = ChatMessageRequest::new(self.ollama.model.to_string(), ollama_messages);
+    let request = ChatMessageRequest::new(self.ollama.models.generation.clone(), ollama_messages);
 
     let response = self.ollama.instance.send_chat_messages(request).await?;
 

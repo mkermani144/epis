@@ -29,8 +29,10 @@ impl TryFrom<String> for Provider {
 pub struct Config {
   /// The LLM provider to use for inference
   pub provider: Provider,
-  /// The specific model name to use with the provider
-  pub model: String,
+  /// The model name to use for text generation
+  pub generation_model: String,
+  /// The model name to use for generating embeddings
+  pub embedding_model: String,
   /// The logging level for the application
   pub log_level: LevelFilter,
 }
@@ -40,14 +42,16 @@ impl Config {
   ///
   /// # Required Environment Variables
   /// * `PROVIDER` - The LLM provider to use (e.g., "ollama")
-  /// * `MODEL` - The model name to use (e.g., "llama2")
+  /// * `GENERATION_MODEL` - The model name to use for text generation (e.g., "llama2")
+  /// * `EMBEDDING_MODEL` - The model name to use for embeddings (e.g., "llama2")
   ///
   /// # Optional Environment Variables
   /// * `RUST_LOG` - The logging level (e.g., "info", "debug", "warn")
   pub fn init() -> Result<Self> {
     Ok(Self {
       provider: std::env::var("PROVIDER")?.try_into()?,
-      model: std::env::var("MODEL")?,
+      generation_model: std::env::var("GENERATION_MODEL")?,
+      embedding_model: std::env::var("EMBEDDING_MODEL")?,
       log_level: std::env::var("LOG_LEVEL")
         .unwrap_or("info".to_string())
         .parse()?,
