@@ -12,7 +12,7 @@ pub enum ChatMessageRole {
   /// Messages sent by the user
   User,
   /// Messages sent by the AI assistant
-  AI,
+  Ai,
   /// System messages (prompts, instructions, etc.)
   System,
 }

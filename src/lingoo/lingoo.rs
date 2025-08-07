@@ -7,7 +7,7 @@
 use anyhow::Result;
 use inquire::Text;
 
-use crate::providers::llm::{Conversation, LLM};
+use crate::providers::llm::{Conversation, Llm};
 
 pub const LINGOO_SYSTEM_PROMPT: &str = "
 You are a language learning assistant.
@@ -26,11 +26,11 @@ You may utilize these tools to help the user:
 ";
 
 /// Language learning assistant powered by LLM
-pub struct Lingoo<'a, T: LLM> {
+pub struct Lingoo<'a, T: Llm> {
   llm: &'a T,
 }
 
-impl<'a, T: LLM> Lingoo<'a, T> {
+impl<'a, T: Llm> Lingoo<'a, T> {
   /// Creates a new Lingoo language learning assistant
   pub fn new(llm: &'a T) -> Self {
     Self { llm }

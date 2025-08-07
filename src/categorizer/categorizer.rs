@@ -7,7 +7,7 @@ use anyhow::Result;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::providers::llm::LLM;
+use crate::providers::llm::Llm;
 
 pub const CATEGORY_SYSTEM_PROMPT: &str = "User sends you a request.
                 It should be related to one of the following knowledge types: [Languages, Invalid].
@@ -26,11 +26,11 @@ struct CategoryResponse {
 }
 
 /// Categorizer for classifying user input into knowledge domains
-pub struct Categorizer<'a, T: LLM> {
+pub struct Categorizer<'a, T: Llm> {
   llm: &'a T,
 }
 
-impl<'a, T: LLM> Categorizer<'a, T> {
+impl<'a, T: Llm> Categorizer<'a, T> {
   /// Creates a new categorizer with the specified LLM
   pub fn new(llm: &'a T) -> Self {
     Self { llm }

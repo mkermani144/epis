@@ -14,7 +14,7 @@ pub trait Conversation {
 }
 
 /// Core trait for LLM providers
-pub trait LLM {
+pub trait Llm {
   /// Sends a prompt to the LLM with a system message and returns a structured response
   async fn ask<ResponseSchema: JsonSchema>(&self, prompt: &str, system: &str) -> Result<String>;
 

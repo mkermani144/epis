@@ -41,7 +41,7 @@ impl<'a> OllamaConversation<'a> {
       .map(|chat_message| {
         let role = match chat_message.role {
           ChatMessageRole::User => MessageRole::User,
-          ChatMessageRole::AI => MessageRole::Assistant,
+          ChatMessageRole::Ai => MessageRole::Assistant,
           ChatMessageRole::System => MessageRole::System,
         };
 
@@ -65,7 +65,7 @@ impl<'a> Conversation for OllamaConversation<'a> {
     let response = self.ollama.instance.send_chat_messages(request).await?;
 
     self.history.push(ChatMessage {
-      role: ChatMessageRole::AI,
+      role: ChatMessageRole::Ai,
       message: Message(response.message.content.clone()),
     });
 

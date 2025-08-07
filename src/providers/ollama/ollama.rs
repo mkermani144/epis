@@ -3,7 +3,7 @@
 //! This module provides the Ollama implementation of the LLM trait,
 //! allowing the application to use local Ollama instances for LLM inference.
 
-use crate::providers::llm::{Conversation, LLM};
+use crate::providers::llm::{Conversation, Llm};
 use crate::providers::ollama::ollama_conversation::OllamaConversation;
 use anyhow::Result;
 use ollama_rs::{
@@ -31,7 +31,7 @@ impl<'a> Ollama<'a> {
   }
 }
 
-impl<'a> LLM for Ollama<'a> {
+impl<'a> Llm for Ollama<'a> {
   /// Sends a structured request to Ollama and returns the response
   async fn ask<ResponseSchema: JsonSchema>(&self, message: &str, system: &str) -> Result<String> {
     let generation_request = GenerationRequest::new(self.model.to_string(), message)
