@@ -1,0 +1,43 @@
+services:
+  epis-app:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - .:/workspace:cached
+    command: sleep infinity
+    environment:
+      - DATABASE_URL=postgresql://epis_user:epis_password@postgres:5432/epis_db
+      - RUST_LOG=info
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - epis-network
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: epis_db
+      POSTGRES_USER: epis_user
+      POSTGRES_PASSWORD: epis_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U epis_user -d epis_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - epis-network
+
+volumes:
+  postgres_data:
+
+networks:
+  epis-network:
+    driver: bridge
