@@ -12,7 +12,7 @@
         "redhat.vscode-yaml"
       ],
       "settings": {
-        "rust-analyzer.checkOnSave.command": "clippy",
+        "rust-analyzer.check.command": "clippy",
         "rust-analyzer.cargo.features": "all",
         "terminal.integrated.defaultProfile.linux": "zsh",
         "terminal.integrated.profiles.linux": {
