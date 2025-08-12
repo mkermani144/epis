@@ -36,6 +36,9 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
 # Install additional Rust tools
 RUN rustup component add rustfmt clippy rust-analyzer
 
+# Install sqlx-cli for database migrations and management
+RUN cargo install sqlx-cli --no-default-features --features postgres
+
 # Set environment variables
 ENV RUST_BACKTRACE=1
 ENV CARGO_INCREMENTAL=1 
