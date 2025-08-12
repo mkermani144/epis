@@ -9,7 +9,7 @@ use crate::types::embedding::Embedding;
 use anyhow::Result;
 use ollama_rs::generation::embeddings::request::GenerateEmbeddingsRequest;
 use ollama_rs::{
-  Ollama as OllamaRs,
+  IntoUrlSealed, Ollama as OllamaRs,
   generation::{
     completion::request::GenerationRequest,
     parameters::{FormatType, JsonStructure},
@@ -25,11 +25,15 @@ pub struct Ollama<'a> {
 
 impl<'a> Ollama<'a> {
   /// Creates a new Ollama provider instance
-  pub fn new(models: &'a OllamaModels) -> Self {
-    Self {
-      instance: OllamaRs::default(),
+  pub fn new(models: &'a OllamaModels, ollama_url: Option<String>) -> Result<Self> {
+    Ok(Self {
+      instance: OllamaRs::from_url(
+        ollama_url
+          .unwrap_or("http://localhost:11434".to_string())
+          .into_url()?,
+      ),
       models,
-    }
+    })
   }
 }
 

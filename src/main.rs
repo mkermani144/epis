@@ -40,7 +40,7 @@ async fn main() -> Result<()> {
   let models = OllamaModels::new(config.generation_model, config.embedding_model);
 
   let llm = match config.provider {
-    Provider::Ollama => Ollama::new(&models),
+    Provider::Ollama => Ollama::new(&models, config.ollama_url)?,
   };
 
   let category = Categorizer::new(&llm).categorize(&user_input).await?;

@@ -35,6 +35,8 @@ pub struct Config {
   pub embedding_model: String,
   /// The logging level for the application
   pub log_level: LevelFilter,
+  /// The Ollama instance URL
+  pub ollama_url: Option<String>,
 }
 
 impl Config {
@@ -44,6 +46,7 @@ impl Config {
   /// * `PROVIDER` - The LLM provider to use (e.g., "ollama")
   /// * `GENERATION_MODEL` - The model name to use for text generation (e.g., "llama2")
   /// * `EMBEDDING_MODEL` - The model name to use for embeddings (e.g., "llama2")
+  /// * `OLLAMA_URL` - The Ollama instance URL
   ///
   /// # Optional Environment Variables
   /// * `RUST_LOG` - The logging level (e.g., "info", "debug", "warn")
@@ -52,6 +55,7 @@ impl Config {
       provider: std::env::var("PROVIDER")?.try_into()?,
       generation_model: std::env::var("GENERATION_MODEL")?,
       embedding_model: std::env::var("EMBEDDING_MODEL")?,
+      ollama_url: std::env::var("OLLAMA_URL").ok(),
       log_level: std::env::var("LOG_LEVEL")
         .unwrap_or("info".to_string())
         .parse()?,
