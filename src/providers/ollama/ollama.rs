@@ -4,7 +4,8 @@
 //! allowing the application to use local Ollama instances for LLM inference.
 
 use super::{ollama_conversation::OllamaConversation, ollama_models::OllamaModels};
-use crate::providers::llm::{Conversation, Llm};
+use crate::providers::llm::{Llm, LlmConversation};
+use crate::types::common::AnyText;
 use crate::types::embedding::Embedding;
 use anyhow::Result;
 use ollama_rs::generation::embeddings::request::GenerateEmbeddingsRequest;
@@ -52,7 +53,7 @@ impl<'a> Llm for Ollama<'a> {
   }
 
   /// Creates a new conversation instance for multi-turn interactions
-  fn start_conversation(&self, system_prompt: Option<&str>) -> impl Conversation {
+  fn start_conversation(&self, system_prompt: Option<&str>) -> impl LlmConversation {
     OllamaConversation::new(self, system_prompt)
   }
 
@@ -71,5 +72,15 @@ impl<'a> Llm for Ollama<'a> {
     } else {
       Err(anyhow::anyhow!("No embedding found"))
     }
+  }
+
+  /// Generates a title for a given text
+  async fn generate_title_for(&self, text: &AnyText) -> Result<AnyText> {
+    let generation_request = GenerationRequest::new(self.models.generation.clone(), text.as_ref())
+      .system("Generate a short title for user prompt");
+
+    let generation_response = self.instance.generate(generation_request).await?;
+
+    Ok(generation_response.response.into())
   }
 }

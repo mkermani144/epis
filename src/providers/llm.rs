@@ -7,10 +7,10 @@
 use anyhow::Result;
 use schemars::JsonSchema;
 
-use crate::types::embedding::Embedding;
+use crate::types::{common::AnyText, embedding::Embedding};
 
 /// Trait for managing ongoing conversations with an LLM
-pub trait Conversation {
+pub trait LlmConversation {
   /// Sends a message to the LLM and returns the response
   async fn send_message(&mut self, message: &str) -> Result<String>;
 }
@@ -21,8 +21,10 @@ pub trait Llm {
   async fn ask<ResponseSchema: JsonSchema>(&self, prompt: &str, system: &str) -> Result<String>;
 
   /// Starts a new conversation with optional system prompt
-  fn start_conversation(&self, system_prompt: Option<&str>) -> impl Conversation;
+  fn start_conversation(&self, system_prompt: Option<&str>) -> impl LlmConversation;
 
   /// Generates embeddings for a given text
   async fn generate_embeddings(&self, text: &str) -> Result<Embedding>;
+
+  async fn generate_title_for(&self, text: &AnyText) -> Result<AnyText>;
 }

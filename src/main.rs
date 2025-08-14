@@ -12,11 +12,16 @@ use providers::ollama::ollama_models::OllamaModels;
 
 mod categorizer;
 mod config;
+mod conversation;
 mod lingoo;
+mod postgres;
 mod providers;
 mod types;
 
-use crate::{categorizer::categorizer::Category, config::Provider, lingoo::lingoo::Lingoo};
+use crate::{
+  categorizer::categorizer::Category, config::Provider, conversation::ConversationService,
+  lingoo::lingoo::Lingoo, postgres::Postgres,
+};
 
 const KNOWLEDGE_TYPES: [&str; 1] = ["languages"];
 
@@ -45,9 +50,14 @@ async fn main() -> Result<()> {
 
   let category = Categorizer::new(&llm).categorize(&user_input).await?;
 
+  let postgres = Postgres::new();
+  let conversation_service = ConversationService::new(postgres);
+
   match category {
     Category::Languages => {
-      Lingoo::new(&llm).start_conversation(&user_input).await?;
+      Lingoo::new(&llm, conversation_service)
+        .start_conversation(&user_input)
+        .await?;
     }
     Category::Invalid => {
       println!("Invalid category");

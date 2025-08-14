@@ -4,7 +4,7 @@
 //! allowing multi-turn conversations with conversation history management.
 
 use crate::{
-  providers::{llm::Conversation, ollama::ollama::Ollama},
+  providers::{llm::LlmConversation, ollama::ollama::Ollama},
   types::common::{ChatMessage, ChatMessageRole, Message},
 };
 use anyhow::Result;
@@ -26,7 +26,7 @@ impl<'a> OllamaConversation<'a> {
     if let Some(system) = system_prompt {
       history.push(ChatMessage {
         role: ChatMessageRole::System,
-        message: Message(system.to_string()),
+        message: Message::new(system.to_string()),
       });
     }
 
@@ -45,18 +45,18 @@ impl<'a> OllamaConversation<'a> {
           ChatMessageRole::System => MessageRole::System,
         };
 
-        OllamaChatMessage::new(role, chat_message.message.0.clone())
+        OllamaChatMessage::new(role, chat_message.message.clone().into_inner())
       })
       .collect()
   }
 }
 
-impl<'a> Conversation for OllamaConversation<'a> {
+impl<'a> LlmConversation for OllamaConversation<'a> {
   /// Sends a message to Ollama and returns the response
   async fn send_message(&mut self, message: &str) -> Result<String> {
     self.history.push(ChatMessage {
       role: ChatMessageRole::User,
-      message: Message(message.to_string()),
+      message: Message::new(message.to_string()),
     });
 
     let ollama_messages = self.build_ollama_messages();
@@ -66,7 +66,7 @@ impl<'a> Conversation for OllamaConversation<'a> {
 
     self.history.push(ChatMessage {
       role: ChatMessageRole::Ai,
-      message: Message(response.message.content.clone()),
+      message: Message::new(response.message.content.clone()),
     });
 
     Ok(response.message.content)
