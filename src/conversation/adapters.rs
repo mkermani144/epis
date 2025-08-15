@@ -5,7 +5,7 @@ use crate::{
   categorizer::categorizer::Category,
   conversation::{repository::ConversationRepository, types::ConversationTitle},
   postgres::Postgres,
-  types::common::Id,
+  types::common::{ChatMessage, ChatMessageRole, Id},
 };
 
 impl ConversationRepository for Postgres {
@@ -36,11 +36,22 @@ impl ConversationRepository for Postgres {
     Ok(())
   }
 
-  async fn insert_message(
-    &self,
-    conversation_id: &Id,
-    message: &crate::types::common::Message,
-  ) -> Result<Id> {
-    todo!()
+  async fn insert_message(&self, conversation_id: &Id, chat_message: &ChatMessage) -> Result<Id> {
+    let role = match chat_message.role {
+      ChatMessageRole::User => "user",
+      ChatMessageRole::Ai => "ai",
+      ChatMessageRole::System => "system",
+    };
+
+    let message = query!(
+      "INSERT INTO message (conversation_id, content, role) VALUES ($1, $2, $3) RETURNING id",
+      conversation_id.as_ref(),
+      chat_message.message.as_ref(),
+      role,
+    )
+    .fetch_one(self.pool())
+    .await?;
+
+    Ok(message.id.into())
   }
 }

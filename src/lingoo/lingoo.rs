@@ -13,7 +13,7 @@ use crate::{
     ConversationService, repository::ConversationRepository, types::ConversationTitle,
   },
   providers::llm::{Llm, LlmConversation},
-  types::common::{AnyText, Message},
+  types::common::{AnyText, ChatMessage, ChatMessageRole, Message},
 };
 
 pub const LINGOO_SYSTEM_PROMPT: &str = "
@@ -74,14 +74,27 @@ impl<'a, T: Llm, R: ConversationRepository> Lingoo<'a, T, R> {
       let response = llm_conversation.send_message(message.as_ref()).await?;
       let reply = Message::from(response);
 
-      self
-        .conversation_service
-        .store_message(&conversation_id, &message);
-      self
-        .conversation_service
-        .store_message(&conversation_id, &reply);
-
       println!("{}", reply.as_ref());
+
+      let user_chat_message = ChatMessage {
+        role: ChatMessageRole::User,
+        message,
+      };
+      let ai_chat_message = ChatMessage {
+        role: ChatMessageRole::Ai,
+        message: reply,
+      };
+
+      // FIXME: The timestamps are wrong and should be fixed
+      // TODO: Run concurrently
+      self
+        .conversation_service
+        .store_message(&conversation_id, &user_chat_message)
+        .await?;
+      self
+        .conversation_service
+        .store_message(&conversation_id, &ai_chat_message)
+        .await?;
 
       user_input = Text::new(">").prompt()?;
     }

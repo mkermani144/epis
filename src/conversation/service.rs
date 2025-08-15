@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use crate::categorizer::categorizer::Category;
 use crate::conversation::types::ConversationTitle;
-use crate::types::common::{Id, Message};
+use crate::types::common::{ChatMessage, Id};
 
 use super::repository::ConversationRepository;
 
@@ -19,10 +19,14 @@ impl<R: ConversationRepository> ConversationService<R> {
     self.repository.create_conversation(category).await
   }
 
-  pub async fn store_message(&self, conversation_id: &Id, message: &Message) -> Result<Id> {
+  pub async fn store_message(
+    &self,
+    conversation_id: &Id,
+    chat_message: &ChatMessage,
+  ) -> Result<Id> {
     self
       .repository
-      .insert_message(conversation_id, message)
+      .insert_message(conversation_id, chat_message)
       .await
   }
 

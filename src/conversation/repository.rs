@@ -3,7 +3,7 @@ use anyhow::Result;
 use crate::{
   categorizer::categorizer::Category,
   conversation::types::ConversationTitle,
-  types::common::{Id, Message},
+  types::common::{ChatMessage, Id},
 };
 
 pub trait ConversationRepository {
@@ -13,5 +13,5 @@ pub trait ConversationRepository {
     conversation_id: &Id,
     title: &ConversationTitle,
   ) -> Result<()>;
-  async fn insert_message(&self, conversation_id: &Id, message: &Message) -> Result<Id>;
+  async fn insert_message(&self, conversation_id: &Id, chat_message: &ChatMessage) -> Result<Id>;
 }
