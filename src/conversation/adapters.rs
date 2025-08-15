@@ -10,9 +10,14 @@ use crate::{
 
 impl ConversationRepository for Postgres {
   async fn create_conversation(&self, category: &Category) -> Result<Id> {
+    let category_str = match category {
+      Category::Languages => "languages",
+      Category::Invalid => "invalid",
+    };
+
     let conversation = query!(
       "INSERT INTO conversation (category) VALUES ($1) RETURNING id",
-      category as _,
+      category_str
     )
     .fetch_one(self.pool())
     .await?;

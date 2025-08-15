@@ -14,8 +14,7 @@ pub const CATEGORY_SYSTEM_PROMPT: &str = "User sends you a request.
                 Respond with a short answer indicating category. \"Invalid\" if irrelevant to all categories.";
 
 /// Supported knowledge categories for user requests
-#[derive(JsonSchema, Debug, Serialize, Deserialize, sqlx::Type)]
-#[sqlx(type_name = "conversation_category", rename_all = "lowercase")]
+#[derive(JsonSchema, Debug, Serialize, Deserialize)]
 pub enum Category {
   Languages,
   Invalid,

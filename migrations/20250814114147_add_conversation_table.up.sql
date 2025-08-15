@@ -1,9 +1,7 @@
-CREATE TYPE conversation_category AS ENUM ('languages');
-
 CREATE TABLE conversation (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT,
-    category conversation_category NOT NULL,
+    category TEXT NOT NULL CHECK (category IN ('languages', 'invalid')),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
