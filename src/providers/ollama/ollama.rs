@@ -77,7 +77,7 @@ impl<'a> Llm for Ollama<'a> {
   /// Generates a title for a given text
   async fn generate_title_for(&self, text: &AnyText) -> Result<AnyText> {
     let generation_request = GenerationRequest::new(self.models.generation.clone(), text.as_ref())
-      .system("Generate a short title for user prompt");
+      .system("Generate a short title for user prompt. It should show its main topic and summarize it. Return only the title, no other text. Minimum 3 words, maximum 10 words.");
 
     let generation_response = self.instance.generate(generation_request).await?;
 

@@ -1,3 +1,5 @@
+use anyhow::Result;
+
 use crate::categorizer::categorizer::Category;
 use crate::conversation::types::ConversationTitle;
 use crate::types::common::{Id, Message};
@@ -13,17 +15,25 @@ impl<R: ConversationRepository> ConversationService<R> {
     Self { repository }
   }
 
-  pub fn initiate_conversation(&self, category: &Category) -> Id {
-    self.repository.create_conversation(category)
+  pub async fn initiate_conversation(&self, category: &Category) -> Result<Id> {
+    self.repository.create_conversation(category).await
   }
 
-  pub fn store_message(&self, conversation_id: &Id, message: &Message) {
-    self.repository.insert_message(conversation_id, message)
-  }
-
-  pub fn set_conversation_title(&self, conversation_id: &Id, title: &ConversationTitle) {
+  pub async fn store_message(&self, conversation_id: &Id, message: &Message) -> Result<Id> {
     self
       .repository
-      .update_conversation_title(conversation_id, title);
+      .insert_message(conversation_id, message)
+      .await
+  }
+
+  pub async fn set_conversation_title(
+    &self,
+    conversation_id: &Id,
+    title: &ConversationTitle,
+  ) -> Result<()> {
+    self
+      .repository
+      .update_conversation_title(conversation_id, title)
+      .await
   }
 }

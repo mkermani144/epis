@@ -3,6 +3,7 @@
 //! This module defines shared data structures for chat messages and conversation handling.
 
 use nutype::nutype;
+use sqlx::types::Uuid;
 
 /// A wrapper for message content
 #[nutype(derive(Debug, Clone, From, AsRef))]
@@ -29,8 +30,8 @@ pub struct ChatMessage {
 }
 
 /// A unique identifier for anything
-#[nutype(derive(Debug, Clone))]
-pub struct Id(String);
+#[nutype(derive(Debug, Clone, From, AsRef))]
+pub struct Id(Uuid);
 
 /// A wrapper for any text
 #[nutype(derive(Debug, Clone, From, AsRef))]

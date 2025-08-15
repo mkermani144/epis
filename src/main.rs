@@ -50,7 +50,7 @@ async fn main() -> Result<()> {
 
   let category = Categorizer::new(&llm).categorize(&user_input).await?;
 
-  let postgres = Postgres::new();
+  let postgres = Postgres::try_new(&config.postgres_url).await?;
   let conversation_service = ConversationService::new(postgres);
 
   match category {

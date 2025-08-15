@@ -1,3 +1,5 @@
+use anyhow::Result;
+
 use crate::{
   categorizer::categorizer::Category,
   conversation::types::ConversationTitle,
@@ -5,7 +7,11 @@ use crate::{
 };
 
 pub trait ConversationRepository {
-  fn create_conversation(&self, category: &Category) -> Id;
-  fn update_conversation_title(&self, conversation_id: &Id, title: &ConversationTitle);
-  fn insert_message(&self, conversation_id: &Id, message: &Message);
+  async fn create_conversation(&self, category: &Category) -> Result<Id>;
+  async fn update_conversation_title(
+    &self,
+    conversation_id: &Id,
+    title: &ConversationTitle,
+  ) -> Result<()>;
+  async fn insert_message(&self, conversation_id: &Id, message: &Message) -> Result<Id>;
 }

@@ -53,7 +53,8 @@ impl<'a, T: Llm, R: ConversationRepository> Lingoo<'a, T, R> {
 
     let conversation_id = self
       .conversation_service
-      .initiate_conversation(&Category::Languages);
+      .initiate_conversation(&Category::Languages)
+      .await?;
 
     let mut user_input = initial_message.to_string();
 
@@ -63,7 +64,8 @@ impl<'a, T: Llm, R: ConversationRepository> Lingoo<'a, T, R> {
     let title = ConversationTitle::try_new(title_for_user_input.into_inner())?;
     self
       .conversation_service
-      .set_conversation_title(&conversation_id, &title);
+      .set_conversation_title(&conversation_id, &title)
+      .await?;
 
     user_input = user_input_text.into_inner();
 
