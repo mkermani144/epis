@@ -39,6 +39,8 @@ async fn main() -> Result<()> {
   for knowledge_type in KNOWLEDGE_TYPES {
     println!("- {knowledge_type}");
   }
+  let postgres = Postgres::try_new(&config.database_url).await?;
+  let conversation_service = ConversationService::new(postgres);
 
   let user_input = Text::new("What can I help you with?").prompt()?;
 
@@ -49,9 +51,6 @@ async fn main() -> Result<()> {
   };
 
   let category = Categorizer::new(&llm).categorize(&user_input).await?;
-
-  let postgres = Postgres::try_new(&config.postgres_url).await?;
-  let conversation_service = ConversationService::new(postgres);
 
   match category {
     Category::Languages => {
