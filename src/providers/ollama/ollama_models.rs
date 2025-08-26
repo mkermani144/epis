@@ -1,4 +1,5 @@
 /// Models configuration for Ollama provider
+#[derive(Clone)]
 pub struct OllamaModels {
   /// Model used for text generation and conversations
   pub generation: String,

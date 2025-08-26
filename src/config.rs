@@ -39,6 +39,8 @@ pub struct Config {
   pub ollama_url: Option<String>,
   /// The postgres URL
   pub database_url: String,
+  /// The HTTP server address
+  pub listen_port: u16,
 }
 
 impl Config {
@@ -60,6 +62,7 @@ impl Config {
       embedding_model: std::env::var("EMBEDDING_MODEL")?,
       ollama_url: std::env::var("OLLAMA_URL").ok(),
       database_url: std::env::var("DATABASE_URL")?,
+      listen_port: std::env::var("LISTEN_PORT")?.parse()?,
       log_level: std::env::var("LOG_LEVEL")
         .unwrap_or("info".to_string())
         .parse()?,

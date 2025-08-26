@@ -4,5 +4,4 @@
 //! including both the main provider and conversation handling.
 
 pub mod ollama;
-pub mod ollama_conversation;
 pub mod ollama_models;

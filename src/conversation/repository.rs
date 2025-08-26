@@ -2,12 +2,13 @@ use anyhow::Result;
 
 use crate::{
   conversation::models::{
-    CreateConversationRequest, SetConversationTitleRequest, StoreMessageRequest,
+    CreateConversationRequest, GetConversationMessageHistoryRequest, SetConversationTitleRequest,
+    StoreMessageRequest,
   },
-  entities::common::Id,
+  entities::common::{ChatMessage, Id},
 };
 
-pub trait ConversationRepository: Send + Sync + 'static {
+pub trait ConversationRepository: Clone + Send + Sync + 'static {
   fn create_conversation(
     &self,
     request: &CreateConversationRequest,
@@ -18,4 +19,8 @@ pub trait ConversationRepository: Send + Sync + 'static {
   ) -> impl Future<Output = Result<()>> + Send;
   fn store_message(&self, request: &StoreMessageRequest)
   -> impl Future<Output = Result<Id>> + Send;
+  fn get_conversation_message_history(
+    &self,
+    request: &GetConversationMessageHistoryRequest,
+  ) -> impl Future<Output = Result<Vec<ChatMessage>>> + Send;
 }

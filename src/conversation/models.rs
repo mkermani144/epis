@@ -62,3 +62,16 @@ impl StoreMessageRequest {
     &self.message
   }
 }
+
+pub struct GetConversationMessageHistoryRequest {
+  conversation_id: Id,
+}
+impl GetConversationMessageHistoryRequest {
+  pub fn new(conversation_id: Id) -> Self {
+    Self { conversation_id }
+  }
+
+  pub fn conversation_id(&self) -> &Id {
+    &self.conversation_id
+  }
+}

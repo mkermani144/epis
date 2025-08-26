@@ -4,16 +4,22 @@
 //! LLM-powered conversations to help users learn languages through various
 //! techniques like mnemonics, word roots, and contextual learning.
 
+use std::sync::Arc;
+
 use anyhow::Result;
-use inquire::Text;
 
 use crate::{
   categorizer::categorizer::Category,
   conversation::{
-    ConversationService, repository::ConversationRepository, types::ConversationTitle,
+    models::{
+      CreateConversationRequest, GetConversationMessageHistoryRequest, SetConversationTitleRequest,
+      StoreMessageRequest,
+    },
+    repository::ConversationRepository,
   },
-  providers::llm::{Llm, LlmConversation},
-  types::common::{AnyText, ChatMessage, ChatMessageRole, Message},
+  entities::common::{ChatMessage, ChatMessageRole, Id, Message},
+  lingoo::models::LingooChatRequest,
+  providers::llm::Llm,
 };
 
 pub const LINGOO_SYSTEM_PROMPT: &str = "
@@ -33,70 +39,74 @@ You may utilize these tools to help the user:
 ";
 
 /// Language learning assistant powered by LLM
-pub struct Lingoo<'a, T: Llm, R: ConversationRepository> {
-  llm: &'a T,
-  conversation_service: ConversationService<R>,
+pub struct Lingoo<T: Llm, R: ConversationRepository> {
+  llm: Arc<T>,
+  conversation_repository: Arc<R>,
 }
 
-impl<'a, T: Llm, R: ConversationRepository> Lingoo<'a, T, R> {
+impl<T: Llm, R: ConversationRepository> Lingoo<T, R> {
   /// Creates a new Lingoo language learning assistant
-  pub fn new(llm: &'a T, conversation_service: ConversationService<R>) -> Self {
+  pub fn new(llm: Arc<T>, conversation_repository: Arc<R>) -> Self {
     Self {
       llm,
-      conversation_service,
+      conversation_repository,
     }
   }
 
-  /// Starts an interactive language learning conversation
-  pub async fn start_conversation(&self, initial_message: &str) -> Result<()> {
-    let mut llm_conversation = self.llm.start_conversation(Some(LINGOO_SYSTEM_PROMPT));
-
+  /// Creates a new conversation and returns its ID
+  pub async fn create_conversation(&self) -> Result<Id> {
     let conversation_id = self
-      .conversation_service
-      .initiate_conversation(&Category::Languages)
+      .conversation_repository
+      .create_conversation(&CreateConversationRequest::new(Category::Languages))
       .await?;
 
-    let mut user_input = initial_message.to_string();
+    Ok(conversation_id)
+  }
 
-    // TODO: Move this to a separate thread
-    let user_input_text = AnyText::new(user_input);
-    let title_for_user_input = self.llm.generate_title_for(&user_input_text).await?;
-    let title = ConversationTitle::try_new(title_for_user_input.into_inner())?;
+  pub async fn chat(&self, lingoo_chat_request: &LingooChatRequest) -> Result<Message> {
+    let conversation_history = self
+      .conversation_repository
+      .get_conversation_message_history(&GetConversationMessageHistoryRequest::new(
+        lingoo_chat_request.conversation_id().clone(),
+      ))
+      .await?;
+    let reply = self
+      .llm
+      .ask_with_history(
+        lingoo_chat_request.message().as_ref(),
+        LINGOO_SYSTEM_PROMPT,
+        &conversation_history,
+      )
+      .await?;
+    // TODO: This copy is ugly and can be prevented, but requires further model changes
+    let reply_copy = reply.clone();
+
+    let message = lingoo_chat_request.message();
+    let user_chat_message = ChatMessage {
+      role: ChatMessageRole::User,
+      message: message.clone(),
+    };
+    let ai_chat_message = ChatMessage {
+      role: ChatMessageRole::Ai,
+      message: reply,
+    };
+    // FIXME: The timestamps are wrong and should be fixed
+    // TODO: Run concurrently
     self
-      .conversation_service
-      .set_conversation_title(&conversation_id, &title)
+      .conversation_repository
+      .store_message(&StoreMessageRequest::new(
+        lingoo_chat_request.conversation_id().clone(),
+        user_chat_message,
+      ))
+      .await?;
+    self
+      .conversation_repository
+      .store_message(&StoreMessageRequest::new(
+        lingoo_chat_request.conversation_id().clone(),
+        ai_chat_message,
+      ))
       .await?;
 
-    user_input = user_input_text.into_inner();
-
-    loop {
-      let message = Message::from(user_input);
-      let response = llm_conversation.send_message(message.as_ref()).await?;
-      let reply = Message::from(response);
-
-      println!("{}", reply.as_ref());
-
-      let user_chat_message = ChatMessage {
-        role: ChatMessageRole::User,
-        message,
-      };
-      let ai_chat_message = ChatMessage {
-        role: ChatMessageRole::Ai,
-        message: reply,
-      };
-
-      // FIXME: The timestamps are wrong and should be fixed
-      // TODO: Run concurrently
-      self
-        .conversation_service
-        .store_message(&conversation_id, &user_chat_message)
-        .await?;
-      self
-        .conversation_service
-        .store_message(&conversation_id, &ai_chat_message)
-        .await?;
-
-      user_input = Text::new(">").prompt()?;
-    }
+    Ok(reply_copy)
   }
 }

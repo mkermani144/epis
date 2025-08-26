@@ -7,24 +7,29 @@
 use anyhow::Result;
 use schemars::JsonSchema;
 
-use crate::types::{common::AnyText, embedding::Embedding};
-
-/// Trait for managing ongoing conversations with an LLM
-pub trait LlmConversation {
-  /// Sends a message to the LLM and returns the response
-  async fn send_message(&mut self, message: &str) -> Result<String>;
-}
+use crate::entities::{
+  common::{AnyText, ChatMessage, Message},
+  embedding::Embedding,
+};
 
 /// Core trait for LLM providers
-pub trait Llm {
+pub trait Llm: Clone + Send + Sync + 'static {
   /// Sends a prompt to the LLM with a system message and returns a structured response
-  async fn ask<ResponseSchema: JsonSchema>(&self, prompt: &str, system: &str) -> Result<String>;
+  fn ask<ResponseSchema: JsonSchema>(
+    &self,
+    prompt: &str,
+    system: &str,
+  ) -> impl Future<Output = Result<String>> + Send;
 
-  /// Starts a new conversation with optional system prompt
-  fn start_conversation(&self, system_prompt: Option<&str>) -> impl LlmConversation;
+  fn ask_with_history(
+    &self,
+    prompt: &str,
+    system: &str,
+    history: &[ChatMessage],
+  ) -> impl Future<Output = Result<Message>> + Send;
 
   /// Generates embeddings for a given text
-  async fn generate_embeddings(&self, text: &str) -> Result<Embedding>;
+  fn generate_embeddings(&self, text: &str) -> impl Future<Output = Result<Embedding>> + Send;
 
-  async fn generate_title_for(&self, text: &AnyText) -> Result<AnyText>;
+  fn generate_title_for(&self, text: &AnyText) -> impl Future<Output = Result<AnyText>> + Send;
 }

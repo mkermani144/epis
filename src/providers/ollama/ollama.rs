@@ -3,11 +3,13 @@
 //! This module provides the Ollama implementation of the LLM trait,
 //! allowing the application to use local Ollama instances for LLM inference.
 
-use super::{ollama_conversation::OllamaConversation, ollama_models::OllamaModels};
-use crate::providers::llm::{Llm, LlmConversation};
-use crate::types::common::AnyText;
-use crate::types::embedding::Embedding;
+use super::ollama_models::OllamaModels;
+use crate::entities::common::{AnyText, ChatMessage, ChatMessageRole, Message};
+use crate::entities::embedding::Embedding;
+use crate::providers::llm::Llm;
 use anyhow::Result;
+use ollama_rs::generation::chat::request::ChatMessageRequest;
+use ollama_rs::generation::chat::{ChatMessage as OllamaChatMessage, MessageRole};
 use ollama_rs::generation::embeddings::request::GenerateEmbeddingsRequest;
 use ollama_rs::{
   IntoUrlSealed, Ollama as OllamaRs,
@@ -19,14 +21,15 @@ use ollama_rs::{
 use schemars::JsonSchema;
 
 /// Ollama LLM provider implementation
-pub struct Ollama<'a> {
+#[derive(Clone)]
+pub struct Ollama {
   pub instance: OllamaRs,
-  pub models: &'a OllamaModels,
+  pub models: OllamaModels,
 }
 
-impl<'a> Ollama<'a> {
+impl Ollama {
   /// Creates a new Ollama provider instance
-  pub fn new(models: &'a OllamaModels, ollama_url: Option<String>) -> Result<Self> {
+  pub fn new(models: OllamaModels, ollama_url: Option<String>) -> Result<Self> {
     Ok(Self {
       instance: OllamaRs::from_url(
         ollama_url
@@ -38,7 +41,7 @@ impl<'a> Ollama<'a> {
   }
 }
 
-impl<'a> Llm for Ollama<'a> {
+impl Llm for Ollama {
   /// Sends a structured request to Ollama and returns the response
   async fn ask<ResponseSchema: JsonSchema>(&self, message: &str, system: &str) -> Result<String> {
     let generation_request = GenerationRequest::new(self.models.generation.clone(), message)
@@ -52,9 +55,39 @@ impl<'a> Llm for Ollama<'a> {
     Ok(generation_response.response)
   }
 
-  /// Creates a new conversation instance for multi-turn interactions
-  fn start_conversation(&self, system_prompt: Option<&str>) -> impl LlmConversation {
-    OllamaConversation::new(self, system_prompt)
+  async fn ask_with_history(
+    &self,
+    message: &str,
+    system: &str,
+    history: &[ChatMessage],
+  ) -> Result<Message> {
+    let mut ollama_history: Vec<OllamaChatMessage> =
+      vec![OllamaChatMessage::system(system.to_string())];
+
+    ollama_history.extend(history.iter().map(|chat_message| {
+      let role = match chat_message.role {
+        ChatMessageRole::User => MessageRole::User,
+        ChatMessageRole::Ai => MessageRole::Assistant,
+        ChatMessageRole::System => MessageRole::System,
+      };
+
+      OllamaChatMessage::new(role, chat_message.message.clone().into_inner())
+    }));
+
+    ollama_history.push(OllamaChatMessage::new(
+      MessageRole::User,
+      message.to_string(),
+    ));
+
+    let chat_message_request =
+      ChatMessageRequest::new(self.models.generation.clone(), ollama_history);
+
+    let chat_message_response = self
+      .instance
+      .send_chat_messages(chat_message_request)
+      .await?;
+
+    Ok(chat_message_response.message.content.into())
   }
 
   /// Generates embeddings for a given text

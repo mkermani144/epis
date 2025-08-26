@@ -4,6 +4,7 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::{PgPool, migrate};
 
 /// Database connection manager for PostgreSQL
+#[derive(Clone)]
 pub struct Postgres {
   pool: PgPool,
 }

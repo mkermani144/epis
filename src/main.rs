@@ -4,24 +4,25 @@
 //! currently supporting language learning through LLM-powered conversations.
 
 use anyhow::Result;
-use categorizer::categorizer::Categorizer;
-use config::Config;
-use inquire::Text;
-use providers::ollama::ollama::Ollama;
-use providers::ollama::ollama_models::OllamaModels;
+use log::info;
+use std::{net::SocketAddr, sync::Arc};
+
+use crate::{
+  config::{Config, Provider},
+  http::server::{AppState, HttpServer},
+  lingoo::lingoo::Lingoo,
+  postgres::Postgres,
+  providers::ollama::{ollama::Ollama, ollama_models::OllamaModels},
+};
 
 mod categorizer;
 mod config;
 mod conversation;
+mod entities;
+mod http;
 mod lingoo;
 mod postgres;
 mod providers;
-mod types;
-
-use crate::{
-  categorizer::categorizer::Category, config::Provider, conversation::ConversationService,
-  lingoo::lingoo::Lingoo, postgres::Postgres,
-};
 
 const KNOWLEDGE_TYPES: [&str; 1] = ["languages"];
 
@@ -39,29 +40,25 @@ async fn main() -> Result<()> {
   for knowledge_type in KNOWLEDGE_TYPES {
     println!("- {knowledge_type}");
   }
-  let postgres = Postgres::try_new(&config.database_url).await?;
-  let conversation_service = ConversationService::new(postgres);
-
-  let user_input = Text::new("What can I help you with?").prompt()?;
 
   let models = OllamaModels::new(config.generation_model, config.embedding_model);
-
   let llm = match config.provider {
-    Provider::Ollama => Ollama::new(&models, config.ollama_url)?,
+    Provider::Ollama => Arc::new(Ollama::new(models, config.ollama_url)?),
   };
+  let postgres = Arc::new(Postgres::try_new(&config.database_url).await?);
+  let lingoo = Lingoo::new(llm, postgres.clone());
 
-  let category = Categorizer::new(&llm).categorize(&user_input).await?;
+  HttpServer::try_new(
+    SocketAddr::from(([0, 0, 0, 0], config.listen_port)),
+    AppState {
+      lingoo: Arc::new(lingoo),
+      conversation_repository: postgres.clone(),
+    },
+  )?
+  .start()
+  .await?;
 
-  match category {
-    Category::Languages => {
-      Lingoo::new(&llm, conversation_service)
-        .start_conversation(&user_input)
-        .await?;
-    }
-    Category::Invalid => {
-      println!("Invalid category");
-    }
-  }
+  info!("HTTP server started on port {}", config.listen_port);
 
   Ok(())
 }

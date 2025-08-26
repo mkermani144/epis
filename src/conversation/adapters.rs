@@ -4,10 +4,13 @@ use sqlx::query;
 use crate::{
   categorizer::categorizer::Category,
   conversation::{
-    models::{CreateConversationRequest, SetConversationTitleRequest, StoreMessageRequest},
+    models::{
+      CreateConversationRequest, GetConversationMessageHistoryRequest, SetConversationTitleRequest,
+      StoreMessageRequest,
+    },
     repository::ConversationRepository,
   },
-  entities::common::{ChatMessageRole, Id},
+  entities::common::{ChatMessage, ChatMessageRole, Id},
   postgres::Postgres,
 };
 
@@ -57,5 +60,36 @@ impl ConversationRepository for Postgres {
     .await?;
 
     Ok(message.id.into())
+  }
+
+  async fn get_conversation_message_history(
+    &self,
+    request: &GetConversationMessageHistoryRequest,
+  ) -> Result<Vec<ChatMessage>> {
+    let messages = query!(
+      "SELECT id, content, role FROM message WHERE conversation_id = $1",
+      request.conversation_id().as_ref(),
+    )
+    .fetch_all(self.pool())
+    .await?;
+
+    let message_history = messages
+      .into_iter()
+      .filter_map(|message| {
+        let mut role = match message.role.as_str() {
+          "user" => Some(ChatMessageRole::User),
+          "ai" => Some(ChatMessageRole::Ai),
+          "system" => Some(ChatMessageRole::System),
+          _ => None,
+        };
+
+        Some(ChatMessage {
+          role: role.take()?,
+          message: message.content.into(),
+        })
+      })
+      .collect();
+
+    Ok(message_history)
   }
 }
