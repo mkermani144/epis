@@ -3,6 +3,8 @@
 //! This module defines shared data structures for chat messages and conversation handling.
 
 use nutype::nutype;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 
 /// A wrapper for message content
@@ -49,3 +51,10 @@ impl TryFrom<String> for Id {
 /// A wrapper for any text
 #[nutype(derive(Debug, Clone, From, AsRef))]
 pub struct AnyText(String);
+
+/// Supported knowledge categories for user requests
+#[derive(JsonSchema, Debug, Serialize, Deserialize, Clone)]
+pub enum Category {
+  Languages,
+  Invalid,
+}

@@ -1,7 +1,7 @@
 use nutype::nutype;
 
 use crate::{
-  categorizer::categorizer::Category,
+  entities::common::Category,
   entities::common::{ChatMessage, Id},
 };
 

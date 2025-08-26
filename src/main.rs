@@ -15,7 +15,6 @@ use crate::{
   providers::ollama::{ollama::Ollama, ollama_models::OllamaModels},
 };
 
-mod categorizer;
 mod config;
 mod conversation;
 mod entities;

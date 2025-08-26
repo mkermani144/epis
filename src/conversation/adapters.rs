@@ -2,7 +2,6 @@ use anyhow::Result;
 use sqlx::query;
 
 use crate::{
-  categorizer::categorizer::Category,
   conversation::{
     models::{
       CreateConversationRequest, GetConversationMessageHistoryRequest, SetConversationTitleRequest,
@@ -10,6 +9,7 @@ use crate::{
     },
     repository::ConversationRepository,
   },
+  entities::common::Category,
   entities::common::{ChatMessage, ChatMessageRole, Id},
   postgres::Postgres,
 };

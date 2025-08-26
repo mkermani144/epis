@@ -9,7 +9,6 @@ use std::sync::Arc;
 use anyhow::Result;
 
 use crate::{
-  categorizer::categorizer::Category,
   conversation::{
     models::{
       CreateConversationRequest, GetConversationMessageHistoryRequest, SetConversationTitleRequest,
@@ -17,6 +16,7 @@ use crate::{
     },
     repository::ConversationRepository,
   },
+  entities::common::Category,
   entities::common::{ChatMessage, ChatMessageRole, Id, Message},
   lingoo::models::LingooChatRequest,
   providers::llm::Llm,
