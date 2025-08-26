@@ -1,6 +1,3 @@
 pub mod adapters;
+pub mod models;
 pub mod repository;
-mod service;
-pub mod types;
-
-pub use service::*;

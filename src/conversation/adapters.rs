@@ -3,14 +3,17 @@ use sqlx::query;
 
 use crate::{
   categorizer::categorizer::Category,
-  conversation::{repository::ConversationRepository, types::ConversationTitle},
+  conversation::{
+    models::{CreateConversationRequest, SetConversationTitleRequest, StoreMessageRequest},
+    repository::ConversationRepository,
+  },
+  entities::common::{ChatMessageRole, Id},
   postgres::Postgres,
-  types::common::{ChatMessage, ChatMessageRole, Id},
 };
 
 impl ConversationRepository for Postgres {
-  async fn create_conversation(&self, category: &Category) -> Result<Id> {
-    let category_str = match category {
+  async fn create_conversation(&self, request: &CreateConversationRequest) -> Result<Id> {
+    let category_str = match request.category() {
       Category::Languages => "languages",
       Category::Invalid => "invalid",
     };
@@ -25,15 +28,11 @@ impl ConversationRepository for Postgres {
     Ok(conversation.id.into())
   }
 
-  async fn update_conversation_title(
-    &self,
-    conversation_id: &Id,
-    title: &ConversationTitle,
-  ) -> Result<()> {
+  async fn set_conversation_title(&self, request: &SetConversationTitleRequest) -> Result<()> {
     query!(
       "UPDATE conversation SET title = $1 WHERE id = $2",
-      title.as_ref(),
-      conversation_id.as_ref(),
+      request.title().as_ref(),
+      request.conversation_id().as_ref(),
     )
     .execute(self.pool())
     .await?;
@@ -41,8 +40,8 @@ impl ConversationRepository for Postgres {
     Ok(())
   }
 
-  async fn insert_message(&self, conversation_id: &Id, chat_message: &ChatMessage) -> Result<Id> {
-    let role = match chat_message.role {
+  async fn store_message(&self, request: &StoreMessageRequest) -> Result<Id> {
+    let role = match request.message().role {
       ChatMessageRole::User => "user",
       ChatMessageRole::Ai => "ai",
       ChatMessageRole::System => "system",
@@ -50,8 +49,8 @@ impl ConversationRepository for Postgres {
 
     let message = query!(
       "INSERT INTO message (conversation_id, content, role) VALUES ($1, $2, $3) RETURNING id",
-      conversation_id.as_ref(),
-      chat_message.message.as_ref(),
+      request.conversation_id().as_ref(),
+      request.message().message.as_ref(),
       role,
     )
     .fetch_one(self.pool())

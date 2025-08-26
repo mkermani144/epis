@@ -1,17 +1,21 @@
 use anyhow::Result;
 
 use crate::{
-  categorizer::categorizer::Category,
-  conversation::types::ConversationTitle,
-  types::common::{ChatMessage, Id},
+  conversation::models::{
+    CreateConversationRequest, SetConversationTitleRequest, StoreMessageRequest,
+  },
+  entities::common::Id,
 };
 
-pub trait ConversationRepository {
-  async fn create_conversation(&self, category: &Category) -> Result<Id>;
-  async fn update_conversation_title(
+pub trait ConversationRepository: Send + Sync + 'static {
+  fn create_conversation(
     &self,
-    conversation_id: &Id,
-    title: &ConversationTitle,
-  ) -> Result<()>;
-  async fn insert_message(&self, conversation_id: &Id, chat_message: &ChatMessage) -> Result<Id>;
+    request: &CreateConversationRequest,
+  ) -> impl Future<Output = Result<Id>> + Send;
+  fn set_conversation_title(
+    &self,
+    request: &SetConversationTitleRequest,
+  ) -> impl Future<Output = Result<()>> + Send;
+  fn store_message(&self, request: &StoreMessageRequest)
+  -> impl Future<Output = Result<Id>> + Send;
 }

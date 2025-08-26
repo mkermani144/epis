@@ -9,10 +9,11 @@ keywords = ["ai", "learning"]
 
 [dependencies]
 anyhow = "1.0.98"
+axum = { version = "0.8.4", features = ["macros"] }
 env_logger = "0.11.3"
 inquire = "0.7.5"
 log = "0.4.20"
-nutype = "0.6.2"
+nutype = { version = "0.6.2", features = ["serde"] }
 ollama-rs = "0.3.2"
 schemars = "1.0.4"
 serde = "1.0.219"
