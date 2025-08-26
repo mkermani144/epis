@@ -32,13 +32,8 @@ pub struct ChatMessage {
 }
 
 /// A unique identifier for anything
-#[nutype(derive(Debug, Clone, From, AsRef))]
+#[nutype(derive(Debug, Clone, From, AsRef, Display))]
 pub struct Id(Uuid);
-impl Id {
-  pub fn to_string(self) -> String {
-    self.into_inner().to_string()
-  }
-}
 
 impl TryFrom<String> for Id {
   type Error = anyhow::Error;

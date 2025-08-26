@@ -11,8 +11,7 @@ use anyhow::Result;
 use crate::{
   conversation::{
     models::{
-      CreateConversationRequest, GetConversationMessageHistoryRequest, SetConversationTitleRequest,
-      StoreMessageRequest,
+      CreateConversationRequest, GetConversationMessageHistoryRequest, StoreMessageRequest,
     },
     repository::ConversationRepository,
   },
