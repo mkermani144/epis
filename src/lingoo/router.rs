@@ -1,11 +1,11 @@
 use anyhow::Result;
 use axum::{
-  Router,
   extract::State,
   response::{IntoResponse, Json},
-  routing::post,
 };
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
+use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
   conversation::repository::ConversationRepository,
@@ -15,7 +15,9 @@ use crate::{
   providers::llm::Llm,
 };
 
-#[derive(Debug, Serialize)]
+const LINGOO_CATEGORY: &'static str = "Lingoo";
+
+#[derive(Debug, Serialize, ToSchema)]
 pub struct CreateLingooConversationResponseData {
   conversation_id: String,
 }
@@ -27,7 +29,7 @@ impl CreateLingooConversationResponseData {
   }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct LingooChatRequestBody {
   conversation_id: String,
   message: String,
@@ -41,7 +43,7 @@ impl LingooChatRequestBody {
   }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct LingooChatResponseData {
   response: String,
 }
@@ -53,33 +55,36 @@ impl LingooChatResponseData {
   }
 }
 
-#[derive(Debug)]
-pub struct LingooRouter<L: Llm, R: ConversationRepository>(Router<AppState<L, R>>);
+pub struct LingooRouter<L: Llm, R: ConversationRepository>(OpenApiRouter<AppState<L, R>>);
 
 impl<L: Llm, R: ConversationRepository> LingooRouter<L, R> {
   pub fn new() -> Self {
-    let router = Router::new()
-      .route("/create", post(Self::create_conversation))
-      .route("/chat", post(Self::chat));
+    let router = OpenApiRouter::new()
+      .routes(routes!(create_conversation))
+      .routes(routes!(chat));
 
     Self(router)
   }
 
-  pub fn into_inner(self) -> axum::Router<AppState<L, R>> {
+  pub fn into_inner(self) -> OpenApiRouter<AppState<L, R>> {
     self.0
   }
+}
 
-  async fn create_conversation(State(app_state): State<AppState<L, R>>) -> impl IntoResponse {
-    let conversation_id = app_state.lingoo.create_conversation().await.unwrap();
-    Json(CreateLingooConversationResponseData::new(conversation_id))
-  }
+#[utoipa::path(post, path = "/create", tags = [LINGOO_CATEGORY], responses((status = 200, body = CreateLingooConversationResponseData)))]
+async fn create_conversation<L: Llm, R: ConversationRepository>(
+  State(app_state): State<AppState<L, R>>,
+) -> impl IntoResponse {
+  let conversation_id = app_state.lingoo.create_conversation().await.unwrap();
+  Json(CreateLingooConversationResponseData::new(conversation_id))
+}
 
-  async fn chat(
-    State(app_state): State<AppState<L, R>>,
-    Json(request): Json<LingooChatRequestBody>,
-  ) -> impl IntoResponse {
-    let lingoo_chat_request = request.try_into_domain().unwrap();
-    let message = app_state.lingoo.chat(&lingoo_chat_request).await.unwrap();
-    Json(LingooChatResponseData::new(message))
-  }
+#[utoipa::path(post, path = "/chat", tags = [LINGOO_CATEGORY], request_body = LingooChatRequestBody, responses((status = 200, body = LingooChatResponseData)))]
+async fn chat<L: Llm, R: ConversationRepository>(
+  State(app_state): State<AppState<L, R>>,
+  Json(request): Json<LingooChatRequestBody>,
+) -> impl IntoResponse {
+  let lingoo_chat_request = request.try_into_domain().unwrap();
+  let message = app_state.lingoo.chat(&lingoo_chat_request).await.unwrap();
+  Json(LingooChatResponseData::new(message))
 }

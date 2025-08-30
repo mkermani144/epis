@@ -3,6 +3,9 @@ use axum::Router;
 use log::info;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::net::TcpListener;
+use utoipa::OpenApi;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_scalar::{Scalar, Servable};
 
 use crate::{
   conversation::{repository::ConversationRepository, router::ConversationRouter},
@@ -22,16 +25,22 @@ pub struct AppState<T: Llm, R: ConversationRepository> {
   pub conversation_repository: Arc<R>,
 }
 
+#[derive(OpenApi)]
+struct ApiDoc;
+
 impl HttpServer {
   /// Creates a new HTTP server
   pub fn try_new<T: Llm, R: ConversationRepository>(
     addr: SocketAddr,
     app_state: AppState<T, R>,
   ) -> Result<Self> {
-    let router = Router::new()
+    let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
       .nest("/conversation", ConversationRouter::new().into_inner())
       .nest("/lingoo", LingooRouter::new().into_inner())
-      .with_state(app_state);
+      .with_state(app_state)
+      .split_for_parts();
+
+    let router = router.merge(Scalar::with_url("/scalar", api));
     info!("HTTP server initialized successfully");
 
     Ok(Self { router, addr })
