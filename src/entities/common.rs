@@ -2,6 +2,8 @@
 //!
 //! This module defines shared data structures for chat messages and conversation handling.
 
+use std::fmt::Display;
+
 use nutype::nutype;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -32,6 +34,7 @@ pub struct ChatMessage {
 }
 
 /// A unique identifier for anything
+/// TODO: Id should not rely on third party crates
 #[nutype(derive(Debug, Clone, From, AsRef, Display))]
 pub struct Id(Uuid);
 
@@ -52,4 +55,12 @@ pub struct AnyText(String);
 pub enum Category {
   Languages,
   Invalid,
+}
+impl Display for Category {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Category::Languages => write!(f, "languages"),
+      Category::Invalid => write!(f, "invalid"),
+    }
+  }
 }

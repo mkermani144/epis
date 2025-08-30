@@ -4,13 +4,13 @@ use sqlx::query;
 use crate::{
   conversation::{
     models::{
-      CreateConversationRequest, GetConversationMessageHistoryRequest, SetConversationTitleRequest,
-      StoreMessageRequest,
+      Conversation, ConversationTitle, CreateConversationRequest,
+      GetConversationMessageHistoryRequest, SetConversationTitleRequest, StoreMessageRequest,
+      Timestamp,
     },
     repository::ConversationRepository,
   },
-  entities::common::Category,
-  entities::common::{ChatMessage, ChatMessageRole, Id},
+  entities::common::{Category, ChatMessage, ChatMessageRole, Id},
   postgres::Postgres,
 };
 
@@ -29,6 +29,34 @@ impl ConversationRepository for Postgres {
     .await?;
 
     Ok(conversation.id.into())
+  }
+
+  async fn list_conversations(&self) -> Result<Vec<Conversation>> {
+    let all_conversations = query!("SELECT * FROM conversation")
+      .fetch_all(self.pool())
+      .await?;
+
+    Ok(
+      all_conversations
+        .iter()
+        .map(|conversation| {
+          let id = Id::new(conversation.id);
+          let title = conversation
+            .title
+            .as_ref()
+            // TODO: Do not unwrap
+            .map(|t| ConversationTitle::try_new(t).unwrap());
+          let category = match conversation.category.as_str() {
+            "languages" => Category::Languages,
+            _ => Category::Invalid,
+          };
+          let created_at = Timestamp::new(conversation.created_at.unix_timestamp() as u64);
+          let updated_at = Timestamp::new(conversation.updated_at.unix_timestamp() as u64);
+          
+          Conversation::new(id, title, category, created_at, updated_at)
+        })
+        .collect(),
+    )
   }
 
   async fn set_conversation_title(&self, request: &SetConversationTitleRequest) -> Result<()> {
