@@ -1,12 +1,11 @@
-use anyhow::Result;
 use sqlx::query;
 
 use crate::{
   conversation::{
     models::{
       Conversation, ConversationTitle, CreateConversationRequest,
-      GetConversationMessageHistoryRequest, SetConversationTitleRequest, StoreMessageRequest,
-      Timestamp,
+      GetConversationMessageHistoryRequest, SetConversationTitleError, SetConversationTitleRequest,
+      StoreMessageRequest, Timestamp,
     },
     repository::ConversationRepository,
   },
@@ -15,7 +14,7 @@ use crate::{
 };
 
 impl ConversationRepository for Postgres {
-  async fn create_conversation(&self, request: &CreateConversationRequest) -> Result<Id> {
+  async fn create_conversation(&self, request: &CreateConversationRequest) -> anyhow::Result<Id> {
     let category_str = match request.category() {
       Category::Languages => "languages",
       Category::Invalid => "invalid",
@@ -31,7 +30,7 @@ impl ConversationRepository for Postgres {
     Ok(conversation.id.into())
   }
 
-  async fn list_conversations(&self) -> Result<Vec<Conversation>> {
+  async fn list_conversations(&self) -> anyhow::Result<Vec<Conversation>> {
     let all_conversations = query!("SELECT * FROM conversation")
       .fetch_all(self.pool())
       .await?;
@@ -52,26 +51,33 @@ impl ConversationRepository for Postgres {
           };
           let created_at = Timestamp::new(conversation.created_at.unix_timestamp() as u64);
           let updated_at = Timestamp::new(conversation.updated_at.unix_timestamp() as u64);
-          
+
           Conversation::new(id, title, category, created_at, updated_at)
         })
         .collect(),
     )
   }
 
-  async fn set_conversation_title(&self, request: &SetConversationTitleRequest) -> Result<()> {
+  async fn set_conversation_title(
+    &self,
+    request: &SetConversationTitleRequest,
+  ) -> Result<(), SetConversationTitleError> {
     query!(
-      "UPDATE conversation SET title = $1 WHERE id = $2",
+      "UPDATE conversation SET title = $1 WHERE id = $2 RETURNING id",
       request.title().as_ref(),
       request.conversation_id().as_ref(),
     )
-    .execute(self.pool())
-    .await?;
+    .fetch_one(self.pool())
+    .await
+    .map_err(|e| match e {
+      sqlx::Error::RowNotFound => SetConversationTitleError::NotFoundConversation,
+      _ => SetConversationTitleError::Unknown,
+    })?;
 
     Ok(())
   }
 
-  async fn store_message(&self, request: &StoreMessageRequest) -> Result<Id> {
+  async fn store_message(&self, request: &StoreMessageRequest) -> anyhow::Result<Id> {
     let role = match request.message().role {
       ChatMessageRole::User => "user",
       ChatMessageRole::Ai => "ai",
@@ -93,7 +99,7 @@ impl ConversationRepository for Postgres {
   async fn get_conversation_message_history(
     &self,
     request: &GetConversationMessageHistoryRequest,
-  ) -> Result<Vec<ChatMessage>> {
+  ) -> anyhow::Result<Vec<ChatMessage>> {
     let messages = query!(
       "SELECT id, content, role FROM message WHERE conversation_id = $1",
       request.conversation_id().as_ref(),

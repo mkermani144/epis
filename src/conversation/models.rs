@@ -1,4 +1,5 @@
 use nutype::nutype;
+use thiserror::Error;
 
 use crate::{
   entities::common::Category,
@@ -40,6 +41,13 @@ impl SetConversationTitleRequest {
   pub fn title(&self) -> &ConversationTitle {
     &self.title
   }
+}
+#[derive(Error, Debug)]
+pub enum SetConversationTitleError {
+  #[error("conversation not found")]
+  NotFoundConversation,
+  #[error("unknown error in setting conversation title")]
+  Unknown,
 }
 
 pub struct StoreMessageRequest {
