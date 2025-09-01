@@ -150,3 +150,9 @@ impl Conversation {
     &self.updated_at
   }
 }
+
+#[derive(Error, Debug)]
+pub enum ListConversationsError {
+  #[error("unknown error while getting conversations list")]
+  Unknown,
+}

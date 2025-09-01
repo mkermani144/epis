@@ -5,8 +5,8 @@ use crate::{
     models::{
       Conversation, ConversationTitle, CreateConversationError, CreateConversationRequest,
       GetConversationMessageHistoryError, GetConversationMessageHistoryRequest,
-      SetConversationTitleError, SetConversationTitleRequest, StoreMessageError,
-      StoreMessageRequest, Timestamp,
+      ListConversationsError, SetConversationTitleError, SetConversationTitleRequest,
+      StoreMessageError, StoreMessageRequest, Timestamp,
     },
     repository::ConversationRepository,
   },
@@ -35,10 +35,11 @@ impl ConversationRepository for Postgres {
     Ok(conversation.id.into())
   }
 
-  async fn list_conversations(&self) -> anyhow::Result<Vec<Conversation>> {
+  async fn list_conversations(&self) -> Result<Vec<Conversation>, ListConversationsError> {
     let all_conversations = query!("SELECT * FROM conversation")
       .fetch_all(self.pool())
-      .await?;
+      .await
+      .map_err(|_| ListConversationsError::Unknown)?;
 
     Ok(
       all_conversations
@@ -48,8 +49,10 @@ impl ConversationRepository for Postgres {
           let title = conversation
             .title
             .as_ref()
-            // TODO: Do not unwrap
-            .map(|t| ConversationTitle::try_new(t).unwrap());
+            // TODO: Do not unwrap. Or maybe should we?
+            .map(|t| {
+              ConversationTitle::try_new(t).expect("Stored conversation titles are never empty")
+            });
           let category = match conversation.category.as_str() {
             "languages" => Category::Languages,
             _ => Category::Invalid,
