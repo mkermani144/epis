@@ -8,9 +8,10 @@ use nutype::nutype;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
+use thiserror::Error;
 
 /// A wrapper for message content
-#[nutype(derive(Debug, Clone, From, AsRef))]
+#[nutype(derive(Debug, Clone, TryFrom, AsRef), validate(not_empty))]
 pub struct Message(String);
 
 /// Represents the role of a participant in a chat conversation
@@ -37,12 +38,16 @@ pub struct ChatMessage {
 /// TODO: Id should not rely on third party crates
 #[nutype(derive(Debug, Clone, From, AsRef, Display))]
 pub struct Id(Uuid);
-
+#[derive(Error, Debug)]
+#[error("Id not valid")]
+pub struct InvalidIdError;
 impl TryFrom<String> for Id {
-  type Error = anyhow::Error;
+  type Error = InvalidIdError;
 
   fn try_from(value: String) -> Result<Self, Self::Error> {
-    Ok(Self::new(Uuid::parse_str(&value)?))
+    Ok(Self::new(
+      Uuid::parse_str(&value).map_err(|_| InvalidIdError)?,
+    ))
   }
 }
 

@@ -1,4 +1,9 @@
-use crate::entities::common::{Id, Message};
+use thiserror::Error;
+
+use crate::{
+  conversation::models::{GetConversationMessageHistoryError, StoreMessageError},
+  entities::common::{Id, Message},
+};
 
 pub struct LingooChatRequest {
   conversation_id: Id,
@@ -19,4 +24,15 @@ impl LingooChatRequest {
   pub fn message(&self) -> &Message {
     &self.message
   }
+}
+#[derive(Error, Debug)]
+pub enum LingooChatError {
+  #[error("Error while getting conversation message history")]
+  GetConversationMessageHistory(#[from] GetConversationMessageHistoryError),
+  #[error("Error getting a response from LLM")]
+  Llm,
+  #[error("Error while storing messages")]
+  StoreMessage(#[from] StoreMessageError),
+  #[error("unknown error during chat")]
+  Unknown,
 }

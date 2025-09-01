@@ -87,7 +87,7 @@ impl Llm for Ollama {
       .send_chat_messages(chat_message_request)
       .await?;
 
-    Ok(chat_message_response.message.content.into())
+    Ok(chat_message_response.message.content.try_into()?)
   }
 
   /// Generates embeddings for a given text

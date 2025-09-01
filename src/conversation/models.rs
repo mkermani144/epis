@@ -23,7 +23,7 @@ impl CreateConversationRequest {
 }
 #[derive(Error, Debug)]
 pub enum CreateConversationError {
-  #[error("unknown error during conversation creation")]
+  #[error("unknown error while creating conversation")]
   Unknown,
 }
 
@@ -51,7 +51,7 @@ impl SetConversationTitleRequest {
 pub enum SetConversationTitleError {
   #[error("conversation not found")]
   NotFoundConversation,
-  #[error("unknown error in setting conversation title")]
+  #[error("unknown error while setting conversation title")]
   Unknown,
 }
 
@@ -75,6 +75,13 @@ impl StoreMessageRequest {
     &self.message
   }
 }
+#[derive(Error, Debug)]
+pub enum StoreMessageError {
+  #[error("conversation not found")]
+  NotFoundConversation,
+  #[error("unknown error while storing message")]
+  Unknown,
+}
 
 pub struct GetConversationMessageHistoryRequest {
   conversation_id: Id,
@@ -87,6 +94,13 @@ impl GetConversationMessageHistoryRequest {
   pub fn conversation_id(&self) -> &Id {
     &self.conversation_id
   }
+}
+#[derive(Error, Debug)]
+pub enum GetConversationMessageHistoryError {
+  #[error("conversation not found")]
+  NotFoundConversation,
+  #[error("unknown error while getting conversation message history")]
+  Unknown,
 }
 
 #[nutype(derive(AsRef))]

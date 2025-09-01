@@ -1,10 +1,11 @@
-use sqlx::query;
+use sqlx::{Error::RowNotFound, query};
 
 use crate::{
   conversation::{
     models::{
       Conversation, ConversationTitle, CreateConversationError, CreateConversationRequest,
-      GetConversationMessageHistoryRequest, SetConversationTitleError, SetConversationTitleRequest,
+      GetConversationMessageHistoryError, GetConversationMessageHistoryRequest,
+      SetConversationTitleError, SetConversationTitleRequest, StoreMessageError,
       StoreMessageRequest, Timestamp,
     },
     repository::ConversationRepository,
@@ -74,14 +75,25 @@ impl ConversationRepository for Postgres {
     .fetch_one(self.pool())
     .await
     .map_err(|e| match e {
-      sqlx::Error::RowNotFound => SetConversationTitleError::NotFoundConversation,
+      RowNotFound => SetConversationTitleError::NotFoundConversation,
       _ => SetConversationTitleError::Unknown,
     })?;
 
     Ok(())
   }
 
-  async fn store_message(&self, request: &StoreMessageRequest) -> anyhow::Result<Id> {
+  async fn store_message(&self, request: &StoreMessageRequest) -> Result<Id, StoreMessageError> {
+    query!(
+      "SELECT * FROM conversation WHERE id = $1",
+      request.conversation_id().as_ref()
+    )
+    .fetch_one(self.pool())
+    .await
+    .map_err(|e| match e {
+      RowNotFound => StoreMessageError::NotFoundConversation,
+      _ => StoreMessageError::Unknown,
+    });
+
     let role = match request.message().role {
       ChatMessageRole::User => "user",
       ChatMessageRole::Ai => "ai",
@@ -95,7 +107,10 @@ impl ConversationRepository for Postgres {
       role,
     )
     .fetch_one(self.pool())
-    .await?;
+    .await
+    .map_err(|e| match e {
+      _ => StoreMessageError::Unknown,
+    })?;
 
     Ok(message.id.into())
   }
@@ -103,13 +118,25 @@ impl ConversationRepository for Postgres {
   async fn get_conversation_message_history(
     &self,
     request: &GetConversationMessageHistoryRequest,
-  ) -> anyhow::Result<Vec<ChatMessage>> {
+  ) -> Result<Vec<ChatMessage>, GetConversationMessageHistoryError> {
+    query!(
+      "SELECT * FROM conversation WHERE id = $1",
+      request.conversation_id().as_ref()
+    )
+    .fetch_one(self.pool())
+    .await
+    .map_err(|e| match e {
+      RowNotFound => GetConversationMessageHistoryError::NotFoundConversation,
+      _ => GetConversationMessageHistoryError::Unknown,
+    });
+
     let messages = query!(
       "SELECT id, content, role FROM message WHERE conversation_id = $1",
       request.conversation_id().as_ref(),
     )
     .fetch_all(self.pool())
-    .await?;
+    .await
+    .map_err(|e| GetConversationMessageHistoryError::Unknown)?;
 
     let message_history = messages
       .into_iter()
@@ -123,7 +150,7 @@ impl ConversationRepository for Postgres {
 
         Some(ChatMessage {
           role: role.take()?,
-          message: message.content.into(),
+          message: message.content.try_into().ok()?,
         })
       })
       .collect();

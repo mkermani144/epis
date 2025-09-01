@@ -9,12 +9,13 @@ use std::sync::Arc;
 use crate::{
   conversation::{
     models::{
-      CreateConversationError, CreateConversationRequest, GetConversationMessageHistoryRequest, StoreMessageRequest
+      CreateConversationError, CreateConversationRequest, GetConversationMessageHistoryRequest,
+      StoreMessageRequest,
     },
     repository::ConversationRepository,
   },
   entities::common::{Category, ChatMessage, ChatMessageRole, Id, Message},
-  lingoo::models::LingooChatRequest,
+  lingoo::models::{LingooChatError, LingooChatRequest},
   providers::llm::Llm,
 };
 
@@ -59,7 +60,10 @@ impl<T: Llm, R: ConversationRepository> Lingoo<T, R> {
     Ok(conversation_id)
   }
 
-  pub async fn chat(&self, lingoo_chat_request: &LingooChatRequest) -> anyhow::Result<Message> {
+  pub async fn chat(
+    &self,
+    lingoo_chat_request: &LingooChatRequest,
+  ) -> Result<Message, LingooChatError> {
     let conversation_history = self
       .conversation_repository
       .get_conversation_message_history(&GetConversationMessageHistoryRequest::new(
@@ -73,7 +77,8 @@ impl<T: Llm, R: ConversationRepository> Lingoo<T, R> {
         LINGOO_SYSTEM_PROMPT,
         &conversation_history,
       )
-      .await?;
+      .await
+      .map_err(|_| LingooChatError::Llm)?;
     // TODO: This copy is ugly and can be prevented, but requires further model changes
     let reply_copy = reply.clone();
 

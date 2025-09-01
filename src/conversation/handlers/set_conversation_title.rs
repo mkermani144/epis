@@ -10,7 +10,7 @@ use crate::{
     repository::ConversationRepository,
     router::CONVERSATION_CATEGORY,
   },
-  entities::common::Id,
+  entities::common::InvalidIdError,
   http::server::AppState,
   providers::llm::Llm,
 };
@@ -18,7 +18,7 @@ use crate::{
 #[derive(Error, Debug)]
 pub enum SetConversationTitleApiError {
   #[error("conversation id is not valid")]
-  InvalidConversationId,
+  InvalidConversationId(#[from] InvalidIdError),
   #[error("conversation not found")]
   NotFoundConversation,
   #[error("conversation title cannot be empty")]
@@ -30,7 +30,7 @@ pub enum SetConversationTitleApiError {
 impl IntoResponse for SetConversationTitleApiError {
   fn into_response(self) -> axum::response::Response {
     match self {
-      SetConversationTitleApiError::InvalidConversationId
+      SetConversationTitleApiError::InvalidConversationId(_)
       | SetConversationTitleApiError::EmptyTitle => {
         (StatusCode::BAD_REQUEST, Json(self.to_string())).into_response()
       }
@@ -53,11 +53,8 @@ impl SetConversationTitleRequestBody {
   pub fn try_into_domain_request(
     self,
   ) -> Result<SetConversationTitleRequest, SetConversationTitleApiError> {
-    let conversation_id = Uuid::parse_str(&self.conversation_id)
-      .map_err(|_| SetConversationTitleApiError::InvalidConversationId)?;
-
     Ok(SetConversationTitleRequest::new(
-      Id::new(conversation_id),
+      self.conversation_id.try_into()?,
       ConversationTitle::try_new(self.title)
         .map_err(|_| SetConversationTitleApiError::EmptyTitle)?,
     ))
