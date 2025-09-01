@@ -95,7 +95,7 @@ impl ConversationRepository for Postgres {
     .map_err(|e| match e {
       RowNotFound => StoreMessageError::NotFoundConversation,
       _ => StoreMessageError::Unknown,
-    });
+    })?;
 
     let role = match request.message().role {
       ChatMessageRole::User => "user",
@@ -131,7 +131,7 @@ impl ConversationRepository for Postgres {
     .map_err(|e| match e {
       RowNotFound => GetConversationMessageHistoryError::NotFoundConversation,
       _ => GetConversationMessageHistoryError::Unknown,
-    });
+    })?;
 
     let messages = query!(
       "SELECT id, content, role FROM message WHERE conversation_id = $1",
