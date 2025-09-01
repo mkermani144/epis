@@ -1,6 +1,6 @@
 use crate::{
   conversation::models::{
-    Conversation, CreateConversationRequest,
+    Conversation, CreateConversationError, CreateConversationRequest,
     GetConversationMessageHistoryRequest, SetConversationTitleError, SetConversationTitleRequest,
     StoreMessageRequest,
   },
@@ -11,7 +11,7 @@ pub trait ConversationRepository: Clone + Send + Sync + 'static {
   fn create_conversation(
     &self,
     request: &CreateConversationRequest,
-  ) -> impl Future<Output = anyhow::Result<Id>> + Send;
+  ) -> impl Future<Output = Result<Id, CreateConversationError>> + Send;
   fn list_conversations(&self) -> impl Future<Output = anyhow::Result<Vec<Conversation>>> + Send;
   fn set_conversation_title(
     &self,

@@ -93,8 +93,9 @@ impl<L: Llm, R: ConversationRepository> ConversationRouter<L, R> {
     (status = NO_CONTENT, body = (), content_type = "application/json"),
     (status = BAD_REQUEST, body = String, content_type = "application/json"),
     (status = NOT_FOUND, body = String, content_type = "application/json"),
-    (status = INTERNAL_SERVER_ERROR, body = String, content_type = "application/json")))
-]
+    (status = INTERNAL_SERVER_ERROR, body = String, content_type = "application/json")
+  )
+)]
 pub async fn set_conversation_title<L: Llm, R: ConversationRepository>(
   State(app_state): State<AppState<L, R>>,
   Json(request): Json<SetConversationTitleRequestBody>,

@@ -3,7 +3,7 @@ use sqlx::query;
 use crate::{
   conversation::{
     models::{
-      Conversation, ConversationTitle, CreateConversationRequest,
+      Conversation, ConversationTitle, CreateConversationError, CreateConversationRequest,
       GetConversationMessageHistoryRequest, SetConversationTitleError, SetConversationTitleRequest,
       StoreMessageRequest, Timestamp,
     },
@@ -14,7 +14,10 @@ use crate::{
 };
 
 impl ConversationRepository for Postgres {
-  async fn create_conversation(&self, request: &CreateConversationRequest) -> anyhow::Result<Id> {
+  async fn create_conversation(
+    &self,
+    request: &CreateConversationRequest,
+  ) -> Result<Id, CreateConversationError> {
     let category_str = match request.category() {
       Category::Languages => "languages",
       Category::Invalid => "invalid",
@@ -25,7 +28,8 @@ impl ConversationRepository for Postgres {
       category_str
     )
     .fetch_one(self.pool())
-    .await?;
+    .await
+    .map_err(|_| CreateConversationError::Unknown)?;
 
     Ok(conversation.id.into())
   }

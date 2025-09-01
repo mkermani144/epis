@@ -1,14 +1,19 @@
 use anyhow::Result;
 use axum::{
   extract::State,
+  http::StatusCode,
   response::{IntoResponse, Json},
 };
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-  conversation::{models::Conversation, repository::ConversationRepository},
+  conversation::{
+    models::{Conversation, CreateConversationError},
+    repository::ConversationRepository,
+  },
   entities::common::{Id, Message},
   http::server::AppState,
   lingoo::models::LingooChatRequest,
@@ -16,6 +21,21 @@ use crate::{
 };
 
 const LINGOO_CATEGORY: &'static str = "Lingoo";
+
+#[derive(Error, Debug)]
+pub enum CreateConversationApiError {
+  #[error("unknown error while creating conversation")]
+  Unknown,
+}
+impl IntoResponse for CreateConversationApiError {
+  fn into_response(self) -> axum::response::Response {
+    match self {
+      CreateConversationApiError::Unknown => {
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(self.to_string())).into_response()
+      }
+    }
+  }
+}
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct CreateLingooConversationResponseData {
@@ -119,12 +139,28 @@ impl<L: Llm, R: ConversationRepository> LingooRouter<L, R> {
   }
 }
 
-#[utoipa::path(post, path = "/conversation/create", tags = [LINGOO_CATEGORY], responses((status = 200, body = CreateLingooConversationResponseData)))]
+#[utoipa::path(
+  post,
+  path = "/conversation/create",
+  tag = LINGOO_CATEGORY,
+  responses(
+    (status = CREATED, body = CreateLingooConversationResponseData, content_type = "application/json"),
+    (status = INTERNAL_SERVER_ERROR, body = String, content_type = "application/json"),
+  )
+)]
 async fn create_conversation<L: Llm, R: ConversationRepository>(
   State(app_state): State<AppState<L, R>>,
-) -> impl IntoResponse {
-  let conversation_id = app_state.lingoo.create_conversation().await.unwrap();
-  Json(CreateLingooConversationResponseData::new(conversation_id))
+) -> Result<Json<CreateLingooConversationResponseData>, CreateConversationApiError> {
+  let conversation_id = app_state
+    .lingoo
+    .create_conversation()
+    .await
+    .map_err(|e| match e {
+      CreateConversationError::Unknown => CreateConversationApiError::Unknown,
+    })?;
+  Ok(Json(CreateLingooConversationResponseData::new(
+    conversation_id,
+  )))
 }
 
 #[utoipa::path(post, path = "/chat", tags = [LINGOO_CATEGORY], request_body = LingooChatRequestBody, responses((status = 200, body = LingooChatResponseData)))]

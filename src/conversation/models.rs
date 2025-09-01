@@ -21,6 +21,11 @@ impl CreateConversationRequest {
     &self.category
   }
 }
+#[derive(Error, Debug)]
+pub enum CreateConversationError {
+  #[error("unknown error during conversation creation")]
+  Unknown,
+}
 
 pub struct SetConversationTitleRequest {
   conversation_id: Id,

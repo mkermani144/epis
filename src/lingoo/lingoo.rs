@@ -6,17 +6,14 @@
 
 use std::sync::Arc;
 
-use anyhow::Result;
-
 use crate::{
   conversation::{
     models::{
-      CreateConversationRequest, GetConversationMessageHistoryRequest, StoreMessageRequest,
+      CreateConversationError, CreateConversationRequest, GetConversationMessageHistoryRequest, StoreMessageRequest
     },
     repository::ConversationRepository,
   },
-  entities::common::Category,
-  entities::common::{ChatMessage, ChatMessageRole, Id, Message},
+  entities::common::{Category, ChatMessage, ChatMessageRole, Id, Message},
   lingoo::models::LingooChatRequest,
   providers::llm::Llm,
 };
@@ -53,7 +50,7 @@ impl<T: Llm, R: ConversationRepository> Lingoo<T, R> {
   }
 
   /// Creates a new conversation and returns its ID
-  pub async fn create_conversation(&self) -> Result<Id> {
+  pub async fn create_conversation(&self) -> Result<Id, CreateConversationError> {
     let conversation_id = self
       .conversation_repository
       .create_conversation(&CreateConversationRequest::new(Category::Languages))
@@ -62,7 +59,7 @@ impl<T: Llm, R: ConversationRepository> Lingoo<T, R> {
     Ok(conversation_id)
   }
 
-  pub async fn chat(&self, lingoo_chat_request: &LingooChatRequest) -> Result<Message> {
+  pub async fn chat(&self, lingoo_chat_request: &LingooChatRequest) -> anyhow::Result<Message> {
     let conversation_history = self
       .conversation_repository
       .get_conversation_message_history(&GetConversationMessageHistoryRequest::new(
