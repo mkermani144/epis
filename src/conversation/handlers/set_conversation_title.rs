@@ -1,0 +1,95 @@
+use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
+use serde::Deserialize;
+use sqlx::types::Uuid;
+use thiserror::Error;
+use utoipa::ToSchema;
+
+use crate::{
+  conversation::{
+    models::{ConversationTitle, SetConversationTitleError, SetConversationTitleRequest},
+    repository::ConversationRepository,
+    router::CONVERSATION_CATEGORY,
+  },
+  entities::common::Id,
+  http::server::AppState,
+  providers::llm::Llm,
+};
+
+#[derive(Error, Debug)]
+pub enum SetConversationTitleApiError {
+  #[error("conversation id is not valid")]
+  InvalidConversationId,
+  #[error("conversation not found")]
+  NotFoundConversation,
+  #[error("conversation title cannot be empty")]
+  EmptyTitle,
+  #[error("unknown error while setting conversation title")]
+  Unknown,
+}
+
+impl IntoResponse for SetConversationTitleApiError {
+  fn into_response(self) -> axum::response::Response {
+    match self {
+      SetConversationTitleApiError::InvalidConversationId
+      | SetConversationTitleApiError::EmptyTitle => {
+        (StatusCode::BAD_REQUEST, Json(self.to_string())).into_response()
+      }
+      SetConversationTitleApiError::NotFoundConversation => {
+        (StatusCode::NOT_FOUND, Json(self.to_string())).into_response()
+      }
+      SetConversationTitleApiError::Unknown => {
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(self.to_string())).into_response()
+      }
+    }
+  }
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct SetConversationTitleRequestBody {
+  pub conversation_id: String,
+  pub title: String,
+}
+impl SetConversationTitleRequestBody {
+  pub fn try_into_domain_request(
+    self,
+  ) -> Result<SetConversationTitleRequest, SetConversationTitleApiError> {
+    let conversation_id = Uuid::parse_str(&self.conversation_id)
+      .map_err(|_| SetConversationTitleApiError::InvalidConversationId)?;
+
+    Ok(SetConversationTitleRequest::new(
+      Id::new(conversation_id),
+      ConversationTitle::try_new(self.title)
+        .map_err(|_| SetConversationTitleApiError::EmptyTitle)?,
+    ))
+  }
+}
+
+#[utoipa::path(
+  patch,
+  path = "/set-title",
+  tag = CONVERSATION_CATEGORY,
+  request_body = SetConversationTitleRequestBody,
+  responses(
+    (status = NO_CONTENT, body = (), content_type = "application/json"),
+    (status = BAD_REQUEST, body = String, content_type = "application/json"),
+    (status = NOT_FOUND, body = String, content_type = "application/json"),
+    (status = INTERNAL_SERVER_ERROR, body = String, content_type = "application/json")
+  )
+)]
+pub async fn set_conversation_title<L: Llm, R: ConversationRepository>(
+  State(app_state): State<AppState<L, R>>,
+  Json(request): Json<SetConversationTitleRequestBody>,
+) -> Result<Json<()>, SetConversationTitleApiError> {
+  let set_conversation_title_request = request.try_into_domain_request()?;
+  app_state
+    .conversation_repository
+    .set_conversation_title(&set_conversation_title_request)
+    .await
+    .map_err(|e| match e {
+      SetConversationTitleError::NotFoundConversation => {
+        SetConversationTitleApiError::NotFoundConversation
+      }
+      _ => SetConversationTitleApiError::Unknown,
+    })?;
+  Ok(Json(()))
+}
