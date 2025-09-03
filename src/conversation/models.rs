@@ -103,7 +103,7 @@ pub enum GetConversationMessageHistoryError {
   Unknown,
 }
 
-#[nutype(derive(AsRef))]
+#[nutype(derive(AsRef, From, Debug))]
 pub struct Timestamp(u64);
 
 pub struct Conversation {
