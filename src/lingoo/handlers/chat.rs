@@ -6,12 +6,13 @@ use utoipa::ToSchema;
 use crate::{
   conversation::{models::GetConversationMessageHistoryError, repository::ConversationRepository},
   entities::common::{Id, InvalidIdError, Message, MessageError},
-  http::server::AppState,
+  http::server::LingooAppState,
   lingoo::{
     models::{LingooChatError, LingooChatRequest},
     router::LINGOO_CATEGORY,
   },
   providers::llm::Llm,
+  rag::rag::Rag,
 };
 
 #[derive(Error, Debug)]
@@ -75,8 +76,8 @@ impl LingooChatResponseData {
     (status = INTERNAL_SERVER_ERROR, body = String, content_type = "application/json"),
   )
 )]
-pub async fn chat<L: Llm, R: ConversationRepository>(
-  State(app_state): State<AppState<L, R>>,
+pub async fn chat<L: Llm, CR: ConversationRepository, R: Rag>(
+  State(app_state): State<LingooAppState<L, CR, R>>,
   Json(request): Json<LingooChatRequestBody>,
 ) -> Result<Json<LingooChatResponseData>, LingooChatApiError> {
   let lingoo_chat_request = request.try_into_domain()?;

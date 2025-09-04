@@ -10,7 +10,7 @@ use utoipa_scalar::{Scalar, Servable};
 use crate::{
   conversation::{repository::ConversationRepository, router::ConversationRouter},
   lingoo::{lingoo::Lingoo, router::LingooRouter},
-  providers::llm::Llm,
+  providers::llm::Llm, rag::rag::Rag,
 };
 
 /// HTTP server manager using Axum
@@ -20,9 +20,23 @@ pub struct HttpServer {
 }
 
 #[derive(Clone)]
-pub struct AppState<T: Llm, R: ConversationRepository> {
-  pub lingoo: Arc<Lingoo<T, R>>,
-  pub conversation_repository: Arc<R>,
+pub struct AppState<L: Llm, CR: ConversationRepository, R: Rag> {
+  pub lingoo: Arc<Lingoo<L, CR, R>>,
+  pub conversation_repository: Arc<CR>,
+  pub rag: Arc<R>,
+}
+
+#[derive(Clone)]
+pub struct ConversationAppState<CR: ConversationRepository> {
+  pub conversation_repository: Arc<CR>,
+}
+
+#[derive(Clone)]
+pub struct LingooAppState<L: Llm, CR: ConversationRepository, R: Rag> {
+  pub lingoo: Arc<Lingoo<L, CR, R>>,
+  // FIXME: Remove this field when /lingoo/conversation/list API is fixed
+  pub conversation_repository: Arc<CR>,
+  pub rag: Arc<R>,
 }
 
 #[derive(OpenApi)]
@@ -30,14 +44,21 @@ struct ApiDoc;
 
 impl HttpServer {
   /// Creates a new HTTP server
-  pub fn try_new<T: Llm, R: ConversationRepository>(
+  pub fn try_new<L: Llm, CR: ConversationRepository, R: Rag>(
     addr: SocketAddr,
-    app_state: AppState<T, R>,
+    app_state: AppState<L, CR, R>,
   ) -> Result<Self> {
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
       .nest("/conversation", ConversationRouter::new().into_inner())
+      .with_state(ConversationAppState {
+        conversation_repository: app_state.conversation_repository.clone(),
+      })
       .nest("/lingoo", LingooRouter::new().into_inner())
-      .with_state(app_state)
+      .with_state(LingooAppState {
+        lingoo: app_state.lingoo.clone(),
+        conversation_repository: app_state.conversation_repository.clone(),
+        rag: app_state.rag.clone(),
+      })
       .split_for_parts();
 
     let router = router.merge(Scalar::with_url("/scalar", api));

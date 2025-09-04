@@ -9,9 +9,10 @@ use utoipa::ToSchema;
 
 use crate::{
   conversation::{models::Conversation, repository::ConversationRepository},
-  http::server::AppState,
+  http::server::LingooAppState,
   lingoo::router::LINGOO_CATEGORY,
   providers::llm::Llm,
+  rag::rag::Rag,
 };
 
 #[derive(Error, Debug)]
@@ -84,8 +85,8 @@ impl ListLingooConversationsResponseData {
     (status = INTERNAL_SERVER_ERROR, body = String, content_type = "application/json"),
   )
 )]
-pub async fn list_conversations<L: Llm, R: ConversationRepository>(
-  State(app_state): State<AppState<L, R>>,
+pub async fn list_conversations<L: Llm, CR: ConversationRepository, R: Rag>(
+  State(app_state): State<LingooAppState<L, CR, R>>,
 ) -> Result<Json<ListLingooConversationsResponseData>, ListConversationsApiError> {
   let lingoo_conversations = app_state
     .conversation_repository

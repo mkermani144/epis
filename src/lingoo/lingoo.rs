@@ -17,6 +17,7 @@ use crate::{
   entities::common::{Category, ChatMessage, ChatMessageRole, Id, Message},
   lingoo::models::{LingooChatError, LingooChatRequest},
   providers::llm::Llm,
+  rag::rag::Rag,
 };
 
 pub const LINGOO_SYSTEM_PROMPT: &str = "
@@ -36,17 +37,19 @@ You may utilize these tools to help the user:
 ";
 
 /// Language learning assistant powered by LLM
-pub struct Lingoo<T: Llm, R: ConversationRepository> {
-  llm: Arc<T>,
-  conversation_repository: Arc<R>,
+pub struct Lingoo<L: Llm, CR: ConversationRepository, R: Rag> {
+  llm: Arc<L>,
+  conversation_repository: Arc<CR>,
+  rag: Arc<R>,
 }
 
-impl<T: Llm, R: ConversationRepository> Lingoo<T, R> {
+impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
   /// Creates a new Lingoo language learning assistant
-  pub fn new(llm: Arc<T>, conversation_repository: Arc<R>) -> Self {
+  pub fn new(llm: Arc<L>, conversation_repository: Arc<CR>, rag: Arc<R>) -> Self {
     Self {
       llm,
       conversation_repository,
+      rag,
     }
   }
 

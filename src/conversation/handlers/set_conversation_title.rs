@@ -1,6 +1,5 @@
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 use serde::Deserialize;
-use sqlx::types::Uuid;
 use thiserror::Error;
 use utoipa::ToSchema;
 
@@ -11,8 +10,7 @@ use crate::{
     router::CONVERSATION_CATEGORY,
   },
   entities::common::InvalidIdError,
-  http::server::AppState,
-  providers::llm::Llm,
+  http::server::ConversationAppState,
 };
 
 #[derive(Error, Debug)]
@@ -73,8 +71,8 @@ impl SetConversationTitleRequestBody {
     (status = INTERNAL_SERVER_ERROR, body = String, content_type = "application/json")
   )
 )]
-pub async fn set_conversation_title<L: Llm, R: ConversationRepository>(
-  State(app_state): State<AppState<L, R>>,
+pub async fn set_conversation_title<CR: ConversationRepository>(
+  State(app_state): State<ConversationAppState<CR>>,
   Json(request): Json<SetConversationTitleRequestBody>,
 ) -> Result<Json<()>, SetConversationTitleApiError> {
   let set_conversation_title_request = request.try_into_domain_request()?;

@@ -6,9 +6,10 @@ use utoipa::ToSchema;
 use crate::{
   conversation::{models::CreateConversationError, repository::ConversationRepository},
   entities::common::Id,
-  http::server::AppState,
+  http::server::LingooAppState,
   lingoo::router::LINGOO_CATEGORY,
   providers::llm::Llm,
+  rag::rag::Rag,
 };
 
 #[derive(Error, Debug)]
@@ -47,8 +48,8 @@ impl CreateLingooConversationResponseData {
     (status = INTERNAL_SERVER_ERROR, body = String, content_type = "application/json"),
   )
 )]
-pub async fn create_conversation<L: Llm, R: ConversationRepository>(
-  State(app_state): State<AppState<L, R>>,
+pub async fn create_conversation<L: Llm, CR: ConversationRepository, R: Rag>(
+  State(app_state): State<LingooAppState<L, CR, R>>,
 ) -> Result<Json<CreateLingooConversationResponseData>, CreateConversationApiError> {
   let conversation_id = app_state
     .lingoo

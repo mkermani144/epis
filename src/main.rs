@@ -10,7 +10,7 @@ use std::{net::SocketAddr, sync::Arc};
 use crate::{
   config::{Config, Provider},
   http::server::{AppState, HttpServer},
-  lingoo::lingoo::Lingoo,
+  lingoo::{lingoo::Lingoo, rag::LingooRag},
   postgres::Postgres,
   providers::ollama::{ollama::Ollama, ollama_models::OllamaModels},
 };
@@ -22,6 +22,7 @@ mod http;
 mod lingoo;
 mod postgres;
 mod providers;
+mod rag;
 
 const KNOWLEDGE_TYPES: [&str; 1] = ["languages"];
 
@@ -45,13 +46,15 @@ async fn main() -> Result<()> {
     Provider::Ollama => Arc::new(Ollama::new(models, config.ollama_url)?),
   };
   let postgres = Arc::new(Postgres::try_new(&config.database_url).await?);
-  let lingoo = Lingoo::new(llm, postgres.clone());
+  let lingoo_rag = Arc::new(LingooRag::new(llm.clone(), postgres.clone()));
+  let lingoo = Lingoo::new(llm.clone(), postgres.clone(), lingoo_rag.clone());
 
   HttpServer::try_new(
     SocketAddr::from(([0, 0, 0, 0], config.listen_port)),
     AppState {
       lingoo: Arc::new(lingoo),
       conversation_repository: postgres.clone(),
+      rag: lingoo_rag.clone(),
     },
   )?
   .start()

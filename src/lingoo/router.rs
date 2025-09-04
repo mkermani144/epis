@@ -2,17 +2,22 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
   conversation::repository::ConversationRepository,
-  http::server::AppState,
-  lingoo::handlers::chat::{__path_chat, chat},
-  lingoo::handlers::create_conversation::{__path_create_conversation, create_conversation},
-  lingoo::handlers::list_conversations::{__path_list_conversations, list_conversations},
+  http::server::LingooAppState,
+  lingoo::handlers::{
+    chat::{__path_chat, chat},
+    create_conversation::{__path_create_conversation, create_conversation},
+    list_conversations::{__path_list_conversations, list_conversations},
+  },
   providers::llm::Llm,
+  rag::rag::Rag,
 };
 
 pub const LINGOO_CATEGORY: &'static str = "Lingoo";
 
-pub struct LingooRouter<L: Llm, R: ConversationRepository>(OpenApiRouter<AppState<L, R>>);
-impl<L: Llm, R: ConversationRepository> LingooRouter<L, R> {
+pub struct LingooRouter<L: Llm, CR: ConversationRepository, R: Rag>(
+  OpenApiRouter<LingooAppState<L, CR, R>>,
+);
+impl<L: Llm, CR: ConversationRepository, R: Rag> LingooRouter<L, CR, R> {
   pub fn new() -> Self {
     let router = OpenApiRouter::new()
       .routes(routes!(create_conversation))
@@ -22,7 +27,7 @@ impl<L: Llm, R: ConversationRepository> LingooRouter<L, R> {
     Self(router)
   }
 
-  pub fn into_inner(self) -> OpenApiRouter<AppState<L, R>> {
+  pub fn into_inner(self) -> OpenApiRouter<LingooAppState<L, CR, R>> {
     self.0
   }
 }
