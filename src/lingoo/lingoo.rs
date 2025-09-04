@@ -15,7 +15,7 @@ use crate::{
     repository::ConversationRepository,
   },
   entities::common::{Category, ChatMessage, ChatMessageRole, Id, Message},
-  lingoo::models::{LingooChatError, LingooChatRequest},
+  lingoo::models::{LingooChatError, LingooChatRagError, LingooChatRequest},
   providers::llm::Llm,
   rag::rag::Rag,
 };
@@ -67,12 +67,22 @@ impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
     &self,
     lingoo_chat_request: &LingooChatRequest,
   ) -> Result<Message, LingooChatError> {
-    let conversation_history = self
+    let mut conversation_history = self
       .conversation_repository
       .get_conversation_message_history(&GetConversationMessageHistoryRequest::new(
         lingoo_chat_request.conversation_id().clone(),
       ))
       .await?;
+
+    if let Some(similarity_vec) = self
+      .rag
+      .retrieve_similarities(&lingoo_chat_request.message().as_ref().to_string().into())
+      .await
+      .map_err(|_| LingooChatError::Rag(LingooChatRagError::Retrieve))?
+    {
+      conversation_history.push(similarity_vec.into());
+    }
+
     let reply = self
       .llm
       .ask_with_history(
@@ -84,6 +94,12 @@ impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
       .map_err(|_| LingooChatError::Llm)?;
     // TODO: This copy is ugly and can be prevented, but requires further model changes
     let reply_copy = reply.clone();
+
+    self
+      .rag
+      .index_similarity(&reply.clone().into_inner().into())
+      .await
+      .map_err(|_| LingooChatError::Rag(LingooChatRagError::Index))?;
 
     let message = lingoo_chat_request.message();
     let user_chat_message = ChatMessage {
