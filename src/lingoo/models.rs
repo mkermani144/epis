@@ -46,8 +46,6 @@ pub enum LingooChatError {
   Llm,
   #[error("error while storing messages")]
   StoreMessage(#[from] StoreMessageError),
-  #[error("unknown error during chat")]
-  Unknown,
 }
 
 #[derive(Debug)]

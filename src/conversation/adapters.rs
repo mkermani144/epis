@@ -139,7 +139,7 @@ impl ConversationRepository for Postgres {
     )
     .fetch_all(self.pool())
     .await
-    .map_err(|e| GetConversationMessageHistoryError::Unknown)?;
+    .map_err(|_| GetConversationMessageHistoryError::Unknown)?;
 
     let message_history = messages
       .into_iter()

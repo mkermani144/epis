@@ -23,7 +23,6 @@ pub struct HttpServer {
 pub struct AppState<L: Llm, CR: ConversationRepository, R: Rag> {
   pub lingoo: Arc<Lingoo<L, CR, R>>,
   pub conversation_repository: Arc<CR>,
-  pub rag: Arc<R>,
 }
 
 #[derive(Clone)]
@@ -36,7 +35,6 @@ pub struct LingooAppState<L: Llm, CR: ConversationRepository, R: Rag> {
   pub lingoo: Arc<Lingoo<L, CR, R>>,
   // FIXME: Remove this field when /lingoo/conversation/list API is fixed
   pub conversation_repository: Arc<CR>,
-  pub rag: Arc<R>,
 }
 
 #[derive(OpenApi)]
@@ -57,7 +55,6 @@ impl HttpServer {
       .with_state(LingooAppState {
         lingoo: app_state.lingoo.clone(),
         conversation_repository: app_state.conversation_repository.clone(),
-        rag: app_state.rag.clone(),
       })
       .split_for_parts();
 

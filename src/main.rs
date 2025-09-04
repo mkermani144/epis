@@ -54,7 +54,6 @@ async fn main() -> Result<()> {
     AppState {
       lingoo: Arc::new(lingoo),
       conversation_repository: postgres.clone(),
-      rag: lingoo_rag.clone(),
     },
   )?
   .start()
