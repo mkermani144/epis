@@ -9,7 +9,7 @@ use std::sync::Arc;
 use crate::{
   conversation::{
     models::{
-      CreateConversationError, GetConversationMessageHistoryRequest,
+      CreateConversationError,
       StoreMessageRequest,
     },
     repository::ConversationRepository,
@@ -69,9 +69,7 @@ impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
   ) -> Result<Message, LingooChatError> {
     let mut conversation_history = self
       .conversation_repository
-      .get_conversation_message_history(&GetConversationMessageHistoryRequest::new(
-        lingoo_chat_request.conversation_id().clone(),
-      ))
+      .get_conversation_message_history(lingoo_chat_request.conversation_id())
       .await?;
 
     if let Some(similarity_vec) = self

@@ -4,7 +4,7 @@ use crate::{
   conversation::{
     models::{
       Conversation, ConversationTitle, CreateConversationError,
-      GetConversationMessageHistoryError, GetConversationMessageHistoryRequest,
+      GetConversationMessageHistoryError,
       ListConversationsError, SetConversationTitleError, SetConversationTitleRequest,
       StoreMessageError, StoreMessageRequest, Timestamp,
     },
@@ -120,11 +120,11 @@ impl ConversationRepository for Postgres {
 
   async fn get_conversation_message_history(
     &self,
-    request: &GetConversationMessageHistoryRequest,
+    cid: &Id,
   ) -> Result<Vec<ChatMessage>, GetConversationMessageHistoryError> {
     query!(
       "SELECT * FROM conversation WHERE id = $1",
-      request.conversation_id().as_ref()
+      cid.as_ref()
     )
     .fetch_one(self.pool())
     .await
@@ -135,7 +135,7 @@ impl ConversationRepository for Postgres {
 
     let messages = query!(
       "SELECT id, content, role FROM message WHERE conversation_id = $1",
-      request.conversation_id().as_ref(),
+      cid.as_ref(),
     )
     .fetch_all(self.pool())
     .await
