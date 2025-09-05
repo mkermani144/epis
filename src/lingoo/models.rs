@@ -90,18 +90,6 @@ impl LingooRagDocument {
   }
 }
 
-pub struct FindSimilarDocsRequest {
-  query: Embedding,
-}
-impl FindSimilarDocsRequest {
-  pub fn new(query: Embedding) -> Self {
-    Self { query }
-  }
-  pub fn query(&self) -> &Embedding {
-    &self.query
-  }
-}
-
 #[derive(Error, Debug)]
 pub enum FindSimilarDocsError {
   #[error("unknown error while finding similar embeddings")]

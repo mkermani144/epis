@@ -2,11 +2,10 @@ use pgvector::Vector;
 use sqlx::query;
 
 use crate::{
-  lingoo::{
-    models::{FindSimilarDocsError, FindSimilarDocsRequest, LingooRagDocument, StoreDocError},
+  entities::embedding::Embedding, lingoo::{
+    models::{FindSimilarDocsError, LingooRagDocument, StoreDocError},
     repository::LingooRepository,
-  },
-  postgres::Postgres,
+  }, postgres::Postgres
 };
 
 use super::models::StoreDocRequest;
@@ -14,11 +13,11 @@ use super::models::StoreDocRequest;
 impl LingooRepository for Postgres {
   async fn find_similar_docs(
     &self,
-    request: &FindSimilarDocsRequest,
+    query: Embedding,
   ) -> Result<Vec<LingooRagDocument>, FindSimilarDocsError> {
     let similar_docs = query!(
       "SELECT (1 - (embedding <=> $1)) AS distance, id, embedding as \"embedding: Vector\", content, created_at, updated_at FROM lingoo_rag ORDER BY distance ASC",
-      Vector::from(request.query().clone().into_inner()) as Vector,
+      Vector::from(query.into_inner()) as Vector,
     )
     .fetch_all(self.pool())
     .await

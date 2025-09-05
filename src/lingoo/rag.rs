@@ -5,7 +5,7 @@ use bm25::{DefaultTokenizer, Tokenizer};
 use crate::{
   entities::common::AnyText,
   lingoo::{
-    models::{FindSimilarDocsRequest, StoreDocRequest},
+    models::{StoreDocRequest},
     repository::LingooRepository,
   },
   providers::llm::Llm,
@@ -45,11 +45,9 @@ impl<L: Llm, LR: LingooRepository> Rag for LingooRag<L, LR> {
       .await
       .map_err(|_| RetrieveSimilaritiesError::Embedding)?;
 
-    let req = FindSimilarDocsRequest::new(embedding);
-
     let similarities: Vec<Similarity> = self
       .lingoo_repository
-      .find_similar_docs(&req)
+      .find_similar_docs(embedding)
       .await
       .map_err(|_| RetrieveSimilaritiesError::Unknown)?
       .iter()
