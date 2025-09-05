@@ -1,6 +1,6 @@
 use crate::{
-  entities::embedding::Embedding,
-  lingoo::models::{FindSimilarDocsError, LingooRagDocument, StoreDocError, StoreDocRequest},
+  entities::{common::AnyText, embedding::Embedding},
+  lingoo::models::{FindSimilarDocsError, LingooRagDocument, StoreDocError},
 };
 
 pub trait LingooRepository: Clone + Send + Sync + 'static {
@@ -10,6 +10,7 @@ pub trait LingooRepository: Clone + Send + Sync + 'static {
   ) -> impl Future<Output = Result<Vec<LingooRagDocument>, FindSimilarDocsError>> + Send;
   fn store_doc(
     &self,
-    request: &StoreDocRequest,
+    content: &AnyText,
+    embedding: Embedding,
   ) -> impl Future<Output = Result<(), StoreDocError>> + Send;
 }

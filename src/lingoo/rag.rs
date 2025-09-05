@@ -4,10 +4,7 @@ use bm25::{DefaultTokenizer, Tokenizer};
 
 use crate::{
   entities::common::AnyText,
-  lingoo::{
-    models::{StoreDocRequest},
-    repository::LingooRepository,
-  },
+  lingoo::repository::LingooRepository,
   providers::llm::Llm,
   rag::{
     models::{IndexSimilarityError, RetrieveSimilaritiesError, Similarity, SimilarityVec},
@@ -35,7 +32,7 @@ impl<L: Llm, LR: LingooRepository> Rag for LingooRag<L, LR> {
     source_text: &AnyText,
   ) -> Result<Option<SimilarityVec>, RetrieveSimilaritiesError> {
     // TODO: Extract into a tokenizer/preprocessor that returns an Option<NonEmptyText>
-    let preprocessed_text: String = DefaultTokenizer::default()
+    let preprocessed_text = DefaultTokenizer::default()
       .tokenize(source_text.as_ref())
       .join(" ");
 
@@ -58,7 +55,7 @@ impl<L: Llm, LR: LingooRepository> Rag for LingooRag<L, LR> {
   }
 
   async fn index_similarity(&self, text: &AnyText) -> Result<(), IndexSimilarityError> {
-    let preprocessed_content: String = DefaultTokenizer::default()
+    let preprocessed_content = DefaultTokenizer::default()
       .tokenize(text.as_ref())
       .join(" ");
 
@@ -70,7 +67,7 @@ impl<L: Llm, LR: LingooRepository> Rag for LingooRag<L, LR> {
 
     self
       .lingoo_repository
-      .store_doc(&StoreDocRequest::new(preprocessed_content, embedding))
+      .store_doc(&preprocessed_content.into(), embedding)
       .await
       .map_err(|_| IndexSimilarityError::Unknown)?;
 

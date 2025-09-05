@@ -96,23 +96,6 @@ pub enum FindSimilarDocsError {
   Unknown,
 }
 
-
-pub struct StoreDocRequest {
-  content: String,
-  embedding: Embedding,
-}
-impl StoreDocRequest {
-  pub fn new(content: String, embedding: Embedding) -> Self {
-    Self { content, embedding }
-  }
-  pub fn content(&self) -> &str {
-    &self.content
-  }
-  pub fn embedding(&self) -> &Embedding {
-    &self.embedding
-  }
-}
-
 #[derive(Error, Debug)]
 pub enum StoreDocError {
   #[error("unknown error while storing doc")]
