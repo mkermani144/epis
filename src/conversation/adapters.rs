@@ -5,7 +5,7 @@ use crate::{
     models::{
       Conversation, ConversationTitle, CreateConversationError,
       GetConversationMessageHistoryError,
-      ListConversationsError, SetConversationTitleError, SetConversationTitleRequest,
+      ListConversationsError, SetConversationTitleError,
       StoreMessageError, StoreMessageRequest, Timestamp,
     },
     repository::ConversationRepository,
@@ -68,12 +68,13 @@ impl ConversationRepository for Postgres {
 
   async fn set_conversation_title(
     &self,
-    request: &SetConversationTitleRequest,
+    cid: &Id,
+    title: &ConversationTitle
   ) -> Result<(), SetConversationTitleError> {
     query!(
       "UPDATE conversation SET title = $1 WHERE id = $2 RETURNING id",
-      request.title().as_ref(),
-      request.conversation_id().as_ref(),
+      title.as_ref(),
+      cid.as_ref(),
     )
     .fetch_one(self.pool())
     .await

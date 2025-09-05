@@ -5,11 +5,11 @@ use utoipa::ToSchema;
 
 use crate::{
   conversation::{
-    models::{ConversationTitle, SetConversationTitleError, SetConversationTitleRequest},
+    models::{ConversationTitle, SetConversationTitleError},
     repository::ConversationRepository,
     router::CONVERSATION_CATEGORY,
   },
-  entities::common::InvalidIdError,
+  entities::common::{Id, InvalidIdError},
   http::server::ConversationAppState,
 };
 
@@ -48,10 +48,10 @@ pub struct SetConversationTitleRequestBody {
   pub title: String,
 }
 impl SetConversationTitleRequestBody {
-  pub fn try_into_domain_request(
+  pub fn try_into_domain_parts(
     self,
-  ) -> Result<SetConversationTitleRequest, SetConversationTitleApiError> {
-    Ok(SetConversationTitleRequest::new(
+  ) -> Result<(Id, ConversationTitle), SetConversationTitleApiError> {
+    Ok((
       self.conversation_id.try_into()?,
       ConversationTitle::try_new(self.title)
         .map_err(|_| SetConversationTitleApiError::EmptyTitle)?,
@@ -75,10 +75,10 @@ pub async fn set_conversation_title<CR: ConversationRepository>(
   State(app_state): State<ConversationAppState<CR>>,
   Json(request): Json<SetConversationTitleRequestBody>,
 ) -> Result<Json<()>, SetConversationTitleApiError> {
-  let set_conversation_title_request = request.try_into_domain_request()?;
+  let (cid, title) = request.try_into_domain_parts()?;
   app_state
     .conversation_repository
-    .set_conversation_title(&set_conversation_title_request)
+    .set_conversation_title(&cid, &title)
     .await
     .map_err(|e| match e {
       SetConversationTitleError::NotFoundConversation => {

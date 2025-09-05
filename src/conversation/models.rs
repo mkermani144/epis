@@ -15,26 +15,6 @@ pub enum CreateConversationError {
   Unknown,
 }
 
-pub struct SetConversationTitleRequest {
-  conversation_id: Id,
-  title: ConversationTitle,
-}
-impl SetConversationTitleRequest {
-  pub fn new(conversation_id: Id, title: ConversationTitle) -> Self {
-    Self {
-      conversation_id,
-      title,
-    }
-  }
-
-  pub fn conversation_id(&self) -> &Id {
-    &self.conversation_id
-  }
-
-  pub fn title(&self) -> &ConversationTitle {
-    &self.title
-  }
-}
 #[derive(Error, Debug)]
 pub enum SetConversationTitleError {
   #[error("conversation not found")]

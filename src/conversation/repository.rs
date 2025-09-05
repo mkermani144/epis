@@ -1,9 +1,7 @@
 use crate::{
   conversation::models::{
-    Conversation, CreateConversationError,
-    GetConversationMessageHistoryError,
-    ListConversationsError, SetConversationTitleError, SetConversationTitleRequest,
-    StoreMessageError, StoreMessageRequest,
+    Conversation, ConversationTitle, CreateConversationError, GetConversationMessageHistoryError,
+    ListConversationsError, SetConversationTitleError, StoreMessageError, StoreMessageRequest,
   },
   entities::common::{Category, ChatMessage, Id},
 };
@@ -18,7 +16,8 @@ pub trait ConversationRepository: Clone + Send + Sync + 'static {
   ) -> impl Future<Output = Result<Vec<Conversation>, ListConversationsError>> + Send;
   fn set_conversation_title(
     &self,
-    request: &SetConversationTitleRequest,
+    cid: &Id,
+    title: &ConversationTitle,
   ) -> impl Future<Output = Result<(), SetConversationTitleError>> + Send;
   fn store_message(
     &self,
