@@ -5,7 +5,6 @@
 //! a unified interface.
 
 use anyhow::Result;
-use schemars::JsonSchema;
 
 use crate::entities::{
   common::{AnyText, ChatMessage, Message},
@@ -14,13 +13,6 @@ use crate::entities::{
 
 /// Core trait for LLM providers
 pub trait Llm: Clone + Send + Sync + 'static {
-  /// Sends a prompt to the LLM with a system message and returns a structured response
-  fn ask<ResponseSchema: JsonSchema>(
-    &self,
-    prompt: &str,
-    system: &str,
-  ) -> impl Future<Output = Result<String>> + Send;
-
   fn ask_with_history(
     &self,
     prompt: &str,

@@ -42,19 +42,6 @@ impl Ollama {
 }
 
 impl Llm for Ollama {
-  /// Sends a structured request to Ollama and returns the response
-  async fn ask<ResponseSchema: JsonSchema>(&self, message: &str, system: &str) -> Result<String> {
-    let generation_request = GenerationRequest::new(self.models.generation.clone(), message)
-      .format(FormatType::StructuredJson(Box::new(JsonStructure::new::<
-        ResponseSchema,
-      >())))
-      .system(system);
-
-    let generation_response = self.instance.generate(generation_request).await?;
-
-    Ok(generation_response.response)
-  }
-
   async fn ask_with_history(
     &self,
     message: &str,

@@ -80,7 +80,7 @@ pub async fn chat<L: Llm, CR: ConversationRepository, R: Rag>(
   let (cid, message) = request.try_into_domain_parts()?;
   let message = app_state
     .lingoo
-    .chat(&cid, &message)
+    .chat(&cid, message)
     .await
     .map_err(|e| match e {
       LingooChatError::GetConversationMessageHistory(

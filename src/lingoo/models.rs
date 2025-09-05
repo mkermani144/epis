@@ -58,8 +58,8 @@ impl LingooRagDocument {
   pub fn embedding(&self) -> &Embedding {
     &self.embedding
   }
-  pub fn content(&self) -> &String {
-    &self.content
+  pub fn content(self) -> String {
+    self.content
   }
   pub fn created_at(&self) -> &Timestamp {
     &self.created_at

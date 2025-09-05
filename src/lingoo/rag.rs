@@ -47,8 +47,8 @@ impl<L: Llm, LR: LingooRepository> Rag for LingooRag<L, LR> {
       .find_similar_docs(embedding)
       .await
       .map_err(|_| RetrieveSimilaritiesError::Unknown)?
-      .iter()
-      .map(|s| s.content().to_owned().into())
+      .into_iter()
+      .map(|s| s.content().into())
       .collect();
 
     Ok(SimilarityVec::new(similarities))

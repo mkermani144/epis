@@ -57,7 +57,7 @@ impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
     Ok(conversation_id)
   }
 
-  pub async fn chat(&self, cid: &Id, message: &Message) -> Result<Message, LingooChatError> {
+  pub async fn chat(&self, cid: &Id, message: Message) -> Result<Message, LingooChatError> {
     let mut conversation_history = self
       .conversation_repository
       .get_conversation_message_history(cid)
@@ -86,13 +86,13 @@ impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
 
     self
       .rag
-      .index_similarity(&reply.clone().into_inner().into())
+      .index_similarity(&reply.as_ref().into())
       .await
       .map_err(|_| LingooChatError::Rag(LingooChatRagError::Index))?;
 
     let user_chat_message = ChatMessage {
       role: ChatMessageRole::User,
-      message: message.clone(),
+      message,
     };
     let ai_chat_message = ChatMessage {
       role: ChatMessageRole::Ai,
