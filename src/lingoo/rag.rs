@@ -3,18 +3,16 @@ use std::sync::Arc;
 use bm25::{DefaultTokenizer, Tokenizer};
 
 use crate::{
-  lingoo::{
+  entities::common::AnyText, lingoo::{
     models::{FindSimilarDocsRequest, StoreDocRequest},
     repository::LingooRepository,
-  },
-  providers::llm::Llm,
-  rag::{
+  }, providers::llm::Llm, rag::{
     models::{
       IndexSimilarityError, IndexSimilarityRequest, RetrieveSimilaritiesError,
-      RetrieveSimilaritiesRequest, Similarity, SimilarityVec,
+Similarity, SimilarityVec,
     },
     rag::Rag,
-  },
+  }
 };
 
 #[derive(Clone)]
@@ -34,10 +32,10 @@ impl<L: Llm, LR: LingooRepository> LingooRag<L, LR> {
 impl<L: Llm, LR: LingooRepository> Rag for LingooRag<L, LR> {
   async fn retrieve_similarities(
     &self,
-    retrieve_request: &RetrieveSimilaritiesRequest,
+    source_text: &AnyText,
   ) -> Result<Option<SimilarityVec>, RetrieveSimilaritiesError> {
     let preprocessed_text: String = DefaultTokenizer::default()
-      .tokenize(retrieve_request.source_text())
+      .tokenize(source_text.as_ref())
       .join(" ");
 
     let embedding = self

@@ -4,20 +4,6 @@ use thiserror::Error;
 
 use crate::entities::common::{ChatMessage, ChatMessageRole};
 
-#[derive(From)]
-pub struct RetrieveSimilaritiesRequest {
-  source_text: String,
-}
-impl RetrieveSimilaritiesRequest {
-  pub fn new(source_text: String) -> Self {
-    Self { source_text }
-  }
-
-  pub fn source_text(&self) -> &str {
-    &self.source_text
-  }
-}
-
 #[nutype(derive(From, Debug))]
 pub struct Similarity(String);
 

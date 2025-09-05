@@ -51,6 +51,7 @@ impl TryFrom<String> for Id {
   }
 }
 
+// TODO: Change this to NonEmptyText
 /// A wrapper for any text
 #[nutype(derive(Debug, Clone, From, AsRef))]
 pub struct AnyText(String);
