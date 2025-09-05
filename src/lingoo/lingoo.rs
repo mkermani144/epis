@@ -10,7 +10,7 @@ use crate::{
   conversation::{
     models::{
       CreateConversationError,
-      StoreMessageRequest,
+      
     },
     repository::ConversationRepository,
   },
@@ -112,17 +112,17 @@ impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
     // TODO: Run concurrently
     self
       .conversation_repository
-      .store_message(&StoreMessageRequest::new(
-        lingoo_chat_request.conversation_id().clone(),
-        user_chat_message,
-      ))
+      .store_message(
+        lingoo_chat_request.conversation_id(),
+        &user_chat_message,
+      )
       .await?;
     self
       .conversation_repository
-      .store_message(&StoreMessageRequest::new(
-        lingoo_chat_request.conversation_id().clone(),
-        ai_chat_message,
-      ))
+      .store_message(
+        lingoo_chat_request.conversation_id(),
+        &ai_chat_message,
+      )
       .await?;
 
     Ok(reply_copy)

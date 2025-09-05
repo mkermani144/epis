@@ -23,26 +23,6 @@ pub enum SetConversationTitleError {
   Unknown,
 }
 
-pub struct StoreMessageRequest {
-  conversation_id: Id,
-  message: ChatMessage,
-}
-impl StoreMessageRequest {
-  pub fn new(conversation_id: Id, message: ChatMessage) -> Self {
-    Self {
-      conversation_id,
-      message,
-    }
-  }
-
-  pub fn conversation_id(&self) -> &Id {
-    &self.conversation_id
-  }
-
-  pub fn message(&self) -> &ChatMessage {
-    &self.message
-  }
-}
 #[derive(Error, Debug)]
 pub enum StoreMessageError {
   #[error("conversation not found")]

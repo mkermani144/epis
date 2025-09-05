@@ -6,7 +6,7 @@ use crate::{
       Conversation, ConversationTitle, CreateConversationError,
       GetConversationMessageHistoryError,
       ListConversationsError, SetConversationTitleError,
-      StoreMessageError, StoreMessageRequest, Timestamp,
+      StoreMessageError, Timestamp,
     },
     repository::ConversationRepository,
   },
@@ -86,10 +86,10 @@ impl ConversationRepository for Postgres {
     Ok(())
   }
 
-  async fn store_message(&self, request: &StoreMessageRequest) -> Result<Id, StoreMessageError> {
+  async fn store_message(&self, cid: &Id, message: &ChatMessage) -> Result<Id, StoreMessageError> {
     query!(
       "SELECT * FROM conversation WHERE id = $1",
-      request.conversation_id().as_ref()
+      cid.as_ref()
     )
     .fetch_one(self.pool())
     .await
@@ -98,7 +98,7 @@ impl ConversationRepository for Postgres {
       _ => StoreMessageError::Unknown,
     })?;
 
-    let role = match request.message().role {
+    let role = match message.role {
       ChatMessageRole::User => "user",
       ChatMessageRole::Ai => "ai",
       ChatMessageRole::System => "system",
@@ -106,8 +106,8 @@ impl ConversationRepository for Postgres {
 
     let message = query!(
       "INSERT INTO message (conversation_id, content, role) VALUES ($1, $2, $3) RETURNING id",
-      request.conversation_id().as_ref(),
-      request.message().message.as_ref(),
+      cid.as_ref(),
+      message.message.as_ref(),
       role,
     )
     .fetch_one(self.pool())
