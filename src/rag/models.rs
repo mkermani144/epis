@@ -45,20 +45,6 @@ pub enum RetrieveSimilaritiesError {
   Unknown,
 }
 
-#[derive(From)]
-pub struct IndexSimilarityRequest {
-  content: String,
-}
-impl IndexSimilarityRequest {
-  pub fn new(content: String) -> Self {
-    Self { content }
-  }
-
-  pub fn content(&self) -> &str {
-    &self.content
-  }
-}
-
 #[derive(Error, Debug)]
 pub enum IndexSimilarityError {
   #[error("error while generating embeddings")]

@@ -1,5 +1,5 @@
 use crate::{entities::common::AnyText, rag::models::{
-  IndexSimilarityError, IndexSimilarityRequest, RetrieveSimilaritiesError,
+  IndexSimilarityError, RetrieveSimilaritiesError,
   SimilarityVec,
 }};
 
@@ -11,6 +11,6 @@ pub trait Rag: Clone + Send + Sync + 'static {
 
   fn index_similarity(
     &self,
-    index_doc_request: &IndexSimilarityRequest,
+    text: &AnyText,
   ) -> impl Future<Output = Result<(), IndexSimilarityError>> + Send;
 }

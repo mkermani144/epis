@@ -3,16 +3,16 @@ use std::sync::Arc;
 use bm25::{DefaultTokenizer, Tokenizer};
 
 use crate::{
-  entities::common::AnyText, lingoo::{
+  entities::common::AnyText,
+  lingoo::{
     models::{FindSimilarDocsRequest, StoreDocRequest},
     repository::LingooRepository,
-  }, providers::llm::Llm, rag::{
-    models::{
-      IndexSimilarityError, IndexSimilarityRequest, RetrieveSimilaritiesError,
-Similarity, SimilarityVec,
-    },
+  },
+  providers::llm::Llm,
+  rag::{
+    models::{IndexSimilarityError, RetrieveSimilaritiesError, Similarity, SimilarityVec},
     rag::Rag,
-  }
+  },
 };
 
 #[derive(Clone)]
@@ -34,6 +34,7 @@ impl<L: Llm, LR: LingooRepository> Rag for LingooRag<L, LR> {
     &self,
     source_text: &AnyText,
   ) -> Result<Option<SimilarityVec>, RetrieveSimilaritiesError> {
+    // TODO: Extract into a tokenizer/preprocessor that returns an Option<NonEmptyText>
     let preprocessed_text: String = DefaultTokenizer::default()
       .tokenize(source_text.as_ref())
       .join(" ");
@@ -58,12 +59,9 @@ impl<L: Llm, LR: LingooRepository> Rag for LingooRag<L, LR> {
     Ok(SimilarityVec::new(similarities))
   }
 
-  async fn index_similarity(
-    &self,
-    index_doc_request: &IndexSimilarityRequest,
-  ) -> Result<(), IndexSimilarityError> {
+  async fn index_similarity(&self, text: &AnyText) -> Result<(), IndexSimilarityError> {
     let preprocessed_content: String = DefaultTokenizer::default()
-      .tokenize(index_doc_request.content())
+      .tokenize(text.as_ref())
       .join(" ");
 
     let embedding = self

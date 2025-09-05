@@ -1,10 +1,7 @@
 use nutype::nutype;
 use thiserror::Error;
 
-use crate::{
-  entities::common::Category,
-  entities::common::{ChatMessage, Id},
-};
+use crate::{entities::common::Category, entities::common::Id};
 
 #[nutype(derive(Debug, Clone, AsRef, Display), validate(not_empty))]
 pub struct ConversationTitle(String);
