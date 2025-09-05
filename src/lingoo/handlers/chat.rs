@@ -7,10 +7,7 @@ use crate::{
   conversation::{models::GetConversationMessageHistoryError, repository::ConversationRepository},
   entities::common::{Id, InvalidIdError, Message, MessageError},
   http::server::LingooAppState,
-  lingoo::{
-    models::{LingooChatError, LingooChatRequest},
-    router::LINGOO_CATEGORY,
-  },
+  lingoo::{models::LingooChatError, router::LINGOO_CATEGORY},
   providers::llm::Llm,
   rag::rag::Rag,
 };
@@ -44,8 +41,8 @@ pub struct LingooChatRequestBody {
   message: String,
 }
 impl LingooChatRequestBody {
-  pub fn try_into_domain(self) -> Result<LingooChatRequest, LingooChatApiError> {
-    Ok(LingooChatRequest::new(
+  pub fn try_into_domain_parts(self) -> Result<(Id, Message), LingooChatApiError> {
+    Ok((
       Id::try_from(self.conversation_id)?,
       Message::try_new(self.message)?,
     ))
@@ -80,10 +77,10 @@ pub async fn chat<L: Llm, CR: ConversationRepository, R: Rag>(
   State(app_state): State<LingooAppState<L, CR, R>>,
   Json(request): Json<LingooChatRequestBody>,
 ) -> Result<Json<LingooChatResponseData>, LingooChatApiError> {
-  let lingoo_chat_request = request.try_into_domain()?;
+  let (cid, message) = request.try_into_domain_parts()?;
   let message = app_state
     .lingoo
-    .chat(&lingoo_chat_request)
+    .chat(&cid, &message)
     .await
     .map_err(|e| match e {
       LingooChatError::GetConversationMessageHistory(

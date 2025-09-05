@@ -7,15 +7,9 @@
 use std::sync::Arc;
 
 use crate::{
-  conversation::{
-    models::{
-      CreateConversationError,
-      
-    },
-    repository::ConversationRepository,
-  },
+  conversation::{models::CreateConversationError, repository::ConversationRepository},
   entities::common::{Category, ChatMessage, ChatMessageRole, Id, Message},
-  lingoo::models::{LingooChatError, LingooChatRagError, LingooChatRequest},
+  lingoo::models::{LingooChatError, LingooChatRagError},
   providers::llm::Llm,
   rag::rag::Rag,
 };
@@ -63,18 +57,15 @@ impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
     Ok(conversation_id)
   }
 
-  pub async fn chat(
-    &self,
-    lingoo_chat_request: &LingooChatRequest,
-  ) -> Result<Message, LingooChatError> {
+  pub async fn chat(&self, cid: &Id, message: &Message) -> Result<Message, LingooChatError> {
     let mut conversation_history = self
       .conversation_repository
-      .get_conversation_message_history(lingoo_chat_request.conversation_id())
+      .get_conversation_message_history(cid)
       .await?;
 
     if let Some(similarity_vec) = self
       .rag
-      .retrieve_similarities(&lingoo_chat_request.message().as_ref().to_string().into())
+      .retrieve_similarities(&message.as_ref().into())
       .await
       .map_err(|_| LingooChatError::Rag(LingooChatRagError::Retrieve))?
     {
@@ -84,7 +75,7 @@ impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
     let reply = self
       .llm
       .ask_with_history(
-        lingoo_chat_request.message().as_ref(),
+        message.as_ref(),
         LINGOO_SYSTEM_PROMPT,
         &conversation_history,
       )
@@ -99,7 +90,6 @@ impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
       .await
       .map_err(|_| LingooChatError::Rag(LingooChatRagError::Index))?;
 
-    let message = lingoo_chat_request.message();
     let user_chat_message = ChatMessage {
       role: ChatMessageRole::User,
       message: message.clone(),
@@ -112,17 +102,11 @@ impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
     // TODO: Run concurrently
     self
       .conversation_repository
-      .store_message(
-        lingoo_chat_request.conversation_id(),
-        &user_chat_message,
-      )
+      .store_message(cid, &user_chat_message)
       .await?;
     self
       .conversation_repository
-      .store_message(
-        lingoo_chat_request.conversation_id(),
-        &ai_chat_message,
-      )
+      .store_message(cid, &ai_chat_message)
       .await?;
 
     Ok(reply_copy)
