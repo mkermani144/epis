@@ -9,18 +9,6 @@ use crate::{
 #[nutype(derive(Debug, Clone, AsRef, Display), validate(not_empty))]
 pub struct ConversationTitle(String);
 
-pub struct CreateConversationRequest {
-  category: Category,
-}
-impl CreateConversationRequest {
-  pub fn new(category: Category) -> Self {
-    Self { category }
-  }
-
-  pub fn category(&self) -> &Category {
-    &self.category
-  }
-}
 #[derive(Error, Debug)]
 pub enum CreateConversationError {
   #[error("unknown error while creating conversation")]

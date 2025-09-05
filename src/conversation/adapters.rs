@@ -3,7 +3,7 @@ use sqlx::{Error::RowNotFound, query};
 use crate::{
   conversation::{
     models::{
-      Conversation, ConversationTitle, CreateConversationError, CreateConversationRequest,
+      Conversation, ConversationTitle, CreateConversationError,
       GetConversationMessageHistoryError, GetConversationMessageHistoryRequest,
       ListConversationsError, SetConversationTitleError, SetConversationTitleRequest,
       StoreMessageError, StoreMessageRequest, Timestamp,
@@ -17,9 +17,9 @@ use crate::{
 impl ConversationRepository for Postgres {
   async fn create_conversation(
     &self,
-    request: &CreateConversationRequest,
+    category: &Category,
   ) -> Result<Id, CreateConversationError> {
-    let category_str = match request.category() {
+    let category_str = match category {
       Category::Languages => "languages",
       Category::Invalid => "invalid",
     };

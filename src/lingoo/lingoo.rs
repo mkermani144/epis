@@ -9,7 +9,7 @@ use std::sync::Arc;
 use crate::{
   conversation::{
     models::{
-      CreateConversationError, CreateConversationRequest, GetConversationMessageHistoryRequest,
+      CreateConversationError, GetConversationMessageHistoryRequest,
       StoreMessageRequest,
     },
     repository::ConversationRepository,
@@ -57,7 +57,7 @@ impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
   pub async fn create_conversation(&self) -> Result<Id, CreateConversationError> {
     let conversation_id = self
       .conversation_repository
-      .create_conversation(&CreateConversationRequest::new(Category::Languages))
+      .create_conversation(&Category::Languages)
       .await?;
 
     Ok(conversation_id)

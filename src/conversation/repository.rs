@@ -1,17 +1,17 @@
 use crate::{
   conversation::models::{
-    Conversation, CreateConversationError, CreateConversationRequest,
+    Conversation, CreateConversationError,
     GetConversationMessageHistoryError, GetConversationMessageHistoryRequest,
     ListConversationsError, SetConversationTitleError, SetConversationTitleRequest,
     StoreMessageError, StoreMessageRequest,
   },
-  entities::common::{ChatMessage, Id},
+  entities::common::{Category, ChatMessage, Id},
 };
 
 pub trait ConversationRepository: Clone + Send + Sync + 'static {
   fn create_conversation(
     &self,
-    request: &CreateConversationRequest,
+    category: &Category,
   ) -> impl Future<Output = Result<Id, CreateConversationError>> + Send;
   fn list_conversations(
     &self,
