@@ -1,4 +1,4 @@
-use derive_more::{From, IntoIterator};
+use derive_more::{IntoIterator};
 use nutype::nutype;
 use thiserror::Error;
 

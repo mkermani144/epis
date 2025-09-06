@@ -1,0 +1,37 @@
+[package]
+name = "epis"
+version = "0.1.0"
+edition = "2024"
+authors = ["Mohammad Kermani <mkermani144@gmail.com>"]
+description = "An extensible assistant helping you learn anything"
+repository = "https://github.com/mkermani144/epis"
+keywords = ["ai", "learning"]
+
+[dependencies]
+anyhow = "1.0.98"
+axum = { version = "0.8.4", features = ["macros"] }
+bm25 = { version = "2.3.1", features = ["language_detection"] }
+derive_more = { version = "2.0.1", features = ["from", "into_iterator"] }
+env_logger = "0.11.3"
+inquire = "0.7.5"
+log = "0.4.20"
+nutype = { version = "0.6.2", features = ["serde"] }
+ollama-rs = "0.3.2"
+pgvector = { version = "0.4.1", features = ["sqlx"] }
+schemars = "1.0.4"
+serde = "1.0.219"
+serde_json = "1.0.142"
+sqlx = { version = "0.8.6", features = [
+  "postgres",
+  "runtime-tokio",
+  "uuid",
+  "time",
+] }
+thiserror = "2.0.16"
+tokio = { version = "1.0", features = ["full"] }
+utoipa = { version = "5.4.0", features = ["debug"] }
+utoipa-axum = { version = "0.2.0", features = ["debug"] }
+utoipa-scalar = { version = "0.3.0", features = ["axum"] }
+
+[profile.dev.package.sqlx-macros]
+opt-level = 3

@@ -15,10 +15,8 @@ use ollama_rs::{
   IntoUrlSealed, Ollama as OllamaRs,
   generation::{
     completion::request::GenerationRequest,
-    parameters::{FormatType, JsonStructure},
   },
 };
-use schemars::JsonSchema;
 
 /// Ollama LLM provider implementation
 #[derive(Clone)]

@@ -2,10 +2,7 @@ use thiserror::Error;
 
 use crate::{
   conversation::models::{GetConversationMessageHistoryError, StoreMessageError, Timestamp},
-  entities::{
-    common::{Id, Message},
-    embedding::Embedding,
-  },
+  entities::{common::Id, embedding::Embedding},
 };
 
 #[derive(Debug, Error)]

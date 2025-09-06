@@ -1,6 +1,6 @@
 {
   "name": "Epis Development Environment",
-  "dockerComposeFile": "../docker-compose.yml",
+  "dockerComposeFile": "../epis/docker-compose.yml",
   "service": "epis-app",
   "workspaceFolder": "/workspace",
 

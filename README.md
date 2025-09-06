@@ -11,7 +11,7 @@ Epis is an extensible assistant designed to help you learn anything.
 1. **Clone the repository:**
    ```sh
    git clone https://github.com/mkermani144/epis
-   cd epis
+   cd epis/epis
    ```
 
 2. **Build and run:**
@@ -31,7 +31,7 @@ The easiest way to get started is using the provided DevContainer setup:
 2. **Clone and open the repository:**
    ```sh
    git clone https://github.com/mkermani144/epis
-   code epis
+   code epis/epis
    ```
 3. **Open in Container**: When prompted, click "Reopen in Container"
 4. **Create `.env` file** with the following content:
