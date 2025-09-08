@@ -3,7 +3,7 @@ use axum::{
   http::StatusCode,
   response::{IntoResponse, Json},
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use utoipa::ToSchema;
 
@@ -15,7 +15,7 @@ use crate::{
   rag::rag::Rag,
 };
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Serialize, Deserialize)]
 pub enum ListConversationsApiError {
   #[error("unknown error during chat")]
   Unknown,
@@ -28,7 +28,7 @@ impl IntoResponse for ListConversationsApiError {
   }
 }
 
-#[derive(Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ListLingooConversationsResponseDatum {
   id: String,
   title: Option<String>,
@@ -52,8 +52,16 @@ impl ListLingooConversationsResponseDatum {
       updated_at,
     }
   }
+
+  pub fn title(self) -> Option<String> {
+    self.title
+  }
+
+  pub fn id(&self) -> &str {
+    &self.id
+  }
 }
-#[derive(Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ListLingooConversationsResponseData {
   data: Vec<ListLingooConversationsResponseDatum>,
 }
@@ -73,6 +81,10 @@ impl ListLingooConversationsResponseData {
       .collect();
 
     Self { data }
+  }
+
+  pub fn data(self) -> Vec<ListLingooConversationsResponseDatum> {
+    self.data
   }
 }
 

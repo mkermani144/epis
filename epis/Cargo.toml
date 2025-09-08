@@ -35,3 +35,6 @@ utoipa-scalar = { version = "0.3.0", features = ["axum"] }
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3
+
+[features]
+types = []

@@ -35,12 +35,18 @@ impl IntoResponse for LingooChatApiError {
   }
 }
 
-#[derive(Debug, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct LingooChatRequestBody {
   conversation_id: String,
   message: String,
 }
 impl LingooChatRequestBody {
+  pub fn new(conversation_id: String, message: String) -> Self {
+    Self {
+      conversation_id,
+      message,
+    }
+  }
   pub fn try_into_domain_parts(self) -> Result<(Id, Message), LingooChatApiError> {
     Ok((
       Id::try_from(self.conversation_id)?,
@@ -49,7 +55,7 @@ impl LingooChatRequestBody {
   }
 }
 
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct LingooChatResponseData {
   response: String,
 }
@@ -58,6 +64,10 @@ impl LingooChatResponseData {
     Self {
       response: response.into_inner(),
     }
+  }
+
+  pub fn response(&self) -> &str {
+    &self.response
   }
 }
 
