@@ -15,5 +15,5 @@ impl Config {
   }
 }
 
-pub static config: LazyLock<Config> =
+pub static CONFIG: LazyLock<Config> =
   LazyLock::new(|| Config::init().expect("failed to initiate config"));

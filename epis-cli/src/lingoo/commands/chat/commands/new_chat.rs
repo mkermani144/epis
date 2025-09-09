@@ -5,12 +5,12 @@ use colored::Colorize;
 use inquire::Text;
 
 use crate::{
-  config::config,
+  config::CONFIG,
   lingoo::{api::LingooHttpApi, utils::chat_round},
 };
 
 pub async fn handle_lingoo_new_chat() -> Result<()> {
-  let epis_host = &*config.epis_host;
+  let epis_host = &*CONFIG.epis_host;
   let api = Arc::new(LingooHttpApi::new(epis_host.into()));
 
   let creation_res = api.create_conversation().await?;

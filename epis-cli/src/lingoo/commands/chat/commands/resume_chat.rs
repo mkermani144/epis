@@ -4,7 +4,7 @@ use derive_more::Display;
 use inquire::Select;
 
 use crate::{
-  config::config,
+  config::CONFIG,
   lingoo::{api::LingooHttpApi, utils::chat_round},
 };
 
@@ -20,7 +20,7 @@ struct PartialConversation {
 }
 
 pub async fn handle_lingoo_resume_chat() -> Result<()> {
-  let epis_host = &*config.epis_host;
+  let epis_host = &*CONFIG.epis_host;
   let lingoo_api = LingooHttpApi::new(epis_host.into());
   let conversations = lingoo_api.list_conversations().await?;
 

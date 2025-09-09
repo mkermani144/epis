@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use anyhow::{Context, Result};
 use epis::{
   ai::handlers::generate_title::{GenerateTitleRequestBody, GenerateTitleResponseData},
