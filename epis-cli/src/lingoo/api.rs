@@ -1,10 +1,14 @@
 use std::collections::HashMap;
 
 use anyhow::{Context, Result};
-use epis::lingoo::handlers::{
-  chat::{LingooChatRequestBody, LingooChatResponseData},
-  create_conversation::CreateLingooConversationResponseData,
-  list_conversations::ListLingooConversationsResponseData,
+use epis::{
+  ai::handlers::generate_title::{GenerateTitleRequestBody, GenerateTitleResponseData},
+  conversation::handlers::set_conversation_title::SetConversationTitleRequestBody,
+  lingoo::handlers::{
+    chat::{LingooChatRequestBody, LingooChatResponseData},
+    create_conversation::CreateLingooConversationResponseData,
+    list_conversations::ListLingooConversationsResponseData,
+  },
 };
 
 pub struct LingooHttpApi {
@@ -54,6 +58,40 @@ impl LingooHttpApi {
         .json()
         .await
         .context("failed to deserialize created conversation response into a json")?,
+    )
+  }
+
+  pub async fn generate_conversation_title(
+    &self,
+    init_msg: String,
+  ) -> Result<GenerateTitleResponseData> {
+    let body = GenerateTitleRequestBody::new(init_msg);
+
+    Ok(
+      reqwest::Client::new()
+        .post(format!("{}/ai/generate-title", self.base_url))
+        .json(&body)
+        .send()
+        .await
+        .context("failed to generate a title for the conversation")?
+        .json()
+        .await
+        .context("failed to deserialize title response into a json")?,
+    )
+  }
+
+  pub async fn set_conversation_title(&self, cid: String, title: String) -> Result<()> {
+    let body = SetConversationTitleRequestBody::new(cid, title);
+
+    Ok(
+      reqwest::Client::new()
+        .patch(format!("{}/conversation/set-title", self.base_url))
+        .json(&body)
+        .send()
+        .await
+        .context("failed to set conversation title")?
+        .json()
+        .await?,
     )
   }
 }

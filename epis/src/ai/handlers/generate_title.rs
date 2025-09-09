@@ -1,4 +1,9 @@
-use axum::{extract::State, http::{StatusCode, Response}, response::IntoResponse, Json};
+use axum::{
+  Json,
+  extract::State,
+  http::StatusCode,
+  response::{IntoResponse, Response},
+};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use utoipa::ToSchema;
@@ -16,7 +21,7 @@ pub enum GenerateTitleApiError {
 }
 
 impl IntoResponse for GenerateTitleApiError {
-  fn into_response(self) -> Response<Body> {
+  fn into_response(self) -> Response {
     match self {
       GenerateTitleApiError::Unknown => {
         (StatusCode::INTERNAL_SERVER_ERROR, Json(self.to_string())).into_response()
@@ -25,11 +30,15 @@ impl IntoResponse for GenerateTitleApiError {
   }
 }
 
-#[derive(Debug, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct GenerateTitleRequestBody {
   init_msg: String,
 }
 impl GenerateTitleRequestBody {
+  pub fn new(init_msg: String) -> Self {
+    Self { init_msg }
+  }
+
   pub fn try_into_domain(self) -> Result<AnyText, GenerateTitleApiError> {
     Ok(self.init_msg.into())
   }

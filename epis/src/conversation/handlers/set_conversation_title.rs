@@ -1,5 +1,5 @@
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use utoipa::ToSchema;
 
@@ -42,12 +42,18 @@ impl IntoResponse for SetConversationTitleApiError {
   }
 }
 
-#[derive(Debug, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct SetConversationTitleRequestBody {
   pub conversation_id: String,
   pub title: String,
 }
 impl SetConversationTitleRequestBody {
+  pub fn new(cid: String, title: String) -> Self {
+    Self {
+      conversation_id: cid,
+      title,
+    }
+  }
   pub fn try_into_domain_parts(
     self,
   ) -> Result<(Id, ConversationTitle), SetConversationTitleApiError> {
