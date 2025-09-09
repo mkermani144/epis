@@ -8,20 +8,20 @@ use log::info;
 use std::{net::SocketAddr, sync::Arc};
 
 use crate::{
+  ai::ollama::{ollama::Ollama, ollama_models::OllamaModels},
   config::{Config, Provider},
   http::server::{AppState, HttpServer},
   lingoo::{lingoo::Lingoo, rag::LingooRag},
   postgres::Postgres,
-  providers::ollama::{ollama::Ollama, ollama_models::OllamaModels},
 };
 
+mod ai;
 mod config;
 mod conversation;
 mod entities;
 mod http;
 mod lingoo;
 mod postgres;
-mod providers;
 mod rag;
 
 const KNOWLEDGE_TYPES: [&str; 1] = ["languages"];

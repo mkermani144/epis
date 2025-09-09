@@ -11,7 +11,7 @@ use crate::{
   conversation::{models::Conversation, repository::ConversationRepository},
   http::server::LingooAppState,
   lingoo::router::LINGOO_CATEGORY,
-  providers::llm::Llm,
+  ai::llm::Llm,
   rag::rag::Rag,
 };
 

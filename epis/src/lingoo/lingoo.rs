@@ -10,7 +10,7 @@ use crate::{
   conversation::{models::CreateConversationError, repository::ConversationRepository},
   entities::common::{Category, ChatMessage, ChatMessageRole, Id, Message},
   lingoo::models::{LingooChatError, LingooChatRagError},
-  providers::llm::Llm,
+  ai::llm::Llm,
   rag::rag::Rag,
 };
 

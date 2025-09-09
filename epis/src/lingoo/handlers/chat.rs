@@ -8,7 +8,7 @@ use crate::{
   entities::common::{Id, InvalidIdError, Message, MessageError},
   http::server::LingooAppState,
   lingoo::{models::LingooChatError, router::LINGOO_CATEGORY},
-  providers::llm::Llm,
+  ai::llm::Llm,
   rag::rag::Rag,
 };
 

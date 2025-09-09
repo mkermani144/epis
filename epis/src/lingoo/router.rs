@@ -8,7 +8,7 @@ use crate::{
     create_conversation::{__path_create_conversation, create_conversation},
     list_conversations::{__path_list_conversations, list_conversations},
   },
-  providers::llm::Llm,
+  ai::llm::Llm,
   rag::rag::Rag,
 };
 

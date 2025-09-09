@@ -5,7 +5,7 @@ use bm25::{DefaultTokenizer, Tokenizer};
 use crate::{
   entities::common::AnyText,
   lingoo::repository::LingooRepository,
-  providers::llm::Llm,
+  ai::llm::Llm,
   rag::{
     models::{IndexSimilarityError, RetrieveSimilaritiesError, Similarity, SimilarityVec},
     rag::Rag,

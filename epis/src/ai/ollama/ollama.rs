@@ -6,7 +6,7 @@
 use super::ollama_models::OllamaModels;
 use crate::entities::common::{AnyText, ChatMessage, ChatMessageRole, Message};
 use crate::entities::embedding::Embedding;
-use crate::providers::llm::Llm;
+use crate::ai::llm::Llm;
 use anyhow::Result;
 use ollama_rs::generation::chat::request::ChatMessageRequest;
 use ollama_rs::generation::chat::{ChatMessage as OllamaChatMessage, MessageRole};

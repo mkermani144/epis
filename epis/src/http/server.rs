@@ -10,7 +10,8 @@ use utoipa_scalar::{Scalar, Servable};
 use crate::{
   conversation::{repository::ConversationRepository, router::ConversationRouter},
   lingoo::{lingoo::Lingoo, router::LingooRouter},
-  providers::llm::Llm, rag::rag::Rag,
+  ai::llm::Llm,
+  rag::rag::Rag,
 };
 
 /// HTTP server manager using Axum

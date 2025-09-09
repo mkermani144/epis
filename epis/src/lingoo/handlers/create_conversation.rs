@@ -8,7 +8,7 @@ use crate::{
   entities::common::Id,
   http::server::LingooAppState,
   lingoo::router::LINGOO_CATEGORY,
-  providers::llm::Llm,
+  ai::llm::Llm,
   rag::rag::Rag,
 };
 
