@@ -5,3 +5,5 @@
 
 pub mod llm;
 pub mod ollama;
+pub mod router;
+pub mod handlers;

@@ -8,9 +8,9 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_scalar::{Scalar, Servable};
 
 use crate::{
+  ai::{llm::Llm, router::AiRouter},
   conversation::{repository::ConversationRepository, router::ConversationRouter},
   lingoo::{lingoo::Lingoo, router::LingooRouter},
-  ai::llm::Llm,
   rag::rag::Rag,
 };
 
@@ -24,6 +24,7 @@ pub struct HttpServer {
 pub struct AppState<L: Llm, CR: ConversationRepository, R: Rag> {
   pub lingoo: Arc<Lingoo<L, CR, R>>,
   pub conversation_repository: Arc<CR>,
+  pub llm: Arc<L>,
 }
 
 #[derive(Clone)]
@@ -36,6 +37,11 @@ pub struct LingooAppState<L: Llm, CR: ConversationRepository, R: Rag> {
   pub lingoo: Arc<Lingoo<L, CR, R>>,
   // FIXME: Remove this field when /lingoo/conversation/list API is fixed
   pub conversation_repository: Arc<CR>,
+}
+
+#[derive(Clone)]
+pub struct AiAppState<L: Llm> {
+  pub llm: Arc<L>,
 }
 
 #[derive(OpenApi)]
@@ -56,6 +62,10 @@ impl HttpServer {
       .with_state(LingooAppState {
         lingoo: app_state.lingoo.clone(),
         conversation_repository: app_state.conversation_repository.clone(),
+      })
+      .nest("/ai", AiRouter::new().into_inner())
+      .with_state(AiAppState {
+        llm: app_state.llm.clone(),
       })
       .split_for_parts();
 
