@@ -65,9 +65,9 @@ impl LingooChatResponseData {
       response: response.into_inner(),
     }
   }
-
-  pub fn response(&self) -> &str {
-    &self.response
+  
+  pub fn into_response(self) -> String {
+    self.response
   }
 }
 

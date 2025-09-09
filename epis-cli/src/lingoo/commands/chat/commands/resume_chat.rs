@@ -1,9 +1,12 @@
 use anyhow::{Context, Result};
 use colored::Colorize;
 use derive_more::Display;
-use inquire::{Select, Text};
+use inquire::Select;
 
-use crate::{config::config, lingoo::api::LingooHttpApi};
+use crate::{
+  config::config,
+  lingoo::{api::LingooHttpApi, utils::chat_round},
+};
 
 #[derive(Display)]
 #[display(
@@ -36,14 +39,9 @@ pub async fn handle_lingoo_resume_chat() -> Result<()> {
 
   // TODO: Show a brief history of past messages
 
-  // TODO: (Maybe) extract into a utility function
   loop {
-    let user_message = Text::new("").prompt()?;
+    let ai_reply = chat_round(selected_conversation.id.clone()).await?;
 
-    let ai_reply = lingoo_api
-      .chat(selected_conversation.id.clone(), user_message)
-      .await?;
-
-    println!("{} {}", "Epis >".bold().cyan(), ai_reply.response())
+    println!("{} {}", "Epis >".bold().cyan(), ai_reply)
   }
 }

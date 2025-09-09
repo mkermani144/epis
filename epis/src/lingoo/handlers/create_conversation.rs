@@ -1,5 +1,5 @@
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use utoipa::ToSchema;
 
@@ -27,7 +27,7 @@ impl IntoResponse for CreateConversationApiError {
   }
 }
 
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct CreateLingooConversationResponseData {
   conversation_id: String,
 }
@@ -36,6 +36,10 @@ impl CreateLingooConversationResponseData {
     Self {
       conversation_id: conversation_id.to_string(),
     }
+  }
+
+  pub fn cid(&self) -> &str {
+    &self.conversation_id
   }
 }
 

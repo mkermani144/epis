@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use anyhow::{Context, Result};
 use epis::lingoo::handlers::{
   chat::{LingooChatRequestBody, LingooChatResponseData},
+  create_conversation::CreateLingooConversationResponseData,
   list_conversations::ListLingooConversationsResponseData,
 };
 
@@ -40,6 +41,19 @@ impl LingooHttpApi {
         .json()
         .await
         .context("failed to deserialize chat response into a json")?,
+    )
+  }
+
+  pub async fn create_conversation(&self) -> Result<CreateLingooConversationResponseData> {
+    Ok(
+      reqwest::Client::new()
+        .post(format!("{}/lingoo/conversation/create", self.base_url))
+        .send()
+        .await
+        .context("failed to post to lingoo conversation create endpoint")?
+        .json()
+        .await
+        .context("failed to deserialize created conversation response into a json")?,
     )
   }
 }
