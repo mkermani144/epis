@@ -4,7 +4,6 @@
 //! Configuration is loaded from environment variables.
 
 use anyhow::Result;
-use tracing::level_filters::LevelFilter;
 
 /// Supported LLM providers for the application
 #[derive(Debug)]
@@ -33,8 +32,6 @@ pub struct Config {
   pub generation_model: String,
   /// The model name to use for generating embeddings
   pub embedding_model: String,
-  /// The logging level for the application
-  pub log_level: LevelFilter,
   /// The Ollama instance URL
   pub ollama_url: Option<String>,
   /// The postgres URL
@@ -63,9 +60,6 @@ impl Config {
       ollama_url: std::env::var("OLLAMA_URL").ok(),
       database_url: std::env::var("DATABASE_URL")?,
       listen_port: std::env::var("LISTEN_PORT")?.parse()?,
-      log_level: std::env::var("LOG_LEVEL")
-        .unwrap_or("info".to_string())
-        .parse()?,
     })
   }
 }
