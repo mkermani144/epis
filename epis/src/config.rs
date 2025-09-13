@@ -4,7 +4,7 @@
 //! Configuration is loaded from environment variables.
 
 use anyhow::Result;
-use log::LevelFilter;
+use tracing::level_filters::LevelFilter;
 
 /// Supported LLM providers for the application
 #[derive(Debug)]

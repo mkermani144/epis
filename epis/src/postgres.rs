@@ -1,7 +1,7 @@
 use anyhow::Result;
-use log::info;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{PgPool, migrate};
+use tracing::info;
 
 /// Database connection manager for PostgreSQL
 #[derive(Clone)]

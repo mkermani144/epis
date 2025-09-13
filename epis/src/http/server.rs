@@ -1,8 +1,8 @@
 use anyhow::Result;
 use axum::Router;
-use log::info;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::net::TcpListener;
+use tracing::info;
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_scalar::{Scalar, Servable};

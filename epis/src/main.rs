@@ -4,8 +4,8 @@
 //! currently supporting language learning through LLM-powered conversations.
 
 use anyhow::Result;
-use log::info;
 use std::{net::SocketAddr, sync::Arc};
+use tracing::info;
 
 use crate::{
   ai::ollama::{ollama::Ollama, ollama_models::OllamaModels},
@@ -29,12 +29,9 @@ const KNOWLEDGE_TYPES: [&str; 1] = ["languages"];
 /// Main entry point for the Epis application
 #[tokio::main]
 async fn main() -> Result<()> {
-  let config = Config::init()?;
+  tracing_subscriber::fmt::init();
 
-  // Initialize logging with the configured log level
-  env_logger::Builder::new()
-    .filter_level(config.log_level)
-    .init();
+  let config = Config::init()?;
 
   println!("Hey, let's grow our knowledge! Currently, I can help you with:");
   for knowledge_type in KNOWLEDGE_TYPES {
