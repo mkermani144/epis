@@ -15,10 +15,10 @@ pub async fn handle_lingoo_new_chat() -> Result<()> {
   let epis_host = &*CONFIG.epis_host;
   let api = Arc::new(LingooHttpApi::new(epis_host.into()));
 
+  let user_message = prompt_message()?;
+
   let creation_res = api.create_conversation().await?;
   let cid = creation_res.cid().to_string();
-
-  let user_message = prompt_message()?;
 
   // We don't care about setting title, and let it fail silently if needed
   {
