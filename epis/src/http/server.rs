@@ -2,6 +2,7 @@ use anyhow::Result;
 use axum::Router;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::net::TcpListener;
+use tower_http::trace::TraceLayer;
 use tracing::info;
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
@@ -67,6 +68,7 @@ impl HttpServer {
       .with_state(AiAppState {
         llm: app_state.llm.clone(),
       })
+      .layer(TraceLayer::new_for_http())
       .split_for_parts();
 
     let router = router.merge(Scalar::with_url("/scalar", api));
