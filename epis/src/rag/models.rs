@@ -1,4 +1,4 @@
-use derive_more::{IntoIterator};
+use derive_more::IntoIterator;
 use nutype::nutype;
 use thiserror::Error;
 
@@ -22,12 +22,13 @@ impl SimilarityVec {
 impl From<SimilarityVec> for ChatMessage {
   fn from(similarity_vec: SimilarityVec) -> Self {
     ChatMessage {
-      role: ChatMessageRole::System,
+      role: ChatMessageRole::Ai,
       message: format!(
-        "---\ncontext:\n{}\n---",
+        "\nDocuments:\n{}\n",
         similarity_vec
           .into_iter()
-          .map(|s| s.into_inner())
+          .enumerate()
+          .map(|s| format!("{}. {}", s.0, s.1.into_inner()))
           .collect::<Vec<String>>()
           .join("\n")
       )

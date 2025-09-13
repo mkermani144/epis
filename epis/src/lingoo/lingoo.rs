@@ -7,10 +7,10 @@
 use std::sync::Arc;
 
 use crate::{
+  ai::llm::Llm,
   conversation::{models::CreateConversationError, repository::ConversationRepository},
   entities::common::{Category, ChatMessage, ChatMessageRole, Id, Message},
   lingoo::models::{LingooChatError, LingooChatRagError},
-  ai::llm::Llm,
   rag::rag::Rag,
 };
 
@@ -58,10 +58,7 @@ impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
   }
 
   pub async fn chat(&self, cid: &Id, message: Message) -> Result<Message, LingooChatError> {
-    let mut conversation_history = self
-      .conversation_repository
-      .get_conversation_message_history(cid)
-      .await?;
+    let mut conversation_history: Vec<ChatMessage> = vec![];
 
     if let Some(similarity_vec) = self
       .rag
@@ -71,6 +68,13 @@ impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
     {
       conversation_history.push(similarity_vec.into());
     }
+
+    conversation_history.extend(
+      self
+        .conversation_repository
+        .get_conversation_message_history(cid)
+        .await?,
+    );
 
     let reply = self
       .llm
