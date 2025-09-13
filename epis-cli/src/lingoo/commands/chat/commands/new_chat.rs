@@ -2,11 +2,13 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use colored::Colorize;
-use inquire::Text;
 
 use crate::{
   config::CONFIG,
-  lingoo::{api::LingooHttpApi, utils::chat_round},
+  lingoo::{
+    api::LingooHttpApi,
+    utils::{chat_round, prompt_message},
+  },
 };
 
 pub async fn handle_lingoo_new_chat() -> Result<()> {
@@ -16,7 +18,7 @@ pub async fn handle_lingoo_new_chat() -> Result<()> {
   let creation_res = api.create_conversation().await?;
   let cid = creation_res.cid().to_string();
 
-  let user_message = Text::new("").prompt()?;
+  let user_message = prompt_message()?;
 
   // We don't care about setting title, and let it fail silently if needed
   {
