@@ -24,19 +24,12 @@ mod lingoo;
 mod postgres;
 mod rag;
 
-const KNOWLEDGE_TYPES: [&str; 1] = ["languages"];
-
 /// Main entry point for the Epis application
 #[tokio::main]
 async fn main() -> Result<()> {
   tracing_subscriber::fmt::init();
 
   let config = Config::init()?;
-
-  println!("Hey, let's grow our knowledge! Currently, I can help you with:");
-  for knowledge_type in KNOWLEDGE_TYPES {
-    println!("- {knowledge_type}");
-  }
 
   let models = OllamaModels::new(config.generation_model, config.embedding_model);
   let llm = match config.provider {
