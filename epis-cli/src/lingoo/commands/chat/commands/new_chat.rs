@@ -7,7 +7,7 @@ use crate::{
   config::CONFIG,
   lingoo::{
     api::LingooHttpApi,
-    utils::{chat_round, prompt_message},
+    utils::{chat_round, prompt},
   },
 };
 
@@ -17,7 +17,7 @@ pub async fn handle_lingoo_new_chat() -> Result<()> {
 
   println!("Starting a new chat, please send your prompt...");
 
-  let user_message = prompt_message()?;
+  let user_message = prompt(None)?;
 
   let creation_res = api.create_conversation().await?;
   let cid = creation_res.cid().to_string();

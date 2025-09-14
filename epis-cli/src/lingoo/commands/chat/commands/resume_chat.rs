@@ -1,41 +1,10 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use colored::Colorize;
-use derive_more::Display;
-use inquire::Select;
 
-use crate::{
-  config::CONFIG,
-  lingoo::{api::LingooHttpApi, utils::chat_round},
-};
-
-#[derive(Display)]
-#[display(
-  "{}{}",
-  self.title.as_ref().map_or("untitled", |title| title),
-  if self.title.is_none() { format!(" ({id:.5}...)") } else { "".into() }
-)]
-struct PartialConversation {
-  id: String,
-  title: Option<String>,
-}
+use crate::lingoo::{commands::chat::commands::utils::select_conversation, utils::chat_round};
 
 pub async fn handle_lingoo_resume_chat() -> Result<()> {
-  let epis_host = &*CONFIG.epis_host;
-  let lingoo_api = LingooHttpApi::new(epis_host.into());
-  let conversations = lingoo_api.list_conversations().await?;
-
-  let conversation_titles = conversations
-    .data()
-    .into_iter()
-    .map(|conversation| PartialConversation {
-      id: (conversation.id().to_string()),
-      title: conversation.title(),
-    })
-    .collect();
-
-  let selected_conversation = Select::new("select conversation", conversation_titles)
-    .prompt()
-    .context("error while parsing conversation to resume")?;
+  let selected_conversation = select_conversation().await?;
 
   // TODO: Show a brief history of past messages
 
