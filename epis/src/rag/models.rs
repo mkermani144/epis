@@ -4,6 +4,27 @@ use thiserror::Error;
 
 use crate::entities::common::{ChatMessage, ChatMessageRole};
 
+#[derive(Debug, Error)]
+pub enum TopKError {
+  #[error("Top-k should be positive")]
+  NonPositive,
+}
+pub struct TopK(u8);
+impl TopK {
+  pub fn try_new(top_k: impl Into<u8>) -> Result<Self, TopKError> {
+    let _top_k: u8 = top_k.into();
+    if _top_k > 0 {
+      Ok(Self(_top_k))
+    } else {
+      Err(TopKError::NonPositive)
+    }
+  }
+
+  pub fn as_u8(&self) -> u8 {
+    self.0
+  }
+}
+
 #[nutype(derive(From, Debug))]
 pub struct Similarity(String);
 

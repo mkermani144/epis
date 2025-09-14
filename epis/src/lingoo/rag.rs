@@ -3,11 +3,11 @@ use std::sync::Arc;
 use bm25::{DefaultTokenizer, Tokenizer};
 
 use crate::{
+  ai::llm::Llm,
   entities::common::AnyText,
   lingoo::repository::LingooRepository,
-  ai::llm::Llm,
   rag::{
-    models::{IndexSimilarityError, RetrieveSimilaritiesError, Similarity, SimilarityVec},
+    models::{IndexSimilarityError, RetrieveSimilaritiesError, Similarity, SimilarityVec, TopK},
     rag::Rag,
   },
 };
@@ -44,7 +44,10 @@ impl<L: Llm, LR: LingooRepository> Rag for LingooRag<L, LR> {
 
     let similarities: Vec<Similarity> = self
       .lingoo_repository
-      .find_similar_docs(embedding)
+      .find_similar_docs(
+        embedding,
+        TopK::try_new(10).map_err(|_| RetrieveSimilaritiesError::Unknown)?,
+      )
       .await
       .map_err(|_| RetrieveSimilaritiesError::Unknown)?
       .into_iter()

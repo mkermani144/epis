@@ -8,16 +8,19 @@ use crate::{
     repository::LingooRepository,
   },
   postgres::Postgres,
+  rag::models::TopK,
 };
 
 impl LingooRepository for Postgres {
   async fn find_similar_docs(
     &self,
     query: Embedding,
+    top_k: TopK,
   ) -> Result<Vec<LingooRagDocument>, FindSimilarDocsError> {
     let similar_docs = query!(
-      "SELECT (1 - (embedding <=> $1)) AS distance, id, embedding as \"embedding: Vector\", content, created_at, updated_at FROM lingoo_rag ORDER BY distance ASC",
+      "SELECT (1 - (embedding <=> $1)) AS distance, id, embedding AS \"embedding: Vector\", content, created_at, updated_at FROM lingoo_rag ORDER BY distance ASC LIMIT $2",
       Vector::from(query.into_inner()) as Vector,
+      Into::<i64>::into(top_k.as_u8()),
     )
     .fetch_all(self.pool())
     .await
