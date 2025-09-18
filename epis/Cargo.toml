@@ -7,6 +7,9 @@ description = "An extensible assistant helping you learn anything"
 repository = "https://github.com/mkermani144/epis"
 keywords = ["ai", "learning"]
 
+[lints]
+workspace = true
+
 [dependencies]
 anyhow = "1.0.98"
 axum = { version = "0.8.4", features = ["macros"] }
