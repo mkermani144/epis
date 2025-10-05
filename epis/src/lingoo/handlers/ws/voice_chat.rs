@@ -27,6 +27,8 @@ pub async fn voice_chat<L: Llm, CR: ConversationRepository, R: Rag, S: Stt>(
 // 3. A possible better state machine implementation
 // 4. Error handling (do not call unwrap)
 // 5. Fix TODOs if needed
+// 6. Spawn threads to acquire the mutex
+// 7. Maybe use tokio Mutex
 async fn handle_socket<L: Llm, CR: ConversationRepository, R: Rag, S: Stt>(
   mut socket: WebSocket,
   app_state: LingooAppState<L, CR, R, S>,
