@@ -1,8 +1,6 @@
-use std::io::Read;
+use derive_more::{Deref, Display, From};
 
-use derive_more::{Deref, Display};
-
-#[derive(Debug, Clone, Deref, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Deref, Hash, PartialEq, Eq, PartialOrd, Ord, From)]
 pub struct AudioBytes(Vec<u8>);
 impl AudioBytes {
   pub fn into_inner(self) -> Vec<u8> {

@@ -1,6 +1,10 @@
 use anyhow::Result;
 use axum::Router;
-use std::{net::SocketAddr, sync::Arc};
+use epis_stt::stt::Stt;
+use std::{
+  net::SocketAddr,
+  sync::{Arc, Mutex},
+};
 use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
 use tracing::info;
@@ -11,36 +15,61 @@ use utoipa_scalar::{Scalar, Servable};
 use crate::{
   ai::{llm::Llm, router::AiRouter},
   conversation::{repository::ConversationRepository, router::ConversationRouter},
-  lingoo::{lingoo::Lingoo, router::LingooRouter},
+  lingoo::{
+    lingoo::Lingoo,
+    router::{LingooRouter, LingooWebsocketRouter},
+  },
   rag::rag::Rag,
 };
 
-/// HTTP server manager using Axum
+#[derive(Debug)]
 pub struct HttpServer {
   router: Router,
   addr: SocketAddr,
 }
 
-#[derive(Clone)]
-pub struct AppState<L: Llm, CR: ConversationRepository, R: Rag> {
+pub struct AppState<L: Llm, CR: ConversationRepository, R: Rag, S: Stt> {
   pub lingoo: Arc<Lingoo<L, CR, R>>,
   pub conversation_repository: Arc<CR>,
   pub llm: Arc<L>,
+  pub stt: Arc<Mutex<S>>,
+}
+// Stt is not Clone for now, so we need to impl Clone
+impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt> Clone for AppState<L, CR, R, S> {
+  fn clone(&self) -> Self {
+    Self {
+      lingoo: self.lingoo.clone(),
+      conversation_repository: self.conversation_repository.clone(),
+      llm: self.llm.clone(),
+      stt: self.stt.clone(),
+    }
+  }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ConversationAppState<CR: ConversationRepository> {
   pub conversation_repository: Arc<CR>,
 }
 
-#[derive(Clone)]
-pub struct LingooAppState<L: Llm, CR: ConversationRepository, R: Rag> {
+// TODO: Extract WS state so it's not part of REST Lingoo state
+pub struct LingooAppState<L: Llm, CR: ConversationRepository, R: Rag, S: Stt> {
   pub lingoo: Arc<Lingoo<L, CR, R>>,
   // FIXME: Remove this field when /lingoo/conversation/list API is fixed
   pub conversation_repository: Arc<CR>,
+  pub stt: Arc<Mutex<S>>,
+}
+// Stt is not Clone for now, so we need to impl Clone
+impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt> Clone for LingooAppState<L, CR, R, S> {
+  fn clone(&self) -> Self {
+    Self {
+      lingoo: self.lingoo.clone(),
+      conversation_repository: self.conversation_repository.clone(),
+      stt: self.stt.clone(),
+    }
+  }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct AiAppState<L: Llm> {
   pub llm: Arc<L>,
 }
@@ -50,9 +79,9 @@ struct ApiDoc;
 
 impl HttpServer {
   /// Creates a new HTTP server
-  pub fn try_new<L: Llm, CR: ConversationRepository, R: Rag>(
+  pub fn try_new<L: Llm, CR: ConversationRepository, R: Rag, S: Stt>(
     addr: SocketAddr,
-    app_state: AppState<L, CR, R>,
+    app_state: AppState<L, CR, R, S>,
   ) -> Result<Self> {
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
       .nest("/conversation", ConversationRouter::new().into_inner())
@@ -63,6 +92,7 @@ impl HttpServer {
       .with_state(LingooAppState {
         lingoo: app_state.lingoo.clone(),
         conversation_repository: app_state.conversation_repository.clone(),
+        stt: app_state.stt.clone(),
       })
       .nest("/ai", AiRouter::new().into_inner())
       .with_state(AiAppState {
@@ -70,6 +100,16 @@ impl HttpServer {
       })
       .layer(TraceLayer::new_for_http())
       .split_for_parts();
+
+    // TODO: Add a root WS router and put the logic there
+    // TODO: Document the WS router somehow
+    let router = router
+      .nest("/ws/lingoo", LingooWebsocketRouter::new().into_inner())
+      .with_state(LingooAppState {
+        lingoo: app_state.lingoo.clone(),
+        conversation_repository: app_state.conversation_repository.clone(),
+        stt: app_state.stt.clone(),
+      });
 
     let router = router.merge(Scalar::with_url("/scalar", api));
     info!("HTTP server initialized successfully");

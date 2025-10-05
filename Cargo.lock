@@ -712,6 +712,7 @@ dependencies = [
  "axum",
  "bm25",
  "derive_more",
+ "epis-stt",
  "hound",
  "inquire",
  "nutype",

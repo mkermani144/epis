@@ -40,7 +40,10 @@ impl<L: Llm, LR: LingooRepository> Rag for LingooRag<L, LR> {
       .llm
       .generate_embeddings(&preprocessed_text)
       .await
-      .map_err(|_| RetrieveSimilaritiesError::Embedding)?;
+      .map_err(|e| {
+        dbg!(e);
+        RetrieveSimilaritiesError::Embedding
+      })?;
 
     let similarities: Vec<Similarity> = self
       .lingoo_repository

@@ -1,5 +1,3 @@
-use std::vec::IntoIter;
-
 use thiserror::Error;
 
 use crate::models::{AudioBytes, SttLanguage};
@@ -18,7 +16,8 @@ pub enum SttError {
   Unknown,
 }
 
-pub trait Stt {
+// FIXME: Add Clone supertrait when there is a solution for WhisperStt to be Clone
+pub trait Stt: Send + Sync + 'static {
   fn speech_to_text<'stt>(
     &'stt mut self,
     wav_bytes: &AudioBytes,

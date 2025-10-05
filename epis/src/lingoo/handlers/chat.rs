@@ -1,14 +1,15 @@
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
+use epis_stt::stt::Stt;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use utoipa::ToSchema;
 
 use crate::{
+  ai::llm::Llm,
   conversation::{models::GetConversationMessageHistoryError, repository::ConversationRepository},
   entities::common::{Id, InvalidIdError, Message, MessageError},
   http::server::LingooAppState,
   lingoo::{models::LingooChatError, router::LINGOO_CATEGORY},
-  ai::llm::Llm,
   rag::rag::Rag,
 };
 
@@ -65,7 +66,7 @@ impl LingooChatResponseData {
       response: response.into_inner(),
     }
   }
-  
+
   pub fn into_response(self) -> String {
     self.response
   }
@@ -83,8 +84,8 @@ impl LingooChatResponseData {
     (status = INTERNAL_SERVER_ERROR, body = String, content_type = "application/json"),
   )
 )]
-pub async fn chat<L: Llm, CR: ConversationRepository, R: Rag>(
-  State(app_state): State<LingooAppState<L, CR, R>>,
+pub async fn chat<L: Llm, CR: ConversationRepository, R: Rag, S: Stt>(
+  State(app_state): State<LingooAppState<L, CR, R, S>>,
   Json(request): Json<LingooChatRequestBody>,
 ) -> Result<Json<LingooChatResponseData>, LingooChatApiError> {
   let (cid, message) = request.try_into_domain_parts()?;

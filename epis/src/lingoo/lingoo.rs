@@ -84,7 +84,10 @@ impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
       .rag
       .retrieve_similarities(&message.as_ref().into())
       .await
-      .map_err(|_| LingooChatError::Rag(LingooChatRagError::Retrieve))?
+      .map_err(|e| {
+        println!("error was: {}", e);
+        LingooChatError::Rag(LingooChatRagError::Retrieve)
+      })?
     {
       conversation_history.push(similarity_vec.into());
     }

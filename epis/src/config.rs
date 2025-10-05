@@ -3,7 +3,7 @@
 //! This module handles application configuration including LLM providers and model settings.
 //! Configuration is loaded from environment variables.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 
 /// Supported LLM providers for the application
 #[derive(Debug)]
@@ -38,6 +38,8 @@ pub struct Config {
   pub database_url: String,
   /// The HTTP server address
   pub listen_port: u16,
+  /// THe whisper model path
+  pub whisper_model_path: String,
 }
 
 impl Config {
@@ -54,12 +56,13 @@ impl Config {
   /// * `RUST_LOG` - The logging level (e.g., "info", "debug", "warn")
   pub fn init() -> Result<Self> {
     Ok(Self {
-      provider: std::env::var("PROVIDER")?.try_into()?,
-      generation_model: std::env::var("GENERATION_MODEL")?,
-      embedding_model: std::env::var("EMBEDDING_MODEL")?,
+      provider: std::env::var("PROVIDER").context("PROVIDER env var not provided")?.try_into()?,
+      generation_model: std::env::var("GENERATION_MODEL").context("GENERATION_MODEL env var not provided")?,
+      embedding_model: std::env::var("EMBEDDING_MODEL").context("EMBEDDING_MODEL env var not provided")?,
       ollama_url: std::env::var("OLLAMA_URL").ok(),
-      database_url: std::env::var("DATABASE_URL")?,
-      listen_port: std::env::var("LISTEN_PORT")?.parse()?,
+      database_url: std::env::var("DATABASE_URL").context("DATABASE_URL env var not provided")?,
+      listen_port: std::env::var("LISTEN_PORT").context("LISTEN_PORT env var not provided")?.parse()?,
+      whisper_model_path: std::env::var("WHISPER_MODEL_PATH").context("WHISPER_MODEL_PATH env var not provided")?,
     })
   }
 }

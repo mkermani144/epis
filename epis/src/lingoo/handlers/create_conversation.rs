@@ -1,14 +1,15 @@
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
+use epis_stt::stt::Stt;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use utoipa::ToSchema;
 
 use crate::{
+  ai::llm::Llm,
   conversation::{models::CreateConversationError, repository::ConversationRepository},
   entities::common::Id,
   http::server::LingooAppState,
   lingoo::router::LINGOO_CATEGORY,
-  ai::llm::Llm,
   rag::rag::Rag,
 };
 
@@ -52,8 +53,8 @@ impl CreateLingooConversationResponseData {
     (status = INTERNAL_SERVER_ERROR, body = String, content_type = "application/json"),
   )
 )]
-pub async fn create_conversation<L: Llm, CR: ConversationRepository, R: Rag>(
-  State(app_state): State<LingooAppState<L, CR, R>>,
+pub async fn create_conversation<L: Llm, CR: ConversationRepository, R: Rag, S: Stt>(
+  State(app_state): State<LingooAppState<L, CR, R, S>>,
 ) -> Result<Json<CreateLingooConversationResponseData>, CreateConversationApiError> {
   let conversation_id = app_state
     .lingoo

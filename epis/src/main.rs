@@ -4,7 +4,12 @@
 //! currently supporting language learning through LLM-powered conversations.
 
 use anyhow::Result;
-use std::{net::SocketAddr, sync::Arc};
+use epis_stt::whisper_stt::{WhisperModelPreset, WhisperStt};
+use std::{
+  net::SocketAddr,
+  path::Path,
+  sync::{Arc, Mutex},
+};
 use tracing::info;
 
 use crate::{
@@ -37,14 +42,19 @@ async fn main() -> Result<()> {
   };
   let postgres = Arc::new(Postgres::try_new(&config.database_url).await?);
   let lingoo_rag = Arc::new(LingooRag::new(llm.clone(), postgres.clone()));
-  let lingoo = Lingoo::new(llm.clone(), postgres.clone(), lingoo_rag.clone());
+  let lingoo = Arc::new(Lingoo::new(llm.clone(), postgres.clone(), lingoo_rag));
+  let whisper = Arc::new(Mutex::new(WhisperStt::try_new(
+    Path::new(&config.whisper_model_path),
+    WhisperModelPreset::Tiny,
+  )?));
 
   HttpServer::try_new(
     SocketAddr::from(([0, 0, 0, 0], config.listen_port)),
     AppState {
-      lingoo: Arc::new(lingoo),
+      lingoo: lingoo,
       conversation_repository: postgres.clone(),
       llm: llm.clone(),
+      stt: whisper,
     },
   )?
   .start()
