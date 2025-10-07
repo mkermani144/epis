@@ -1,0 +1,11 @@
+[package]
+name = "epis-core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+derive_more = { version = "2.0.1", features = ["as_ref", "into"] }
+thiserror = "2.0.17"
+
+[lints]
+workspace = true
