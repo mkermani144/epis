@@ -1,7 +1,7 @@
-use derive_more::{AsRef, Into};
+use derive_more::{AsRef, Display, Into};
 use thiserror::Error;
 
-#[derive(Debug, Clone, AsRef, PartialEq, Eq, PartialOrd, Ord, Hash, Into)]
+#[derive(Debug, Clone, AsRef, PartialEq, Eq, PartialOrd, Ord, Hash, Into, Display)]
 #[as_ref(forward)]
 pub struct NonEmptyString(String);
 
@@ -17,6 +17,10 @@ impl NonEmptyString {
       return Err(NonEmptyStringError::Empty);
     }
     Ok(Self(value))
+  }
+
+  pub fn into_inner(self) -> String {
+    self.0
   }
 }
 
