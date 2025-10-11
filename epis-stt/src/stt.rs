@@ -4,15 +4,15 @@ use crate::models::{AudioBytes, SttLanguage};
 
 #[derive(Debug, Clone, Error)]
 pub enum SttError {
-  #[error("invalid audio bytes")]
+  #[error("Invalid audio bytes")]
   InvalidBytes,
-  #[error("error during sampling")]
+  #[error("Error during sampling")]
   FailedSampling,
-  #[error("sorround audio (>2 channels) is not supported")]
+  #[error("Sorround audio (>2 channels) is not supported")]
   UnsupportedSorroundAudio,
-  #[error("model err during speech to text")]
+  #[error("Model err during speech to text")]
   ModelError,
-  #[error("unknown error during speech to text")]
+  #[error("Unknown error stt")]
   Unknown,
 }
 
