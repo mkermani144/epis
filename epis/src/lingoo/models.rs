@@ -25,6 +25,7 @@ pub enum LingooChatError {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct LingooRagDocument {
   id: Id,
   embedding: Embedding,
@@ -49,18 +50,23 @@ impl LingooRagDocument {
     }
   }
 
+  #[allow(dead_code)]
   pub fn id(&self) -> &Id {
     &self.id
   }
+  #[allow(dead_code)]
   pub fn embedding(&self) -> &Embedding {
     &self.embedding
   }
+  #[allow(dead_code)]
   pub fn content(self) -> String {
     self.content
   }
+  #[allow(dead_code)]
   pub fn created_at(&self) -> &Timestamp {
     &self.created_at
   }
+  #[allow(dead_code)]
   pub fn updated_at(&self) -> &Timestamp {
     &self.updated_at
   }

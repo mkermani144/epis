@@ -48,6 +48,7 @@ pub struct SetConversationTitleRequestBody {
   pub title: String,
 }
 impl SetConversationTitleRequestBody {
+  #[allow(dead_code)]
   pub fn new(cid: String, title: String) -> Self {
     Self {
       conversation_id: cid,

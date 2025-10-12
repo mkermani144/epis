@@ -35,6 +35,7 @@ pub struct GenerateTitleRequestBody {
   init_msg: String,
 }
 impl GenerateTitleRequestBody {
+  #[allow(dead_code)]
   pub fn new(init_msg: String) -> Self {
     Self { init_msg }
   }
@@ -55,6 +56,7 @@ impl GenerateTitleResponseData {
     }
   }
 
+  #[allow(dead_code)]
   pub fn into_title(self) -> String {
     self.title
   }

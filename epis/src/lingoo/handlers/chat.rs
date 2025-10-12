@@ -43,6 +43,7 @@ pub struct LingooChatRequestBody {
   message: String,
 }
 impl LingooChatRequestBody {
+  #[allow(dead_code)]
   pub fn new(conversation_id: String, message: String) -> Self {
     Self {
       conversation_id,
@@ -68,6 +69,7 @@ impl LingooChatResponseData {
     }
   }
 
+  #[allow(dead_code)]
   pub fn into_response(self) -> String {
     self.response
   }

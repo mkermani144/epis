@@ -55,10 +55,12 @@ impl ListLingooConversationsResponseDatum {
     }
   }
 
+  #[allow(dead_code)]
   pub fn title(self) -> Option<String> {
     self.title
   }
 
+  #[allow(dead_code)]
   pub fn id(&self) -> &str {
     &self.id
   }
@@ -85,6 +87,7 @@ impl ListLingooConversationsResponseData {
     Self { data }
   }
 
+  #[allow(dead_code)]
   pub fn data(self) -> Vec<ListLingooConversationsResponseDatum> {
     self.data
   }

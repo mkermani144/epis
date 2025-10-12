@@ -40,6 +40,7 @@ impl CreateLingooConversationResponseData {
     }
   }
 
+  #[allow(dead_code)]
   pub fn cid(&self) -> &str {
     &self.conversation_id
   }
