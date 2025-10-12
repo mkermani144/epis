@@ -1,5 +1,6 @@
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 use epis_stt::stt::Stt;
+use epis_tts::tts::Tts;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use utoipa::ToSchema;
@@ -84,8 +85,8 @@ impl LingooChatResponseData {
     (status = INTERNAL_SERVER_ERROR, body = String, content_type = "application/json"),
   )
 )]
-pub async fn chat<L: Llm, CR: ConversationRepository, R: Rag, S: Stt>(
-  State(app_state): State<LingooAppState<L, CR, R, S>>,
+pub async fn chat<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts>(
+  State(app_state): State<LingooAppState<L, CR, R, S, T>>,
   Json(request): Json<LingooChatRequestBody>,
 ) -> Result<Json<LingooChatResponseData>, LingooChatApiError> {
   let (cid, message) = request.try_into_domain_parts()?;

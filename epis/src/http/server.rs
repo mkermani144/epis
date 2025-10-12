@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::Router;
 use epis_stt::stt::Stt;
+use epis_tts::tts::Tts;
 use std::{
   net::SocketAddr,
   sync::{Arc, Mutex},
@@ -28,20 +29,24 @@ pub struct HttpServer {
   addr: SocketAddr,
 }
 
-pub struct AppState<L: Llm, CR: ConversationRepository, R: Rag, S: Stt> {
+pub struct AppState<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> {
   pub lingoo: Arc<Lingoo<L, CR, R>>,
   pub conversation_repository: Arc<CR>,
   pub llm: Arc<L>,
   pub stt: Arc<Mutex<S>>,
+  pub tts: Arc<Mutex<T>>,
 }
 // Stt is not Clone for now, so we need to impl Clone
-impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt> Clone for AppState<L, CR, R, S> {
+impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> Clone
+  for AppState<L, CR, R, S, T>
+{
   fn clone(&self) -> Self {
     Self {
       lingoo: self.lingoo.clone(),
       conversation_repository: self.conversation_repository.clone(),
       llm: self.llm.clone(),
       stt: self.stt.clone(),
+      tts: self.tts.clone(),
     }
   }
 }
@@ -52,19 +57,23 @@ pub struct ConversationAppState<CR: ConversationRepository> {
 }
 
 // TODO: Extract WS state so it's not part of REST Lingoo state
-pub struct LingooAppState<L: Llm, CR: ConversationRepository, R: Rag, S: Stt> {
+pub struct LingooAppState<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> {
   pub lingoo: Arc<Lingoo<L, CR, R>>,
   // FIXME: Remove this field when /lingoo/conversation/list API is fixed
   pub conversation_repository: Arc<CR>,
   pub stt: Arc<Mutex<S>>,
+  pub tts: Arc<Mutex<T>>,
 }
 // Stt is not Clone for now, so we need to impl Clone
-impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt> Clone for LingooAppState<L, CR, R, S> {
+impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> Clone
+  for LingooAppState<L, CR, R, S, T>
+{
   fn clone(&self) -> Self {
     Self {
       lingoo: self.lingoo.clone(),
       conversation_repository: self.conversation_repository.clone(),
       stt: self.stt.clone(),
+      tts: self.tts.clone(),
     }
   }
 }
@@ -79,9 +88,9 @@ struct ApiDoc;
 
 impl HttpServer {
   /// Creates a new HTTP server
-  pub fn try_new<L: Llm, CR: ConversationRepository, R: Rag, S: Stt>(
+  pub fn try_new<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts>(
     addr: SocketAddr,
-    app_state: AppState<L, CR, R, S>,
+    app_state: AppState<L, CR, R, S, T>,
   ) -> Result<Self> {
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
       .nest("/conversation", ConversationRouter::new().into_inner())
@@ -93,6 +102,7 @@ impl HttpServer {
         lingoo: app_state.lingoo.clone(),
         conversation_repository: app_state.conversation_repository.clone(),
         stt: app_state.stt.clone(),
+        tts: app_state.tts.clone(),
       })
       .nest("/ai", AiRouter::new().into_inner())
       .with_state(AiAppState {
@@ -109,6 +119,7 @@ impl HttpServer {
         lingoo: app_state.lingoo.clone(),
         conversation_repository: app_state.conversation_repository.clone(),
         stt: app_state.stt.clone(),
+        tts: app_state.tts.clone(),
       });
 
     let router = router.merge(Scalar::with_url("/scalar", api));

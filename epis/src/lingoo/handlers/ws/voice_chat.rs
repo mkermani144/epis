@@ -8,15 +8,16 @@ use axum::{
   response::Response,
 };
 use epis_stt::stt::Stt;
+use epis_tts::{models::TtsLanguage, tts::Tts};
 
 use crate::{
   ai::llm::Llm, conversation::repository::ConversationRepository, entities::common::Id,
   http::server::LingooAppState, rag::rag::Rag,
 };
 
-pub async fn voice_chat<L: Llm, CR: ConversationRepository, R: Rag, S: Stt>(
+pub async fn voice_chat<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts>(
   ws: WebSocketUpgrade,
-  State(app_state): State<LingooAppState<L, CR, R, S>>,
+  State(app_state): State<LingooAppState<L, CR, R, S, T>>,
 ) -> Response {
   ws.on_upgrade(|socket| handle_socket(socket, app_state))
 }
@@ -29,9 +30,9 @@ pub async fn voice_chat<L: Llm, CR: ConversationRepository, R: Rag, S: Stt>(
 // 5. Fix TODOs if needed
 // 6. Spawn threads to acquire the mutex
 // 7. Maybe use tokio Mutex
-async fn handle_socket<L: Llm, CR: ConversationRepository, R: Rag, S: Stt>(
+async fn handle_socket<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts>(
   mut socket: WebSocket,
-  app_state: LingooAppState<L, CR, R, S>,
+  app_state: LingooAppState<L, CR, R, S, T>,
 ) {
   let mut cid: Option<Id> = None;
   while let Some(msg) = socket.recv().await {
@@ -69,9 +70,23 @@ async fn handle_socket<L: Llm, CR: ConversationRepository, R: Rag, S: Stt>(
               .await
               .unwrap();
 
-            println!("Ai reply is: {}", ai_reply.as_ref());
+            println!("Ai reply is: {}", ai_reply.clone().into_inner());
 
-            todo!("Implement Tts")
+            let mut reply_audio_vec: Vec<_> = app_state
+              .tts
+              .lock()
+              .unwrap()
+              .text_to_speech(
+                // FIXME: Do not unwrap, impl From instead
+                &ai_reply.into_inner().try_into().unwrap(),
+                &TtsLanguage::En,
+              )
+              .unwrap()
+              .into_iter()
+              .collect();
+
+            let reply_audio = reply_audio_vec.pop().unwrap();
+            Message::Binary(reply_audio.into_inner().into())
           }
         }
         _ => {

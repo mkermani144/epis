@@ -4,6 +4,7 @@ use axum::{
   response::{IntoResponse, Json},
 };
 use epis_stt::stt::Stt;
+use epis_tts::tts::Tts;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use utoipa::ToSchema;
@@ -98,8 +99,8 @@ impl ListLingooConversationsResponseData {
     (status = INTERNAL_SERVER_ERROR, body = String, content_type = "application/json"),
   )
 )]
-pub async fn list_conversations<L: Llm, CR: ConversationRepository, R: Rag, S: Stt>(
-  State(app_state): State<LingooAppState<L, CR, R, S>>,
+pub async fn list_conversations<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts>(
+  State(app_state): State<LingooAppState<L, CR, R, S, T>>,
 ) -> Result<Json<ListLingooConversationsResponseData>, ListConversationsApiError> {
   let lingoo_conversations = app_state
     .conversation_repository

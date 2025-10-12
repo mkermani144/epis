@@ -5,6 +5,7 @@
 
 use anyhow::Result;
 use epis_stt::whisper_stt::{WhisperModelPreset, WhisperStt};
+use epis_tts::{byt5_ttp::ByT5Ttp, kokoro_tts::KokoroTts, models::TtsLanguage};
 use std::{
   net::SocketAddr,
   path::Path,
@@ -47,14 +48,25 @@ async fn main() -> Result<()> {
     Path::new(&config.whisper_model_path),
     WhisperModelPreset::Tiny,
   )?));
+  let byt5 = ByT5Ttp::new(
+    Path::new(&config.byt5_encoder_model_path),
+    Path::new(&config.byt5_decoder_model_path),
+  )?;
+  let kokoro = Arc::new(Mutex::new(KokoroTts::new(
+    byt5,
+    Path::new(&config.kokoro_model_path),
+    vec![TtsLanguage::En, TtsLanguage::Es],
+    Path::new(&config.kokoro_voice_data_dir),
+  )?));
 
   HttpServer::try_new(
     SocketAddr::from(([0, 0, 0, 0], config.listen_port)),
     AppState {
       lingoo: lingoo,
-      conversation_repository: postgres.clone(),
-      llm: llm.clone(),
+      conversation_repository: postgres,
+      llm: llm,
       stt: whisper,
+      tts: kokoro,
     },
   )?
   .start()
