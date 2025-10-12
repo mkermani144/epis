@@ -10,6 +10,7 @@ use crate::{
 
 pub const AI_CATEGORY: &'static str = "Ai";
 
+#[derive(Debug)]
 pub struct AiRouter<L: Llm>(OpenApiRouter<AiAppState<L>>);
 
 impl<L: Llm> AiRouter<L> {

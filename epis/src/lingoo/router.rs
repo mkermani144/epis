@@ -18,7 +18,7 @@ use crate::{
 
 pub const LINGOO_CATEGORY: &'static str = "Lingoo";
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct LingooRouter<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts>(
   OpenApiRouter<LingooAppState<L, CR, R, S, T>>,
 );
@@ -38,6 +38,7 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> LingooRouter<L,
 }
 
 // TODO: Move into its own module
+#[derive(Debug)]
 pub struct LingooWebsocketRouter<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts>(
   Router<LingooAppState<L, CR, R, S, T>>,
 );

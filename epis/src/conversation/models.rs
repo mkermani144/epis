@@ -38,6 +38,7 @@ pub enum GetConversationMessageHistoryError {
 #[nutype(derive(AsRef, From, Debug))]
 pub struct Timestamp(u64);
 
+#[derive(Debug)]
 pub struct Conversation {
   id: Id,
   title: Option<ConversationTitle>,

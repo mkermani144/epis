@@ -12,7 +12,7 @@ use crate::{
   },
 };
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct LingooRag<L: Llm, LR: LingooRepository> {
   llm: Arc<L>,
   lingoo_repository: Arc<LR>,

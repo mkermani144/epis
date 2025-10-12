@@ -51,6 +51,7 @@ You may utilize these tools to help the user:
 };
 
 /// Language learning assistant powered by LLM
+#[derive(Debug)]
 pub struct Lingoo<L: Llm, CR: ConversationRepository, R: Rag> {
   llm: Arc<L>,
   conversation_repository: Arc<CR>,

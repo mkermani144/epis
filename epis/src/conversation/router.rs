@@ -10,6 +10,7 @@ use crate::{
 
 pub const CONVERSATION_CATEGORY: &'static str = "Conversation";
 
+#[derive(Debug)]
 pub struct ConversationRouter<CR: ConversationRepository>(OpenApiRouter<ConversationAppState<CR>>);
 
 impl<CR: ConversationRepository> ConversationRouter<CR> {

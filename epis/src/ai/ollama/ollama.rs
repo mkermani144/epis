@@ -4,22 +4,19 @@
 //! allowing the application to use local Ollama instances for LLM inference.
 
 use super::ollama_models::OllamaModels;
+use crate::ai::llm::Llm;
 use crate::entities::common::{AnyText, ChatMessage, ChatMessageRole, Message};
 use crate::entities::embedding::Embedding;
-use crate::ai::llm::Llm;
 use anyhow::Result;
 use ollama_rs::generation::chat::request::ChatMessageRequest;
 use ollama_rs::generation::chat::{ChatMessage as OllamaChatMessage, MessageRole};
 use ollama_rs::generation::embeddings::request::GenerateEmbeddingsRequest;
 use ollama_rs::{
-  IntoUrlSealed, Ollama as OllamaRs,
-  generation::{
-    completion::request::GenerationRequest,
-  },
+  IntoUrlSealed, Ollama as OllamaRs, generation::completion::request::GenerationRequest,
 };
 
 /// Ollama LLM provider implementation
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Ollama {
   pub instance: OllamaRs,
   pub models: OllamaModels,

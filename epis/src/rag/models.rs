@@ -9,6 +9,7 @@ pub enum TopKError {
   #[error("Top-k should be positive")]
   NonPositive,
 }
+#[derive(Debug)]
 pub struct TopK(u8);
 impl TopK {
   pub fn try_new(top_k: impl Into<u8>) -> Result<Self, TopKError> {
@@ -28,7 +29,7 @@ impl TopK {
 #[nutype(derive(From, Debug))]
 pub struct Similarity(String);
 
-#[derive(IntoIterator)]
+#[derive(Debug, IntoIterator)]
 pub struct SimilarityVec(Vec<Similarity>);
 impl SimilarityVec {
   pub fn new(similarity_vec: Vec<Similarity>) -> Option<Self> {

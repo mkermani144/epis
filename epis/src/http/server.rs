@@ -29,6 +29,7 @@ pub struct HttpServer {
   addr: SocketAddr,
 }
 
+#[derive(Debug)]
 pub struct AppState<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> {
   pub lingoo: Arc<Lingoo<L, CR, R>>,
   pub conversation_repository: Arc<CR>,
@@ -57,6 +58,7 @@ pub struct ConversationAppState<CR: ConversationRepository> {
 }
 
 // TODO: Extract WS state so it's not part of REST Lingoo state
+#[derive(Debug)]
 pub struct LingooAppState<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> {
   pub lingoo: Arc<Lingoo<L, CR, R>>,
   // FIXME: Remove this field when /lingoo/conversation/list API is fixed

@@ -4,7 +4,7 @@ use sqlx::{PgPool, migrate};
 use tracing::info;
 
 /// Database connection manager for PostgreSQL
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Postgres {
   pool: PgPool,
 }
