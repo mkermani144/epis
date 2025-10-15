@@ -1,6 +1,6 @@
 use std::sync::mpsc::{self, Receiver, Sender};
 
-use crate::queue::Queue;
+use crate::queue::queue::Queue;
 
 /// A channel-based implementation of a queue. It's a simple wrapper around channel sender and
 /// receiver,
