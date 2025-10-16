@@ -3,7 +3,7 @@ use std::{
   thread::{JoinHandle, spawn},
 };
 
-use crate::{queue::queue::Queue, queue_worker_pool::job::Job};
+use crate::{queue::queue::Queue, queue_worker_pool::entities::Job};
 
 /// Representation of the worker used alongside [QueueWorkerPool]. It's a basic implementation of a
 /// pool worker with nothing fancy. The worker terminates when it sees a [None] in the queue.
@@ -15,11 +15,10 @@ pub struct QueueWorker {
   pub(super) join_handle: JoinHandle<()>,
 }
 impl QueueWorker {
-  pub fn new<O, J, Q>(queue: Arc<Mutex<Q>>) -> Self
+  pub fn new<O, Q>(queue: Arc<Mutex<Q>>) -> Self
   where
     O: Send,
-    J: Fn() -> O + Send,
-    Q: Queue<Item = Option<(Job<O, J>, Sender<O>)>>,
+    Q: Queue<Item = Option<(Job<O>, Sender<O>)>>,
   {
     let join_handle = spawn(move || {
       loop {
@@ -27,7 +26,7 @@ impl QueueWorker {
           .lock()
           .expect("Cannot graph worker pool queue lock")
           .dequeue();
-        if let Some(Some((Job(job), tx))) = queued_item {
+        if let Some(Some((job, tx))) = queued_item {
           tx.send(job())
             .expect("Worker pool is deallocated, which is unexpected");
         } else {
