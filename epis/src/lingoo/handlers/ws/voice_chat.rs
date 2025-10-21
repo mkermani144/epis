@@ -50,12 +50,8 @@ async fn handle_socket<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tt
         ))
         .await;
 
-      if let Ok(result) = result {
-        result
-      }
-
       // If we cannot send, it means the other part is disconnected
-      bail!("Socket client side disconnected")
+      result.or_else(|_| bail!("Socket client side disconnected"))
     };
 
   let mut session = VoiceChatSession::new(app_state);
@@ -67,7 +63,11 @@ async fn handle_socket<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tt
       match raw_message {
         Message::Text(raw_text_message) => {
           if let Ok(parsed_message) = serde_json::from_str(&raw_text_message) {
-            session.handle_message(parsed_message);
+            let message_to_reply = session.handle_message(parsed_message).await;
+
+            if let Err(_) = reply(&mut socket, &message_to_reply).await {
+              return;
+            };
           } else {
             if let Err(_) = reply(&mut socket, &VoiceChatReplyMessage::Invalid).await {
               return;
