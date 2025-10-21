@@ -731,6 +731,7 @@ dependencies = [
  "axum",
  "bm25",
  "derive_more",
+ "epis-core",
  "epis-stt",
  "epis-tts",
  "hound",
@@ -750,6 +751,7 @@ dependencies = [
  "utoipa",
  "utoipa-axum",
  "utoipa-scalar",
+ "uuid",
 ]
 
 [[package]]
@@ -3415,6 +3417,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2f87b8aa10b915a06587d0dec516c282ff295b475d94abf425d62b57710070a2"
 dependencies = [
  "js-sys",
+ "serde",
  "wasm-bindgen",
 ]
 

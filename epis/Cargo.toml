@@ -15,6 +15,7 @@ anyhow = "1.0.98"
 axum = { version = "0.8.4", features = ["macros", "ws"] }
 bm25 = { version = "2.3.1", features = ["language_detection"] }
 derive_more = { version = "2.0.1", features = ["from", "into_iterator"] }
+epis-core = { path = "../epis-core" }
 epis-stt = { path = "../epis-stt" }
 epis-tts = { path = "../epis-tts" }
 hound = "3.5.1"
@@ -39,6 +40,7 @@ tracing-subscriber = "0.3.20"
 utoipa = { version = "5.4.0", features = ["debug"] }
 utoipa-axum = { version = "0.2.0", features = ["debug"] }
 utoipa-scalar = { version = "0.3.0", features = ["axum"] }
+uuid = { version = "1.18.1", features = ["serde"] }
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3
