@@ -28,10 +28,6 @@ pub async fn voice_chat<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: T
   ws.on_upgrade(|socket| handle_socket(socket, app_state))
 }
 
-// FIXME: This is a basic implementation and the following should be fixed:
-// - Fix TODOs if needed
-// - Spawn threads to acquire the mutex
-// - Maybe use tokio Mutex
 async fn handle_socket<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts>(
   mut socket: WebSocket,
   app_state: LingooAppState<L, CR, R, S, T>,

@@ -1,6 +1,6 @@
 use derive_more::{AsRef, Display, From};
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, From, AsRef, Display)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, From, AsRef, Display, Default)]
 #[display("<AudioChunk>")]
 pub struct AudioChunk(Vec<u8>);
 
