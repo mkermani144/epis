@@ -7,8 +7,8 @@ use std::fmt::Display;
 use nutype::nutype;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sqlx::types::Uuid;
 use thiserror::Error;
+use uuid::Uuid;
 
 /// A wrapper for message content
 #[nutype(derive(Debug, Clone, TryFrom, AsRef), validate(not_empty))]
@@ -35,8 +35,7 @@ pub struct ChatMessage {
 }
 
 /// A unique identifier for anything
-/// TODO: Id should not rely on third party crates
-#[nutype(derive(Debug, Clone, From, AsRef, Display))]
+#[nutype(derive(Debug, Clone, From, AsRef, Display, Serialize, Deserialize))]
 pub struct Id(Uuid);
 #[derive(Error, Debug)]
 #[error("Id not valid")]
