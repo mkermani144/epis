@@ -133,37 +133,35 @@ impl<T: Ttp> Tts for KokoroTts<T> {
     // FIXME: Either use this parameter, or drop it in favor of chunk-based language detection
     language: &TtsLanguage,
   ) -> Result<impl IntoIterator<Item = AudioChunk>, Self::Error> {
-    let phoneme_sentences: Vec<String> = <NonEmptyString as AsRef<str>>::as_ref(text)
-      // TODO: Replace the following two expressions and the filter with a preprocessing module
-      .replace(
-        |c: char| c.is_ascii_punctuation() && c != '!' && c != '?' && c != '.',
-        "",
-      )
-      .split(|c: char| c.is_ascii_punctuation() || c == '\n')
-      .filter_map(|sentence| {
-        if sentence.is_empty() {
-          return None;
-        }
+    let phoneme_sentences: Result<Vec<String>, KokoroTtsError> =
+      <NonEmptyString as AsRef<str>>::as_ref(text)
+        // TODO: Replace the following two expressions and the filter with a preprocessing module
+        .replace(
+          |c: char| c.is_ascii_punctuation() && c != '!' && c != '?' && c != '.',
+          "",
+        )
+        .split(|c: char| c.is_ascii_punctuation() || c == '\n')
+        .filter_map(|sentence| {
+          let trimmed_sentence = NonEmptyString::new(sentence.trim().into()).ok()?;
+          let sentence_language = match detect_lang(trimmed_sentence.as_ref()).unwrap_or(Lang::Eng)
+          {
+            Lang::Eng => TtsLanguage::En,
+            Lang::Spa => TtsLanguage::Es,
+            Lang::Tur => TtsLanguage::Tr,
+            _ => TtsLanguage::En,
+          };
 
-        let trimmed_sentence = NonEmptyString::new(sentence.trim().into()).unwrap();
-        let sentence_language = match detect_lang(trimmed_sentence.as_ref()).unwrap_or(Lang::Eng) {
-          Lang::Eng => TtsLanguage::En,
-          Lang::Spa => TtsLanguage::Es,
-          Lang::Tur => TtsLanguage::Tr,
-          _ => TtsLanguage::En,
-        };
+          let phonemized_sentence = self
+            .ttp
+            .text_to_phonemes(&trimmed_sentence, &sentence_language)
+            .map_err(|e| KokoroTtsError::Ttp(e.to_string()))
+            .map(|phonemes| phonemes.into());
 
-        let phonemized_sentence = self
-          .ttp
-          .text_to_phonemes(&trimmed_sentence, &sentence_language)
-          .unwrap()
-          .into();
+          Some(phonemized_sentence)
+        })
+        .collect();
 
-        Some(phonemized_sentence)
-      })
-      .collect();
-
-    let phonemes = phoneme_sentences.join(". ");
+    let phonemes = phoneme_sentences?.join(". ");
 
     let vocab = create_vocab();
     let mut input_ids = vec![BOS_ID];
