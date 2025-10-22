@@ -131,10 +131,32 @@ impl<T: Ttp> Tts for KokoroTts<T> {
     text: &NonEmptyString,
     language: &TtsLanguage,
   ) -> Result<impl IntoIterator<Item = AudioChunk>, Self::Error> {
-    let phonemes = self
-      .ttp
-      .text_to_phonemes(text, &language)
-      .map_err(|e| KokoroTtsError::Ttp(e.to_string()))?;
+    let phoneme_sentences: Vec<String> = <NonEmptyString as AsRef<str>>::as_ref(text)
+      // TODO: Replace the following two expressions and the filter with a preprocessing module
+      .replace(
+        |c: char| c.is_ascii_punctuation() && c != '!' && c != '?' && c != '.',
+        "",
+      )
+      .split(|c: char| c.is_ascii_punctuation() || c == '\n')
+      .filter_map(|sentence| {
+        if sentence.is_empty() {
+          return None;
+        }
+
+        let phonemized_sentence = self
+          .ttp
+          .text_to_phonemes(
+            &NonEmptyString::new(sentence.trim().into()).unwrap(),
+            &language,
+          )
+          .unwrap()
+          .into();
+
+        Some(phonemized_sentence)
+      })
+      .collect();
+
+    let phonemes = phoneme_sentences.join(". ");
 
     let vocab = create_vocab();
     let mut input_ids = vec![BOS_ID];
