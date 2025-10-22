@@ -799,6 +799,7 @@ dependencies = [
  "rten-generate",
  "rten-tensor",
  "thiserror",
+ "whatlang",
 ]
 
 [[package]]
@@ -3569,6 +3570,15 @@ checksum = "5a6580f308b1fad9207618087a65c04e7a10bc77e02c8e84e9b00dd4b12fa0bb"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "whatlang"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f5e8f38b596e2a359b755342473520a99421e43658548c79489ee221b728c107"
+dependencies = [
+ "hashbrown",
 ]
 
 [[package]]

@@ -5,6 +5,7 @@ use hound::{SampleFormat, WavSpec, WavWriter};
 use rten::{Model, ModelLoadError, RunOptions};
 use rten_tensor::{AsView, Layout, NdLayout, NdTensor, Tensor, TensorBase};
 use thiserror::Error;
+use whatlang::{Lang, detect_lang};
 
 use crate::{
   kokoro::create_vocab::create_vocab,
@@ -129,6 +130,7 @@ impl<T: Ttp> Tts for KokoroTts<T> {
   fn text_to_speech(
     &mut self,
     text: &NonEmptyString,
+    // FIXME: Either use this parameter, or drop it in favor of chunk-based language detection
     language: &TtsLanguage,
   ) -> Result<impl IntoIterator<Item = AudioChunk>, Self::Error> {
     let phoneme_sentences: Vec<String> = <NonEmptyString as AsRef<str>>::as_ref(text)
@@ -143,12 +145,16 @@ impl<T: Ttp> Tts for KokoroTts<T> {
           return None;
         }
 
+        let trimmed_sentence = NonEmptyString::new(sentence.trim().into()).unwrap();
+        let sentence_language = match detect_lang(trimmed_sentence.as_ref()).unwrap_or(Lang::Eng) {
+          Lang::Eng => TtsLanguage::En,
+          Lang::Spa => TtsLanguage::Es,
+          _ => TtsLanguage::En,
+        };
+
         let phonemized_sentence = self
           .ttp
-          .text_to_phonemes(
-            &NonEmptyString::new(sentence.trim().into()).unwrap(),
-            &language,
-          )
+          .text_to_phonemes(&trimmed_sentence, &sentence_language)
           .unwrap()
           .into();
 
