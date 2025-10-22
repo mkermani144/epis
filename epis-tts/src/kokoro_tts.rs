@@ -149,6 +149,7 @@ impl<T: Ttp> Tts for KokoroTts<T> {
         let sentence_language = match detect_lang(trimmed_sentence.as_ref()).unwrap_or(Lang::Eng) {
           Lang::Eng => TtsLanguage::En,
           Lang::Spa => TtsLanguage::Es,
+          Lang::Tur => TtsLanguage::Tr,
           _ => TtsLanguage::En,
         };
 

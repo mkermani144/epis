@@ -20,4 +20,6 @@ pub enum TtsLanguage {
   En,
   #[display("es-ES")]
   Es,
+  #[display("tr-TR")]
+  Tr,
 }
