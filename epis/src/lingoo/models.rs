@@ -6,6 +6,7 @@ use crate::{
 };
 
 #[derive(Debug, Error)]
+#[allow(dead_code)]
 pub enum LingooChatRagError {
   #[error("error while indexing rag data")]
   Index,
@@ -13,6 +14,7 @@ pub enum LingooChatRagError {
   Retrieve,
 }
 #[derive(Error, Debug)]
+#[allow(dead_code)]
 pub enum LingooChatError {
   #[error("error while getting conversation message history")]
   GetConversationMessageHistory(#[from] GetConversationMessageHistoryError),

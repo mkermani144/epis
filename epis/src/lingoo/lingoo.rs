@@ -10,7 +10,7 @@ use crate::{
   ai::llm::Llm,
   conversation::{models::CreateConversationError, repository::ConversationRepository},
   entities::common::{Category, ChatMessage, ChatMessageRole, Id, Message},
-  lingoo::models::{LingooChatError, LingooChatRagError},
+  lingoo::models::LingooChatError,
   rag::rag::Rag,
 };
 
@@ -55,6 +55,7 @@ You may utilize these tools to help the user:
 pub struct Lingoo<L: Llm, CR: ConversationRepository, R: Rag> {
   llm: Arc<L>,
   conversation_repository: Arc<CR>,
+  #[allow(dead_code)]
   rag: Arc<R>,
 }
 
@@ -79,26 +80,10 @@ impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
   }
 
   pub async fn chat(&self, cid: &Id, message: Message) -> Result<Message, LingooChatError> {
-    let mut conversation_history: Vec<ChatMessage> = vec![];
-
-    if let Some(similarity_vec) = self
-      .rag
-      .retrieve_similarities(&message.as_ref().into())
-      .await
-      .map_err(|e| {
-        println!("error was: {}", e);
-        LingooChatError::Rag(LingooChatRagError::Retrieve)
-      })?
-    {
-      conversation_history.push(similarity_vec.into());
-    }
-
-    conversation_history.extend(
-      self
-        .conversation_repository
-        .get_conversation_message_history(cid)
-        .await?,
-    );
+    let conversation_history: Vec<ChatMessage> = self
+      .conversation_repository
+      .get_conversation_message_history(cid)
+      .await?;
 
     let reply = self
       .llm
@@ -111,12 +96,6 @@ impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
       .map_err(|_| LingooChatError::Llm)?;
     // TODO: This copy is ugly and can be prevented, but requires further model changes
     let reply_copy = reply.clone();
-
-    self
-      .rag
-      .index_similarity(&reply.as_ref().into())
-      .await
-      .map_err(|_| LingooChatError::Rag(LingooChatRagError::Index))?;
 
     let user_chat_message = ChatMessage {
       role: ChatMessageRole::User,
