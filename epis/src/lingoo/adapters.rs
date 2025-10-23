@@ -18,7 +18,7 @@ impl LingooRepository for Postgres {
     top_k: TopK,
   ) -> Result<Vec<LingooRagDocument>, FindSimilarDocsError> {
     let similar_docs = query!(
-      "SELECT (1 - (embedding <=> $1)) AS distance, id, embedding AS \"embedding: Vector\", content, created_at, updated_at FROM lingoo_rag ORDER BY distance ASC LIMIT $2",
+      "SELECT embedding <=> $1 AS distance, id, embedding AS \"embedding: Vector\", content, created_at, updated_at FROM lingoo_rag ORDER BY distance ASC LIMIT $2",
       Vector::from(query.into_inner()) as Vector,
       Into::<i64>::into(top_k.as_u8()),
     )
