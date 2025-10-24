@@ -15,7 +15,7 @@ anyhow = "1.0.98"
 axum = { version = "0.8.4", features = ["macros", "ws"] }
 base64 = "0.22.1"
 bm25 = { version = "2.3.1", features = ["language_detection"] }
-derive_more = { version = "2.0.1", features = ["from", "into_iterator"] }
+derive_more = { version = "2.0.1", features = ["from", "into_iterator", "debug"] }
 epis-core = { path = "../epis-core" }
 epis-stt = { path = "../epis-stt" }
 epis-tts = { path = "../epis-tts" }

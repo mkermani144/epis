@@ -12,6 +12,7 @@ use epis_stt::{
   stt::{Stt, SttError},
 };
 use epis_tts::{models::TtsLanguage, tts::Tts};
+use tracing::{debug, instrument, warn};
 
 use crate::{
   ai::llm::Llm,
@@ -78,13 +79,20 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> VoiceChatSessio
     if let VoiceChatMessage::VoiceChatPrompt { audio_bytes_base64 } = message {
       let prompt_audio_bytes_vec = BASE64_STANDARD
         .decode(audio_bytes_base64)
-        .map_err(|_| VoiceChatReplyMessage::InvalidAudioBase64)?;
+        .map_err(|error| {
+          warn!(%error, "Cannot decode audio base64");
+          VoiceChatReplyMessage::InvalidAudioBase64
+        })?;
+      debug!("Message base64 decoded");
 
       let prompt_text: String = self
         .app_state
         .stt
         .lock()
-        .map_err(|_| VoiceChatReplyMessage::InternalError)?
+        .map_err(|error| {
+          warn!(%error, "Cannot grab Stt lock");
+          VoiceChatReplyMessage::InternalError
+        })?
         .speech_to_text(
           &prompt_audio_bytes_vec.into(),
           // FIXME: Support other base languages
@@ -98,19 +106,22 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> VoiceChatSessio
         // TODO: Do not collect - Call AI for each chunk instead
         .into_iter()
         .collect();
+      debug!("Message audio converted to text");
 
       let ai_reply_text_unchecked = self
         .app_state
         .lingoo
         .chat(
           &id,
-          prompt_text
-            .try_into()
-            .map_err(|_| VoiceChatReplyMessage::EmptyPrompt)?,
+          prompt_text.try_into().map_err(|_| {
+            warn!("Cannot pass an empty prompt to Lingoo Ai");
+            VoiceChatReplyMessage::EmptyPrompt
+          })?,
         )
         .await
         .map_err(|_| VoiceChatReplyMessage::InternalError)?
         .into_inner();
+      debug!("Ai reply text generated");
 
       let ai_reply_text =
         NonEmptyString::new(ai_reply_text_unchecked).expect("Ai reply is never empty");
@@ -119,17 +130,24 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> VoiceChatSessio
         .app_state
         .tts
         .lock()
-        .map_err(|_| VoiceChatReplyMessage::InternalError)?
+        .map_err(|error| {
+          warn!(%error, "Cannot grab Tts lock");
+          VoiceChatReplyMessage::InternalError
+        })?
         // FIXME: Support other ai languages
         .text_to_speech(&ai_reply_text, &TtsLanguage::En)
         .map_err(|_| VoiceChatReplyMessage::InternalError)?
         .into_iter()
         .collect();
+      debug!("Ai reply audio vec generated");
 
       // TODO: This is a redundant complexity. Tts returns an [impl IntoIterator], but for now,
       // only one chunk at a time is supported. Modify either.
       let ai_reply_audio = ai_reply_audio_vec.pop().unwrap_or_default();
+      debug!("First element of the generated audio vec was chosen as reply audio");
+
       let ai_reply_audio_base64 = BASE64_STANDARD.encode(ai_reply_audio.into_inner());
+      debug!("Ai reply audio converted to base64");
 
       Ok(VoiceChatReplyMessage::VoiceChatAiReply {
         audio_bytes_base64: ai_reply_audio_base64,
@@ -144,6 +162,7 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> VoiceChatSessio
   /// # Return value
   /// This method returns a [VoiceChatReplyMessage], which can be sent back the the user via the
   /// socket.
+  #[instrument(skip_all, ret)]
   pub async fn handle_message(&mut self, message: VoiceChatMessage) -> VoiceChatReplyMessage {
     let reply = match std::mem::take(&mut self.state) {
       VoiceChatState::Uninit => {
@@ -151,6 +170,7 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> VoiceChatSessio
 
         // Upon the first valid message, change state to [Init]
         if let Some(new_state) = new_state {
+          debug!(old=%self.state, new=%new_state, "Session state updated");
           self.state = new_state;
         }
         reply

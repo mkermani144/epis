@@ -12,6 +12,7 @@ use axum::{
 };
 use epis_stt::stt::Stt;
 use epis_tts::tts::Tts;
+use tracing::{debug, instrument, trace, warn};
 
 use crate::{
   ai::llm::Llm,
@@ -28,6 +29,7 @@ pub async fn voice_chat<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: T
   ws.on_upgrade(|socket| handle_socket(socket, app_state))
 }
 
+#[instrument(skip(socket, app_state))]
 async fn handle_socket<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts>(
   mut socket: WebSocket,
   app_state: LingooAppState<L, CR, R, S, T>,
@@ -55,29 +57,39 @@ async fn handle_socket<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tt
   while let Some(raw_message) = socket.recv().await {
     // While there is a message, try to parse it into a [VoiceChatMessage] and handle it through
     // session. If message is invalid, reply with a message indicating it.
-    if let Ok(raw_message) = raw_message {
-      match raw_message {
-        Message::Text(raw_text_message) => {
-          if let Ok(parsed_message) = serde_json::from_str(&raw_text_message) {
-            let message_to_reply = session.handle_message(parsed_message).await;
+    match raw_message {
+      Ok(raw_message) => {
+        match raw_message {
+          Message::Text(raw_text_message) => {
+            if let Ok(parsed_message) = serde_json::from_str(&raw_text_message) {
+              debug!(message = %parsed_message, "Message received and parsed");
+              let message_to_reply = session.handle_message(parsed_message).await;
 
-            if let Err(_) = reply(&mut socket, &message_to_reply).await {
-              return;
-            };
-          } else {
+              if let Err(_) = reply(&mut socket, &message_to_reply).await {
+                debug!("Failed to reply to message");
+                return;
+              };
+            } else {
+              trace!("An invalid text message received");
+              if let Err(_) = reply(&mut socket, &VoiceChatReplyMessage::Invalid).await {
+                trace!("Failed to reply to message");
+                return;
+              }
+            }
+          }
+          _ => {
+            trace!("An invalid non-text message received");
             if let Err(_) = reply(&mut socket, &VoiceChatReplyMessage::Invalid).await {
+              trace!("Failed to reply to message");
               return;
             }
           }
-        }
-        _ => {
-          if let Err(_) = reply(&mut socket, &VoiceChatReplyMessage::Invalid).await {
-            return;
-          }
-        }
-      };
-    } else {
-      return;
+        };
+      }
+      Err(error) => {
+        warn!(%error, "Failed to receive message");
+        return;
+      }
     }
   }
 }
