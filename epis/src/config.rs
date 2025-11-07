@@ -48,6 +48,8 @@ pub struct Config {
   pub kokoro_voice_data_dir: String,
   /// The Kokoro model path
   pub kokoro_model_path: String,
+  /// Clerk secret key
+  pub clerk_sk: String,
 }
 
 impl Config {
@@ -86,6 +88,7 @@ impl Config {
         .context("KOKORO_VOICE_DATA_DIR env var not provided")?,
       kokoro_model_path: std::env::var("KOKORO_MODEL_PATH")
         .context("KOKORO_MODEL_PATH env var not provided")?,
+      clerk_sk: std::env::var("CLERK_SK").context("CLERK_SK env var not provided")?,
     })
   }
 }

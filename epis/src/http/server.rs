@@ -1,5 +1,9 @@
 use anyhow::Result;
 use axum::Router;
+use clerk_rs::{
+  clerk::Clerk,
+  validators::{axum::ClerkLayer, jwks::MemoryCacheJwksProvider},
+};
 use epis_stt::stt::Stt;
 use epis_tts::tts::Tts;
 use std::{
@@ -93,6 +97,8 @@ impl HttpServer {
   pub fn try_new<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts>(
     addr: SocketAddr,
     app_state: AppState<L, CR, R, S, T>,
+    // TODO: Switch to a solution-agnostic trait
+    clerk: Clerk,
   ) -> Result<Self> {
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
       .nest("/conversation", ConversationRouter::new().into_inner())
@@ -111,6 +117,11 @@ impl HttpServer {
         llm: app_state.llm.clone(),
       })
       .layer(TraceLayer::new_for_http())
+      .layer(ClerkLayer::new(
+        MemoryCacheJwksProvider::new(clerk),
+        None,
+        true,
+      ))
       .split_for_parts();
 
     // TODO: Add a root WS router and put the logic there

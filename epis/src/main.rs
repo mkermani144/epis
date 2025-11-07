@@ -4,6 +4,7 @@
 //! currently supporting language learning through LLM-powered conversations.
 
 use anyhow::Result;
+use clerk_rs::{ClerkConfiguration, clerk::Clerk};
 use epis_stt::whisper_stt::{WhisperModelPreset, WhisperStt};
 use epis_tts::{byt5_ttp::ByT5Ttp, kokoro_tts::KokoroTts, models::TtsLanguage};
 use std::{
@@ -59,6 +60,9 @@ async fn main() -> Result<()> {
     Path::new(&config.kokoro_voice_data_dir),
   )?));
 
+  let clerk_config = ClerkConfiguration::new(None, None, Some(config.clerk_sk), None);
+  let clerk = Clerk::new(clerk_config);
+
   HttpServer::try_new(
     SocketAddr::from(([0, 0, 0, 0], config.listen_port)),
     AppState {
@@ -68,6 +72,7 @@ async fn main() -> Result<()> {
       stt: whisper,
       tts: kokoro,
     },
+    clerk,
   )?
   .start()
   .await?;
