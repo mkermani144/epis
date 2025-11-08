@@ -94,6 +94,7 @@ export function useWebSocket(
             case "InvalidSorroundAudio":
             case "InternalError":
             case "EmptyPrompt":
+            case "ZeroCharge":
               console.error("Server error:", message.type);
               onStateChange("idle");
               break;
@@ -129,5 +130,3 @@ export function useWebSocket(
 
   return { isConnected, wsRef };
 }
-
-

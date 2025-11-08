@@ -25,7 +25,8 @@ export interface VoiceChatReplyMessage {
     | "InternalError"
     | "EmptyPrompt"
     | "VoiceChatInitOk"
-    | "VoiceChatAiReply";
+    | "VoiceChatAiReply"
+    | "ZeroCharge";
   data?: {
     audio_bytes_base64?: string;
   };
@@ -70,5 +71,6 @@ export function useConversation() {
 
   return cid;
 }
+
 
 
