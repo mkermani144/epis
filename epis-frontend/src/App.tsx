@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { VoiceCircle, StatusText } from "./components/VoiceCircle";
 import { useConversation, useWebSocket, useAudioRecording } from "./hooks";
+import {
+  SignedIn,
+  SignedOut,
+  SignIn,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+} from "@clerk/clerk-react";
+import { Button } from "./components/ui/button";
 
 // Main App Component
 function App() {
@@ -41,20 +50,45 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
-      <h1 className="text-4xl font-bold text-gray-800 mb-12">Epis Lingoo</h1>
+    <div className="min-h-screen bg-gray-100 flex flex-col">
+      <header className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
+        <h1 className="text-4xl font-bold text-gray-800">Epis Lingoo</h1>
+        <div className="flex items-center gap-2">
+          <SignedOut>
+            <SignInButton mode="modal">
+              <Button variant="outline">Sign In</Button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <Button>Sign Up</Button>
+            </SignUpButton>
+          </SignedOut>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
+        </div>
+      </header>
 
-      <div
-        className="flex items-center justify-center"
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        <VoiceCircle state={state} />
-      </div>
+      <SignedIn>
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <div
+            className="flex items-center justify-center"
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            <VoiceCircle state={state} />
+          </div>
 
-      <StatusText state={state} isConnected={isConnected} />
+          <StatusText state={state} isConnected={isConnected} />
+        </div>
+      </SignedIn>
+
+      <SignedOut>
+        <div className="flex-1 flex items-center justify-center">
+          <SignIn />
+        </div>
+      </SignedOut>
     </div>
   );
 }
