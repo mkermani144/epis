@@ -1,6 +1,6 @@
 use derive_more::Display;
 
-use crate::entities::common::Id;
+use crate::{entities::common::Id, lingoo::handlers::ws::voice_chat::charge::Charge};
 
 /// State of a voice chat session.
 ///
@@ -12,6 +12,6 @@ pub enum VoiceChatState {
   #[default]
   #[display("Uninit")]
   Uninit,
-  #[display("Init({_0})")]
-  Init(Id),
+  #[display("Init({cid}, {remaining_charge})")]
+  Init { cid: Id, remaining_charge: Charge },
 }

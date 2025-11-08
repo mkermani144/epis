@@ -17,7 +17,7 @@ use tracing::info;
 use crate::{
   ai::ollama::{ollama::Ollama, ollama_models::OllamaModels},
   config::{Config, Provider},
-  http::server::{AppState, HttpServer},
+  http::server::{AppState, ClerkWrapper, HttpServer},
   lingoo::{lingoo::Lingoo, rag::LingooRag},
   postgres::Postgres,
 };
@@ -61,18 +61,18 @@ async fn main() -> Result<()> {
   )?));
 
   let clerk_config = ClerkConfiguration::new(None, None, Some(config.clerk_sk), None);
-  let clerk = Clerk::new(clerk_config);
+  let clerk = ClerkWrapper::new(Clerk::new(clerk_config));
 
   HttpServer::try_new(
     SocketAddr::from(([0, 0, 0, 0], config.listen_port)),
     AppState {
-      lingoo: lingoo,
+      lingoo,
       conversation_repository: postgres,
-      llm: llm,
+      llm,
       stt: whisper,
       tts: kokoro,
+      clerk,
     },
-    clerk,
   )?
   .start()
   .await?;

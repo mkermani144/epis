@@ -25,6 +25,9 @@ pub enum VoiceChatReplyMessage {
   /// Used to indicate an invalid audio base 64
   #[display("InvalidAudioBase64")]
   InvalidAudioBase64,
+  /// Used to indicate zero remaining charge
+  #[display("ZeroCharge")]
+  ZeroCharge,
   /// Used to indicate an invalid number of audio channels
   #[display("InvalidSorroundAudio")]
   InvalidSorroundAudio,

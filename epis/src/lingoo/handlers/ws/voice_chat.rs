@@ -1,15 +1,18 @@
+mod charge;
 mod message;
 mod session;
 mod state;
 
 use anyhow::bail;
 use axum::{
+  Extension,
   extract::{
     State,
     ws::{Message, WebSocket, WebSocketUpgrade},
   },
   response::Response,
 };
+use clerk_rs::validators::authorizer::ClerkJwt;
 use epis_stt::stt::Stt;
 use epis_tts::tts::Tts;
 use tracing::{debug, instrument, trace, warn};
@@ -25,14 +28,16 @@ use crate::{
 pub async fn voice_chat<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts>(
   ws: WebSocketUpgrade,
   State(app_state): State<LingooAppState<L, CR, R, S, T>>,
+  Extension(jwt): Extension<ClerkJwt>,
 ) -> Response {
-  ws.on_upgrade(|socket| handle_socket(socket, app_state))
+  ws.on_upgrade(|socket| handle_socket(socket, app_state, jwt))
 }
 
 #[instrument(skip(socket, app_state))]
 async fn handle_socket<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts>(
   mut socket: WebSocket,
   app_state: LingooAppState<L, CR, R, S, T>,
+  jwt: ClerkJwt,
 ) {
   // Replay to client with a [VoiceChatReplyMessage]. Error is returned if the client is
   // disconnected.
@@ -52,7 +57,7 @@ async fn handle_socket<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tt
       result.or_else(|_| bail!("Socket client side disconnected"))
     };
 
-  let mut session = VoiceChatSession::new(app_state);
+  let mut session = VoiceChatSession::new(app_state.clone(), jwt);
 
   while let Some(raw_message) = socket.recv().await {
     // While there is a message, try to parse it into a [VoiceChatMessage] and handle it through

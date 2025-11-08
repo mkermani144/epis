@@ -33,6 +33,23 @@ pub struct HttpServer {
   addr: SocketAddr,
 }
 
+// This newtype is needed only for implementing Debug
+#[derive(Clone)]
+pub struct ClerkWrapper(Clerk);
+impl ClerkWrapper {
+  pub fn new(clerk: Clerk) -> Self {
+    Self(clerk)
+  }
+  pub fn into_inner(self) -> Clerk {
+    self.0
+  }
+}
+impl std::fmt::Debug for ClerkWrapper {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.debug_struct("Clerk").finish()
+  }
+}
+
 #[derive(Debug)]
 pub struct AppState<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> {
   pub lingoo: Arc<Lingoo<L, CR, R>>,
@@ -40,6 +57,7 @@ pub struct AppState<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> 
   pub llm: Arc<L>,
   pub stt: Arc<Mutex<S>>,
   pub tts: Arc<Mutex<T>>,
+  pub clerk: ClerkWrapper,
 }
 // Stt is not Clone for now, so we need to impl Clone
 impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> Clone
@@ -52,6 +70,7 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> Clone
       llm: self.llm.clone(),
       stt: self.stt.clone(),
       tts: self.tts.clone(),
+      clerk: self.clerk.clone(),
     }
   }
 }
@@ -69,6 +88,7 @@ pub struct LingooAppState<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T:
   pub conversation_repository: Arc<CR>,
   pub stt: Arc<Mutex<S>>,
   pub tts: Arc<Mutex<T>>,
+  pub clerk: ClerkWrapper,
 }
 // Stt is not Clone for now, so we need to impl Clone
 impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> Clone
@@ -80,6 +100,7 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> Clone
       conversation_repository: self.conversation_repository.clone(),
       stt: self.stt.clone(),
       tts: self.tts.clone(),
+      clerk: self.clerk.clone(),
     }
   }
 }
@@ -98,7 +119,6 @@ impl HttpServer {
     addr: SocketAddr,
     app_state: AppState<L, CR, R, S, T>,
     // TODO: Switch to a solution-agnostic trait
-    clerk: Clerk,
   ) -> Result<Self> {
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
       .nest("/conversation", ConversationRouter::new().into_inner())
@@ -111,17 +131,12 @@ impl HttpServer {
         conversation_repository: app_state.conversation_repository.clone(),
         stt: app_state.stt.clone(),
         tts: app_state.tts.clone(),
+        clerk: app_state.clerk.clone(),
       })
       .nest("/ai", AiRouter::new().into_inner())
       .with_state(AiAppState {
         llm: app_state.llm.clone(),
       })
-      .layer(TraceLayer::new_for_http())
-      .layer(ClerkLayer::new(
-        MemoryCacheJwksProvider::new(clerk),
-        None,
-        true,
-      ))
       .split_for_parts();
 
     // TODO: Add a root WS router and put the logic there
@@ -133,9 +148,19 @@ impl HttpServer {
         conversation_repository: app_state.conversation_repository.clone(),
         stt: app_state.stt.clone(),
         tts: app_state.tts.clone(),
+        clerk: app_state.clerk.clone(),
       });
 
+    // Layers that apply to both REST and WS
+    let router = router
+      .layer(ClerkLayer::new(
+        MemoryCacheJwksProvider::new(app_state.clerk.clone().into_inner()),
+        None,
+        true,
+      ))
+      .layer(TraceLayer::new_for_http());
     let router = router.merge(Scalar::with_url("/scalar", api));
+
     info!("HTTP server initialized successfully");
 
     Ok(Self { router, addr })

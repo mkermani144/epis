@@ -6,12 +6,16 @@
 /// all those chunks, and only when all chunks are received, send the whole prompt to the llm. For
 /// now, though, the one-chunk audios just work.
 use base64::{Engine, prelude::BASE64_STANDARD};
+use clerk_rs::{
+  apis::users_api::User, models::UpdateUserMetadataRequest, validators::authorizer::ClerkJwt,
+};
 use epis_core::non_empty_text::NonEmptyString;
 use epis_stt::{
   models::SttLanguage,
   stt::{Stt, SttError},
 };
 use epis_tts::{models::TtsLanguage, tts::Tts};
+use serde_json::{Number, json};
 use tracing::{debug, instrument, warn};
 
 use crate::{
@@ -20,24 +24,29 @@ use crate::{
   entities::common::Id,
   http::server::LingooAppState,
   lingoo::handlers::ws::voice_chat::{
+    charge::Charge,
     message::{VoiceChatMessage, VoiceChatReplyMessage},
     state::VoiceChatState,
   },
   rag::rag::Rag,
 };
 
+const DEFAULT_CHARGE: u16 = 10;
+
 /// A voice chat session, through which a complete voice chat scenario is done. Multiple cycles of
 /// sending and receiving Lingoo messages can be done through it.
 pub struct VoiceChatSession<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> {
   state: VoiceChatState,
   app_state: LingooAppState<L, CR, R, S, T>,
+  jwt: ClerkJwt,
 }
 
 impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> VoiceChatSession<L, CR, R, S, T> {
-  pub fn new(app_state: LingooAppState<L, CR, R, S, T>) -> Self {
+  pub fn new(app_state: LingooAppState<L, CR, R, S, T>, jwt: ClerkJwt) -> Self {
     Self {
       state: VoiceChatState::Uninit,
       app_state,
+      jwt,
     }
   }
 
@@ -52,10 +61,35 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> VoiceChatSessio
     message: VoiceChatMessage,
   ) -> (Option<VoiceChatState>, VoiceChatReplyMessage) {
     if let VoiceChatMessage::VoiceChatInit { cid } = message {
-      (
-        Some(VoiceChatState::Init(cid)),
+      let default_charge: Number = DEFAULT_CHARGE.into();
+
+      let fetched_charge = self.jwt.other.get("charge");
+      debug!(?fetched_charge, "Fetched user charge from Clerk");
+
+      let charge = fetched_charge
+        .unwrap_or(&default_charge.clone().into())
+        .as_number()
+        .unwrap_or(&default_charge.into())
+        .as_u64()
+        .unwrap()
+        .try_into()
+        .unwrap_or(DEFAULT_CHARGE);
+      debug!(%charge, "Computed actual user charge");
+
+      let remaining_charge = Charge::new(charge);
+
+      if remaining_charge.is_zero() {
+        debug!("User charge is zero, so the request cannot be handled");
+        return (None, VoiceChatReplyMessage::ZeroCharge);
+      }
+
+      return (
+        Some(VoiceChatState::Init {
+          cid,
+          remaining_charge,
+        }),
         VoiceChatReplyMessage::VoiceChatInitOk,
-      )
+      );
     } else {
       (None, VoiceChatReplyMessage::Invalid)
     }
@@ -74,9 +108,14 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> VoiceChatSessio
   async fn handle_init(
     &mut self,
     message: VoiceChatMessage,
-    id: Id,
+    id: &Id,
+    remaining_charge: &Charge,
   ) -> Result<VoiceChatReplyMessage, VoiceChatReplyMessage> {
     if let VoiceChatMessage::VoiceChatPrompt { audio_bytes_base64 } = message {
+      if remaining_charge.is_zero() {
+        return Err(VoiceChatReplyMessage::ZeroCharge);
+      }
+
       let prompt_audio_bytes_vec = BASE64_STANDARD
         .decode(audio_bytes_base64)
         .map_err(|error| {
@@ -149,6 +188,21 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> VoiceChatSessio
       let ai_reply_audio_base64 = BASE64_STANDARD.encode(ai_reply_audio.into_inner());
       debug!("Ai reply audio converted to base64");
 
+      let user_id = &self.jwt.sub;
+      User::update_user_metadata(
+        &self.app_state.clerk.clone().into_inner(),
+        user_id,
+        Some(UpdateUserMetadataRequest {
+          private_metadata: None,
+          unsafe_metadata: None,
+          public_metadata: Some(json!({ "charge": remaining_charge.as_ref() - 1 })),
+        }),
+      )
+      .await
+      // FIXME: We should handle this failure case, by retrying or some other method
+      .unwrap();
+      debug!(remaining_charge = %remaining_charge.as_ref() - 1, "User charge updated in Clerk");
+
       Ok(VoiceChatReplyMessage::VoiceChatAiReply {
         audio_bytes_base64: ai_reply_audio_base64,
       })
@@ -175,10 +229,26 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> VoiceChatSessio
         }
         reply
       }
-      VoiceChatState::Init(id) => self
-        .handle_init(message, id)
-        .await
-        .unwrap_or_else(|reply| reply),
+      VoiceChatState::Init {
+        cid,
+        mut remaining_charge,
+      } => {
+        let reply = self
+          .handle_init(message, &cid, &remaining_charge)
+          .await
+          .unwrap_or_else(|reply| reply);
+
+        remaining_charge.decrement();
+
+        let new_state = VoiceChatState::Init {
+          cid,
+          remaining_charge: remaining_charge,
+        };
+        debug!(old=%self.state, new=%new_state, "Session state updated");
+        self.state = new_state;
+
+        reply
+      }
     };
 
     reply
