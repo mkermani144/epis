@@ -33,7 +33,7 @@ pub async fn voice_chat<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: T
   ws.on_upgrade(|socket| handle_socket(socket, app_state, jwt))
 }
 
-#[instrument(skip(socket, app_state))]
+#[instrument(skip_all)]
 async fn handle_socket<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts>(
   mut socket: WebSocket,
   app_state: LingooAppState<L, CR, R, S, T>,
