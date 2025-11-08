@@ -46,6 +46,7 @@ export function useConversation() {
           `${config.episServerUrl}/lingoo/conversation/create`,
           {
             method: "POST",
+	    credentials: import.meta.env.PROD ? "same-origin" : "include",
             headers: {
               "Content-Type": "application/json",
             },
