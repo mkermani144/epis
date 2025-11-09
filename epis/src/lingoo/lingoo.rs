@@ -6,6 +6,8 @@
 
 use std::sync::Arc;
 
+use epis_core::non_empty_text::NonEmptyString;
+
 use crate::{
   ai::llm::Llm,
   conversation::{models::CreateConversationError, repository::ConversationRepository},
@@ -70,10 +72,13 @@ impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
   }
 
   /// Creates a new conversation and returns its ID
-  pub async fn create_conversation(&self) -> Result<Id, CreateConversationError> {
+  pub async fn create_conversation(
+    &self,
+    user_id: &NonEmptyString,
+  ) -> Result<Id, CreateConversationError> {
     let conversation_id = self
       .conversation_repository
-      .create_conversation(&Category::Languages)
+      .create_conversation(&Category::Languages, user_id)
       .await?;
 
     Ok(conversation_id)

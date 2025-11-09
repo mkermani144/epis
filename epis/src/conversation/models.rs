@@ -89,3 +89,11 @@ pub enum ListConversationsError {
   #[error("unknown error while getting conversations list")]
   Unknown,
 }
+
+#[derive(Error, Debug)]
+pub enum GetConversationUserIdError {
+  #[error("conversation not found")]
+  NotFoundConversation,
+  #[error("unknown error while getting conversation user id")]
+  Unknown,
+}

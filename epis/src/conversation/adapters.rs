@@ -1,10 +1,12 @@
+use epis_core::non_empty_text::NonEmptyString;
 use sqlx::{Error::RowNotFound, query};
 
 use crate::{
   conversation::{
     models::{
       Conversation, ConversationTitle, CreateConversationError, GetConversationMessageHistoryError,
-      ListConversationsError, SetConversationTitleError, StoreMessageError, Timestamp,
+      GetConversationUserIdError, ListConversationsError, SetConversationTitleError,
+      StoreMessageError, Timestamp,
     },
     repository::ConversationRepository,
   },
@@ -13,15 +15,20 @@ use crate::{
 };
 
 impl ConversationRepository for Postgres {
-  async fn create_conversation(&self, category: &Category) -> Result<Id, CreateConversationError> {
+  async fn create_conversation(
+    &self,
+    category: &Category,
+    user_id: &NonEmptyString,
+  ) -> Result<Id, CreateConversationError> {
     let category_str = match category {
       Category::Languages => "languages",
       Category::Invalid => "invalid",
     };
 
     let conversation = query!(
-      "INSERT INTO conversation (category) VALUES ($1) RETURNING id",
-      category_str
+      "INSERT INTO conversation (category, user_id) VALUES ($1, $2) RETURNING id",
+      category_str,
+      user_id.as_str(),
     )
     .fetch_one(self.pool())
     .await
@@ -30,11 +37,17 @@ impl ConversationRepository for Postgres {
     Ok(conversation.id.into())
   }
 
-  async fn list_conversations(&self) -> Result<Vec<Conversation>, ListConversationsError> {
-    let all_conversations = query!("SELECT * FROM conversation")
-      .fetch_all(self.pool())
-      .await
-      .map_err(|_| ListConversationsError::Unknown)?;
+  async fn list_conversations(
+    &self,
+    user_id: &NonEmptyString,
+  ) -> Result<Vec<Conversation>, ListConversationsError> {
+    let all_conversations = query!(
+      "SELECT * FROM conversation WHERE user_id = $1",
+      user_id.as_str()
+    )
+    .fetch_all(self.pool())
+    .await
+    .map_err(|_| ListConversationsError::Unknown)?;
 
     Ok(
       all_conversations
@@ -149,5 +162,24 @@ impl ConversationRepository for Postgres {
       .collect();
 
     Ok(message_history)
+  }
+
+  async fn get_conversation_user_id(
+    &self,
+    cid: &Id,
+  ) -> Result<NonEmptyString, GetConversationUserIdError> {
+    let user_id = query!(
+      "SELECT user_id FROM conversation WHERE id = $1",
+      cid.as_ref(),
+    )
+    .fetch_one(self.pool())
+    .await
+    .map_err(|e| match e {
+      RowNotFound => GetConversationUserIdError::NotFoundConversation,
+      _ => GetConversationUserIdError::Unknown,
+    })?
+    .user_id;
+
+    Ok(user_id.try_into().unwrap())
   }
 }

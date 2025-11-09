@@ -1,4 +1,5 @@
-use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
+use axum::{Extension, Json, extract::State, http::StatusCode, response::IntoResponse};
+use clerk_rs::validators::authorizer::ClerkJwt;
 use epis_stt::stt::Stt;
 use epis_tts::tts::Tts;
 use serde::{Deserialize, Serialize};
@@ -7,7 +8,10 @@ use utoipa::ToSchema;
 
 use crate::{
   ai::llm::Llm,
-  conversation::{models::GetConversationMessageHistoryError, repository::ConversationRepository},
+  conversation::{
+    models::{GetConversationMessageHistoryError, GetConversationUserIdError},
+    repository::ConversationRepository,
+  },
   entities::common::{Id, InvalidIdError, Message, MessageError},
   http::server::LingooAppState,
   lingoo::{models::LingooChatError, router::LINGOO_CATEGORY},
@@ -22,6 +26,8 @@ pub enum LingooChatApiError {
   NotFoundConversation,
   #[error("invalid message")]
   InvalidMessage(#[from] MessageError),
+  #[error("unauthorized to chat in this conversation")]
+  Unauthorized,
   #[error("unknown error during chat")]
   Unknown,
 }
@@ -32,6 +38,7 @@ impl IntoResponse for LingooChatApiError {
         (StatusCode::BAD_REQUEST, Json(self.to_string())).into_response()
       }
       Self::NotFoundConversation => (StatusCode::NOT_FOUND, Json(self.to_string())).into_response(),
+      Self::Unauthorized => (StatusCode::UNAUTHORIZED, Json(self.to_string())).into_response(),
       Self::Unknown => (StatusCode::INTERNAL_SERVER_ERROR, Json(self.to_string())).into_response(),
     }
   }
@@ -84,14 +91,32 @@ impl LingooChatResponseData {
     (status = OK, body = LingooChatResponseData, content_type = "application/json"),
     (status = BAD_REQUEST, body = String, content_type = "application/json"),
     (status = NOT_FOUND, body = String, content_type = "application/json"),
+    (status = UNAUTHORIZED, body = String, content_type = "application/json"),
     (status = INTERNAL_SERVER_ERROR, body = String, content_type = "application/json"),
   )
 )]
 pub async fn chat<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts>(
   State(app_state): State<LingooAppState<L, CR, R, S, T>>,
+  Extension(jwt): Extension<ClerkJwt>,
   Json(request): Json<LingooChatRequestBody>,
 ) -> Result<Json<LingooChatResponseData>, LingooChatApiError> {
   let (cid, message) = request.try_into_domain_parts()?;
+
+  let user_id = jwt.sub;
+
+  let conversation_user_id = app_state
+    .conversation_repository
+    .get_conversation_user_id(&cid)
+    .await
+    .map_err(|e| match e {
+      GetConversationUserIdError::NotFoundConversation => LingooChatApiError::NotFoundConversation,
+      _ => LingooChatApiError::Unknown,
+    })?;
+
+  if conversation_user_id != user_id {
+    return Err(LingooChatApiError::Unauthorized);
+  }
+
   let message = app_state
     .lingoo
     .chat(&cid, message)

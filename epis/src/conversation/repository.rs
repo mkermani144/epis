@@ -1,7 +1,10 @@
+use epis_core::non_empty_text::NonEmptyString;
+
 use crate::{
   conversation::models::{
     Conversation, ConversationTitle, CreateConversationError, GetConversationMessageHistoryError,
-    ListConversationsError, SetConversationTitleError, StoreMessageError,
+    GetConversationUserIdError, ListConversationsError, SetConversationTitleError,
+    StoreMessageError,
   },
   entities::common::{Category, ChatMessage, Id},
 };
@@ -10,9 +13,11 @@ pub trait ConversationRepository: Clone + Send + Sync + 'static {
   fn create_conversation(
     &self,
     category: &Category,
+    user_id: &NonEmptyString,
   ) -> impl Future<Output = Result<Id, CreateConversationError>> + Send;
   fn list_conversations(
     &self,
+    user_id: &NonEmptyString,
   ) -> impl Future<Output = Result<Vec<Conversation>, ListConversationsError>> + Send;
   fn set_conversation_title(
     &self,
@@ -28,4 +33,8 @@ pub trait ConversationRepository: Clone + Send + Sync + 'static {
     &self,
     cid: &Id,
   ) -> impl Future<Output = Result<Vec<ChatMessage>, GetConversationMessageHistoryError>> + Send;
+  fn get_conversation_user_id(
+    &self,
+    cid: &Id,
+  ) -> impl Future<Output = Result<NonEmptyString, GetConversationUserIdError>> + Send;
 }

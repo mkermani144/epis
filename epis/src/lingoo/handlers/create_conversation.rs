@@ -1,4 +1,5 @@
-use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
+use axum::{Extension, Json, extract::State, http::StatusCode, response::IntoResponse};
+use clerk_rs::validators::authorizer::ClerkJwt;
 use epis_stt::stt::Stt;
 use epis_tts::tts::Tts;
 use serde::{Deserialize, Serialize};
@@ -57,10 +58,13 @@ impl CreateLingooConversationResponseData {
 )]
 pub async fn create_conversation<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts>(
   State(app_state): State<LingooAppState<L, CR, R, S, T>>,
+  Extension(jwt): Extension<ClerkJwt>,
 ) -> Result<Json<CreateLingooConversationResponseData>, CreateConversationApiError> {
+  let user_id = jwt.sub;
+
   let conversation_id = app_state
     .lingoo
-    .create_conversation()
+    .create_conversation(&user_id.try_into().unwrap())
     .await
     .map_err(|e| match e {
       CreateConversationError::Unknown => CreateConversationApiError::Unknown,
