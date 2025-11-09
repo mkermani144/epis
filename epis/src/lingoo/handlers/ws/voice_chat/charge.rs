@@ -12,6 +12,7 @@ impl Charge {
   pub fn is_zero(&self) -> bool {
     self.0 == 0
   }
+  #[allow(dead_code)]
   pub fn into_inner(self) -> u16 {
     self.0
   }
