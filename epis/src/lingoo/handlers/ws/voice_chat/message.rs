@@ -37,6 +37,12 @@ pub enum VoiceChatReplyMessage {
   /// Used to indicate an empty prompt
   #[display("EmptyPrompt")]
   EmptyPrompt,
+  /// Used to indicate a cid that doesn't exist
+  #[display("NotFoundConversation")]
+  NotFoundConversation,
+  /// Used to indicate an unauthorized cid
+  #[display("Unauthorized")]
+  Unauthorized,
   /// Used to indicate voice chat initialization was successful
   #[display("VoiceChatInitOk")]
   VoiceChatInitOk,

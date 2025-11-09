@@ -20,7 +20,7 @@ use tracing::{debug, instrument, warn};
 
 use crate::{
   ai::llm::Llm,
-  conversation::repository::ConversationRepository,
+  conversation::{models::GetConversationUserIdError, repository::ConversationRepository},
   entities::common::Id,
   http::server::LingooAppState,
   lingoo::handlers::ws::voice_chat::{
@@ -56,7 +56,7 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> VoiceChatSessio
   /// # Return value
   /// If the message is expected, the new state and a [VoiceChatReplyMessage::VoiceChatInitOk] is
   /// returned.
-  fn handle_uninit(
+  async fn handle_uninit(
     &mut self,
     message: VoiceChatMessage,
   ) -> (Option<VoiceChatState>, VoiceChatReplyMessage) {
@@ -83,13 +83,35 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> VoiceChatSessio
         return (None, VoiceChatReplyMessage::ZeroCharge);
       }
 
-      return (
-        Some(VoiceChatState::Init {
-          cid,
-          remaining_charge,
-        }),
-        VoiceChatReplyMessage::VoiceChatInitOk,
-      );
+      let user_id = self.jwt.sub.clone();
+
+      let conversation_user_id_result = self
+        .app_state
+        .conversation_repository
+        .get_conversation_user_id(&cid)
+        .await
+        .map_err(|e| match e {
+          GetConversationUserIdError::NotFoundConversation => {
+            VoiceChatReplyMessage::NotFoundConversation
+          }
+          _ => VoiceChatReplyMessage::InternalError,
+        });
+
+      match conversation_user_id_result {
+        Ok(conversation_user_id) => {
+          if conversation_user_id != user_id {
+            return (None, VoiceChatReplyMessage::Unauthorized);
+          }
+          return (
+            Some(VoiceChatState::Init {
+              cid,
+              remaining_charge,
+            }),
+            VoiceChatReplyMessage::VoiceChatInitOk,
+          );
+        }
+        Err(e) => return (None, e),
+      }
     } else {
       (None, VoiceChatReplyMessage::Invalid)
     }
@@ -220,7 +242,7 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> VoiceChatSessio
   pub async fn handle_message(&mut self, message: VoiceChatMessage) -> VoiceChatReplyMessage {
     let reply = match std::mem::take(&mut self.state) {
       VoiceChatState::Uninit => {
-        let (new_state, reply) = self.handle_uninit(message);
+        let (new_state, reply) = self.handle_uninit(message).await;
 
         // Upon the first valid message, change state to [Init]
         if let Some(new_state) = new_state {
