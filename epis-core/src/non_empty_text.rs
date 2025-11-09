@@ -19,6 +19,10 @@ impl NonEmptyString {
     Ok(Self(value))
   }
 
+  pub fn as_str(&self) -> &str {
+    &self.0
+  }
+
   pub fn into_inner(self) -> String {
     self.0
   }
@@ -41,5 +45,17 @@ impl TryFrom<&str> for NonEmptyString {
 impl From<NonEmptyString> for &str {
   fn from(value: NonEmptyString) -> Self {
     value.into()
+  }
+}
+
+impl PartialEq<String> for NonEmptyString {
+  fn eq(&self, other: &String) -> bool {
+    self.0 == *other
+  }
+}
+
+impl PartialEq<NonEmptyString> for String {
+  fn eq(&self, other: &NonEmptyString) -> bool {
+    *self == other.0
   }
 }
