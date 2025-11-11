@@ -40,7 +40,7 @@ impl OpenAi {
 }
 
 impl Stt for OpenAi {
-  #[instrument]
+  #[instrument(skip_all)]
   async fn speech_to_text<'stt>(
     &'stt mut self,
     wav_bytes: AudioBytes,
