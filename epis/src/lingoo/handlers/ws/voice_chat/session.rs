@@ -146,27 +146,22 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> VoiceChatSessio
         })?;
       debug!("Message base64 decoded");
 
-      let prompt_text: String = self
+      let prompt_text = self
         .app_state
         .stt
         .lock()
-        .map_err(|error| {
-          warn!(%error, "Cannot grab Stt lock");
-          VoiceChatReplyMessage::InternalError
-        })?
+        .await
         .speech_to_text(
-          &prompt_audio_bytes_vec.into(),
+          prompt_audio_bytes_vec.into(),
           // FIXME: Support other base languages
           SttLanguage::En,
         )
+        .await
         .map_err(|e| match e {
           SttError::InvalidBytes => VoiceChatReplyMessage::InvalidAudioBase64,
           SttError::UnsupportedSorroundAudio => VoiceChatReplyMessage::InvalidSorroundAudio,
           _ => VoiceChatReplyMessage::InternalError,
-        })?
-        // TODO: Do not collect - Call AI for each chunk instead
-        .into_iter()
-        .collect();
+        })?;
       debug!("Message audio converted to text");
 
       let ai_reply_text_unchecked = self
@@ -191,10 +186,7 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> VoiceChatSessio
         .app_state
         .tts
         .lock()
-        .map_err(|error| {
-          warn!(%error, "Cannot grab Tts lock");
-          VoiceChatReplyMessage::InternalError
-        })?
+        .await
         // FIXME: Support other ai languages
         .text_to_speech(&ai_reply_text, &TtsLanguage::En)
         .map_err(|_| VoiceChatReplyMessage::InternalError)?

@@ -6,11 +6,8 @@ use clerk_rs::{
 };
 use epis_stt::stt::Stt;
 use epis_tts::tts::Tts;
-use std::{
-  net::SocketAddr,
-  sync::{Arc, Mutex},
-};
-use tokio::net::TcpListener;
+use std::{net::SocketAddr, sync::Arc};
+use tokio::{net::TcpListener, sync::Mutex};
 use tower_http::trace::TraceLayer;
 use tracing::info;
 use utoipa::OpenApi;

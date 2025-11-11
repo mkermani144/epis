@@ -38,8 +38,8 @@ pub struct Config {
   pub database_url: String,
   /// The HTTP server address
   pub listen_port: u16,
-  /// The Whisper model path
-  pub whisper_model_path: String,
+  /// Transcription model name
+  pub transcription_model: String,
   /// The ByT5 encoder model path
   pub byt5_encoder_model_path: String,
   /// The ByT5 decoder path
@@ -54,16 +54,6 @@ pub struct Config {
 
 impl Config {
   /// Initializes the configuration from environment variables
-  ///
-  /// # Required Environment Variables
-  /// * `PROVIDER` - The LLM provider to use (e.g., "ollama")
-  /// * `GENERATION_MODEL` - The model name to use for text generation (e.g., "llama2")
-  /// * `EMBEDDING_MODEL` - The model name to use for embeddings (e.g., "llama2")
-  /// * `OLLAMA_URL` - The Ollama instance URL
-  /// * `DATABASE_URL` - The postgres URL
-  ///
-  /// # Optional Environment Variables
-  /// * `RUST_LOG` - The logging level (e.g., "info", "debug", "warn")
   pub fn init() -> Result<Self> {
     Ok(Self {
       provider: std::env::var("PROVIDER")
@@ -78,8 +68,8 @@ impl Config {
       listen_port: std::env::var("LISTEN_PORT")
         .context("LISTEN_PORT env var not provided")?
         .parse()?,
-      whisper_model_path: std::env::var("WHISPER_MODEL_PATH")
-        .context("WHISPER_MODEL_PATH env var not provided")?,
+      transcription_model: std::env::var("TRANSCRIPTION_MODEL")
+        .context("TRANSCRIPTION_MODEL env var not provided")?,
       byt5_encoder_model_path: std::env::var("BYT5_ENCODER_MODEL_PATH")
         .context("BYT5_ENCODER_MODEL_PATH env var not provided")?,
       byt5_decoder_model_path: std::env::var("BYT5_DECODER_MODEL_PATH")

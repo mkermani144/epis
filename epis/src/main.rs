@@ -5,13 +5,9 @@
 
 use anyhow::Result;
 use clerk_rs::{ClerkConfiguration, clerk::Clerk};
-use epis_stt::whisper_stt::{WhisperModelPreset, WhisperStt};
 use epis_tts::{byt5_ttp::ByT5Ttp, kokoro_tts::KokoroTts, models::TtsLanguage};
-use std::{
-  net::SocketAddr,
-  path::Path,
-  sync::{Arc, Mutex},
-};
+use std::{net::SocketAddr, path::Path, sync::Arc};
+use tokio::sync::Mutex;
 use tracing::info;
 
 use crate::{
@@ -19,6 +15,7 @@ use crate::{
   config::{Config, Provider},
   http::server::{AppState, ClerkWrapper, HttpServer},
   lingoo::{lingoo::Lingoo, rag::LingooRag},
+  openai::adapter::{OpenAi, OpenAiModels},
   postgres::Postgres,
 };
 
@@ -28,6 +25,7 @@ mod conversation;
 mod entities;
 mod http;
 mod lingoo;
+mod openai;
 mod postgres;
 mod rag;
 
@@ -45,10 +43,11 @@ async fn main() -> Result<()> {
   let postgres = Arc::new(Postgres::try_new(&config.database_url).await?);
   let lingoo_rag = Arc::new(LingooRag::new(llm.clone(), postgres.clone()));
   let lingoo = Arc::new(Lingoo::new(llm.clone(), postgres.clone(), lingoo_rag));
-  let whisper = Arc::new(Mutex::new(WhisperStt::try_new(
-    Path::new(&config.whisper_model_path),
-    WhisperModelPreset::Tiny,
-  )?));
+  let openai = Arc::new(Mutex::new(OpenAi::new(
+    // FIXME: Pass correct responses and tts models
+    OpenAiModels::new(config.transcription_model, "".into(), "".into()),
+    Some("https://api.gapapi.com/v1".into()),
+  )));
   let byt5 = ByT5Ttp::new(
     Path::new(&config.byt5_encoder_model_path),
     Path::new(&config.byt5_decoder_model_path),
@@ -69,7 +68,7 @@ async fn main() -> Result<()> {
       lingoo,
       conversation_repository: postgres,
       llm,
-      stt: whisper,
+      stt: openai,
       tts: kokoro,
       clerk,
     },

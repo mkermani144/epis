@@ -16,11 +16,10 @@ pub enum SttError {
   Unknown,
 }
 
-// FIXME: Add Clone supertrait when there is a solution for WhisperStt to be Clone
-pub trait Stt: Send + Sync + 'static {
-  fn speech_to_text<'stt>(
+pub trait Stt: Clone + Send + Sync + 'static {
+  fn speech_to_text(
     &'stt mut self,
-    wav_bytes: &AudioBytes,
+    wav_bytes: AudioBytes,
     language: SttLanguage,
-  ) -> Result<impl IntoIterator<Item = &'stt str>, SttError>;
+  ) -> impl Future<Output = Result<String, SttError>> + Send;
 }
