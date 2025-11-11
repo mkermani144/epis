@@ -17,7 +17,7 @@ pub enum SttError {
 }
 
 pub trait Stt: Clone + Send + Sync + 'static {
-  fn speech_to_text(
+  fn speech_to_text<'stt>(
     &'stt mut self,
     wav_bytes: AudioBytes,
     language: SttLanguage,
