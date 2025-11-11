@@ -1,3 +1,5 @@
+use std::io::Cursor;
+
 /// A basic session implementation for voice chat realtime communication, implelemented via a dead
 /// simple state machine.
 ///
@@ -15,6 +17,7 @@ use epis_stt::{
   stt::{Stt, SttError},
 };
 use epis_tts::{models::TtsLanguage, tts::Tts};
+use hound::{WavReader, WavSpec};
 use serde_json::{Number, json};
 use tracing::{debug, instrument, warn};
 
@@ -145,6 +148,17 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> VoiceChatSessio
           VoiceChatReplyMessage::InvalidAudioBase64
         })?;
       debug!("Message base64 decoded");
+
+      let reader = WavReader::new(Cursor::new(&prompt_audio_bytes_vec))
+        .map_err(|_| VoiceChatReplyMessage::InternalError)?;
+      let spec = reader.spec();
+      let duration = reader.duration() as f64 / spec.sample_rate as f64;
+      debug!("Prompt duration is {} seconds", duration);
+
+      if duration > 10. {
+        debug!("Rejecting request due to long prompt");
+        return Err(VoiceChatReplyMessage::LongPrompt);
+      }
 
       let prompt_text = self
         .app_state

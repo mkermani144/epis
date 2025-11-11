@@ -43,6 +43,9 @@ pub enum VoiceChatReplyMessage {
   /// Used to indicate an unauthorized cid
   #[display("Unauthorized")]
   Unauthorized,
+  /// Used to indicate a long prompt
+  #[display("LongPrompt")]
+  LongPrompt,
   /// Used to indicate voice chat initialization was successful
   #[display("VoiceChatInitOk")]
   VoiceChatInitOk,

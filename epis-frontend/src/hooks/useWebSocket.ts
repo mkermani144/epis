@@ -95,6 +95,7 @@ export function useWebSocket(
             case "InternalError":
             case "EmptyPrompt":
             case "ZeroCharge":
+            case "LongPrompt":
               console.error("Server error:", message.type);
               onStateChange("idle");
               break;
