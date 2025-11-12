@@ -45,6 +45,9 @@ utoipa-axum = { version = "0.2.0", features = ["debug"] }
 utoipa-scalar = { version = "0.3.0", features = ["axum"] }
 uuid = { version = "1.18.1", features = ["serde"] }
 
+[target.'cfg(debug_assertions)'.dependencies]
+tower-http = { version = "0.6.6", features = ["trace", "cors"] }
+
 [profile.dev.package.sqlx-macros]
 opt-level = 3
 

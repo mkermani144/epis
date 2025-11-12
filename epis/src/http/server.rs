@@ -149,14 +149,19 @@ impl HttpServer {
       });
 
     // Layers that apply to both REST and WS
-    let router = router
+    let mut router = router
       .layer(ClerkLayer::new(
         MemoryCacheJwksProvider::new(app_state.clerk.clone().into_inner()),
         None,
         true,
       ))
       .layer(TraceLayer::new_for_http());
-    let router = router.merge(Scalar::with_url("/scalar", api));
+
+    if cfg!(debug_assertions) {
+      router = router.layer(tower_http::cors::CorsLayer::very_permissive());
+    }
+
+    router = router.merge(Scalar::with_url("/scalar", api));
 
     info!("HTTP server initialized successfully");
 
