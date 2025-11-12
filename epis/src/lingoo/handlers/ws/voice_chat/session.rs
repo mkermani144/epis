@@ -17,7 +17,7 @@ use epis_stt::{
   stt::{Stt, SttError},
 };
 use epis_tts::{models::TtsLanguage, tts::Tts};
-use hound::{WavReader, WavSpec};
+use hound::WavReader;
 use serde_json::{Number, json};
 use tracing::{debug, instrument, warn};
 
@@ -31,21 +31,20 @@ use crate::{
     message::{VoiceChatMessage, VoiceChatReplyMessage},
     state::VoiceChatState,
   },
-  rag::rag::Rag,
 };
 
 const DEFAULT_CHARGE: u16 = 10;
 
 /// A voice chat session, through which a complete voice chat scenario is done. Multiple cycles of
 /// sending and receiving Lingoo messages can be done through it.
-pub struct VoiceChatSession<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> {
+pub struct VoiceChatSession<L: Llm, CR: ConversationRepository, S: Stt, T: Tts> {
   state: VoiceChatState,
-  app_state: LingooAppState<L, CR, R, S, T>,
+  app_state: LingooAppState<L, CR, S, T>,
   jwt: ClerkJwt,
 }
 
-impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> VoiceChatSession<L, CR, R, S, T> {
-  pub fn new(app_state: LingooAppState<L, CR, R, S, T>, jwt: ClerkJwt) -> Self {
+impl<L: Llm, CR: ConversationRepository, S: Stt, T: Tts> VoiceChatSession<L, CR, S, T> {
+  pub fn new(app_state: LingooAppState<L, CR, S, T>, jwt: ClerkJwt) -> Self {
     Self {
       state: VoiceChatState::Uninit,
       app_state,

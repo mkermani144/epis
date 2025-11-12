@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! Ollama provider module
 //!
 //! This module contains the Ollama LLM provider implementation,

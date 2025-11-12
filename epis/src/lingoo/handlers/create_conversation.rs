@@ -12,7 +12,6 @@ use crate::{
   entities::common::Id,
   http::server::LingooAppState,
   lingoo::router::LINGOO_CATEGORY,
-  rag::rag::Rag,
 };
 
 #[derive(Error, Debug)]
@@ -56,8 +55,8 @@ impl CreateLingooConversationResponseData {
     (status = INTERNAL_SERVER_ERROR, body = String, content_type = "application/json"),
   )
 )]
-pub async fn create_conversation<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts>(
-  State(app_state): State<LingooAppState<L, CR, R, S, T>>,
+pub async fn create_conversation<L: Llm, CR: ConversationRepository, S: Stt, T: Tts>(
+  State(app_state): State<LingooAppState<L, CR, S, T>>,
   Extension(jwt): Extension<ClerkJwt>,
 ) -> Result<Json<CreateLingooConversationResponseData>, CreateConversationApiError> {
   let user_id = jwt.sub;

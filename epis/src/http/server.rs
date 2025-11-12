@@ -21,7 +21,6 @@ use crate::{
     lingoo::Lingoo,
     router::{LingooRouter, LingooWebsocketRouter},
   },
-  rag::rag::Rag,
 };
 
 #[derive(Debug)]
@@ -48,18 +47,16 @@ impl std::fmt::Debug for ClerkWrapper {
 }
 
 #[derive(Debug)]
-pub struct AppState<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> {
-  pub lingoo: Arc<Lingoo<L, CR, R>>,
+pub struct AppState<L: Llm, CR: ConversationRepository, S: Stt, T: Tts> {
+  pub lingoo: Arc<Lingoo<L, CR>>,
   pub conversation_repository: Arc<CR>,
-  pub llm: Arc<L>,
+  pub llm: Arc<Mutex<L>>,
   pub stt: Arc<Mutex<S>>,
   pub tts: Arc<Mutex<T>>,
   pub clerk: ClerkWrapper,
 }
 // Stt is not Clone for now, so we need to impl Clone
-impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> Clone
-  for AppState<L, CR, R, S, T>
-{
+impl<L: Llm, CR: ConversationRepository, S: Stt, T: Tts> Clone for AppState<L, CR, S, T> {
   fn clone(&self) -> Self {
     Self {
       lingoo: self.lingoo.clone(),
@@ -79,8 +76,8 @@ pub struct ConversationAppState<CR: ConversationRepository> {
 
 // TODO: Extract WS state so it's not part of REST Lingoo state
 #[derive(Debug)]
-pub struct LingooAppState<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> {
-  pub lingoo: Arc<Lingoo<L, CR, R>>,
+pub struct LingooAppState<L: Llm, CR: ConversationRepository, S: Stt, T: Tts> {
+  pub lingoo: Arc<Lingoo<L, CR>>,
   // FIXME: Remove this field when /lingoo/conversation/list API is fixed
   pub conversation_repository: Arc<CR>,
   pub stt: Arc<Mutex<S>>,
@@ -88,9 +85,7 @@ pub struct LingooAppState<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T:
   pub clerk: ClerkWrapper,
 }
 // Stt is not Clone for now, so we need to impl Clone
-impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> Clone
-  for LingooAppState<L, CR, R, S, T>
-{
+impl<L: Llm, CR: ConversationRepository, S: Stt, T: Tts> Clone for LingooAppState<L, CR, S, T> {
   fn clone(&self) -> Self {
     Self {
       lingoo: self.lingoo.clone(),
@@ -104,7 +99,7 @@ impl<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts> Clone
 
 #[derive(Debug, Clone)]
 pub struct AiAppState<L: Llm> {
-  pub llm: Arc<L>,
+  pub llm: Arc<Mutex<L>>,
 }
 
 #[derive(OpenApi)]
@@ -112,9 +107,9 @@ struct ApiDoc;
 
 impl HttpServer {
   /// Creates a new HTTP server
-  pub fn try_new<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts>(
+  pub fn try_new<L: Llm, CR: ConversationRepository, S: Stt, T: Tts>(
     addr: SocketAddr,
-    app_state: AppState<L, CR, R, S, T>,
+    app_state: AppState<L, CR, S, T>,
     // TODO: Switch to a solution-agnostic trait
   ) -> Result<Self> {
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())

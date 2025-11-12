@@ -15,7 +15,6 @@ use crate::{
   entities::common::{Id, InvalidIdError, Message, MessageError},
   http::server::LingooAppState,
   lingoo::{models::LingooChatError, router::LINGOO_CATEGORY},
-  rag::rag::Rag,
 };
 
 #[derive(Error, Debug)]
@@ -95,8 +94,8 @@ impl LingooChatResponseData {
     (status = INTERNAL_SERVER_ERROR, body = String, content_type = "application/json"),
   )
 )]
-pub async fn chat<L: Llm, CR: ConversationRepository, R: Rag, S: Stt, T: Tts>(
-  State(app_state): State<LingooAppState<L, CR, R, S, T>>,
+pub async fn chat<L: Llm, CR: ConversationRepository, S: Stt, T: Tts>(
+  State(app_state): State<LingooAppState<L, CR, S, T>>,
   Extension(jwt): Extension<ClerkJwt>,
   Json(request): Json<LingooChatRequestBody>,
 ) -> Result<Json<LingooChatResponseData>, LingooChatApiError> {

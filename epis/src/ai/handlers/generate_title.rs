@@ -79,6 +79,8 @@ pub async fn generate_title<L: Llm>(
   let title = request.try_into_domain()?;
   let generated_title = app_state
     .llm
+    .lock()
+    .await
     .generate_title_for(&title)
     .await
     .map_err(|e| match e {

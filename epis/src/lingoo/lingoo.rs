@@ -7,13 +7,13 @@
 use std::sync::Arc;
 
 use epis_core::non_empty_text::NonEmptyString;
+use tokio::sync::Mutex;
 
 use crate::{
   ai::llm::Llm,
   conversation::{models::CreateConversationError, repository::ConversationRepository},
   entities::common::{Category, ChatMessage, ChatMessageRole, Id, Message},
   lingoo::models::LingooChatError,
-  rag::rag::Rag,
 };
 
 pub const LINGOO_SYSTEM_PROMPT: &str = if cfg!(feature = "new-lingoo-prompt") {
@@ -54,20 +54,17 @@ You may utilize these tools to help the user:
 
 /// Language learning assistant powered by LLM
 #[derive(Debug)]
-pub struct Lingoo<L: Llm, CR: ConversationRepository, R: Rag> {
-  llm: Arc<L>,
+pub struct Lingoo<L: Llm, CR: ConversationRepository> {
+  llm: Arc<Mutex<L>>,
   conversation_repository: Arc<CR>,
-  #[allow(dead_code)]
-  rag: Arc<R>,
 }
 
-impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
+impl<L: Llm, CR: ConversationRepository> Lingoo<L, CR> {
   /// Creates a new Lingoo language learning assistant
-  pub fn new(llm: Arc<L>, conversation_repository: Arc<CR>, rag: Arc<R>) -> Self {
+  pub fn new(llm: Arc<Mutex<L>>, conversation_repository: Arc<CR>) -> Self {
     Self {
       llm,
       conversation_repository,
-      rag,
     }
   }
 
@@ -92,6 +89,8 @@ impl<L: Llm, CR: ConversationRepository, R: Rag> Lingoo<L, CR, R> {
 
     let reply = self
       .llm
+      .lock()
+      .await
       .ask_with_history(
         message.as_ref(),
         LINGOO_SYSTEM_PROMPT,
