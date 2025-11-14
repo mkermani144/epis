@@ -53,5 +53,3 @@ opt-level = 3
 
 [features]
 types = []
-new-lingoo-prompt = []
-default = ["new-lingoo-prompt"]

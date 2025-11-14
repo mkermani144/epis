@@ -11,10 +11,9 @@ use tokio::sync::Mutex;
 use tracing::info;
 
 use crate::{
-  ai::ollama::{ollama::Ollama, ollama_models::OllamaModels},
-  config::{Config, Provider},
+  config::Config,
   http::server::{AppState, ClerkWrapper, HttpServer},
-  lingoo::{lingoo::Lingoo, rag::LingooRag},
+  lingoo::lingoo::Lingoo,
   openai::adapter::{OpenAi, OpenAiModels},
   postgres::Postgres,
 };
@@ -36,18 +35,17 @@ async fn main() -> Result<()> {
 
   let config = Config::init()?;
 
-  let models = OllamaModels::new(config.generation_model, config.embedding_model);
-  let llm = match config.provider {
-    Provider::Ollama => Arc::new(Ollama::new(models, config.ollama_url)?),
-  };
-  let postgres = Arc::new(Postgres::try_new(&config.database_url).await?);
-  let lingoo_rag = Arc::new(LingooRag::new(llm.clone(), postgres.clone()));
-  let lingoo = Arc::new(Lingoo::new(llm.clone(), postgres.clone(), lingoo_rag));
   let openai = Arc::new(Mutex::new(OpenAi::new(
     // FIXME: Pass correct responses and tts models
-    OpenAiModels::new(config.transcription_model, "".into(), "".into()),
-    Some("https://api.gapapi.com/v1".into()),
+    OpenAiModels::new(
+      config.transcription_model,
+      config.responses_model,
+      "".into(),
+    ),
+    None,
   )));
+  let postgres = Arc::new(Postgres::try_new(&config.database_url).await?);
+  let lingoo = Arc::new(Lingoo::new(openai.clone(), postgres.clone()));
   let byt5 = ByT5Ttp::new(
     Path::new(&config.byt5_encoder_model_path),
     Path::new(&config.byt5_decoder_model_path),
@@ -67,8 +65,8 @@ async fn main() -> Result<()> {
     AppState {
       lingoo,
       conversation_repository: postgres,
-      llm,
-      stt: openai,
+      llm: openai.clone(),
+      stt: openai.clone(),
       tts: kokoro,
       clerk,
     },
