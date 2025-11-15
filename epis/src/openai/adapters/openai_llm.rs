@@ -58,7 +58,7 @@ impl Llm for super::OpenAi {
     &self,
     prompt: &str,
     system: &str,
-    _history: &[ChatMessage],
+    history: &[ChatMessage],
   ) -> anyhow::Result<Message> {
     let prompt = EasyInputMessageArgs::default()
       .role(Role::User)
@@ -73,6 +73,20 @@ impl Llm for super::OpenAi {
 
     let schema = schema_for!(LingooAiResponse);
     let schema_value = serde_json::to_value(schema)?;
+
+    let mut full_history = vec![InputItem::EasyMessage(system)];
+    full_history.extend(
+      history
+        .iter()
+        .rev()
+        .take(10)
+        .rev()
+        .map(|message| InputItem::EasyMessage(message.clone().into()))
+        .collect::<Vec<InputItem>>(),
+    );
+    full_history.push(InputItem::EasyMessage(prompt));
+
+    let input = InputParam::Items(full_history);
 
     let request = CreateResponseArgs::default()
       // TODO: Set max tokens based on data
@@ -91,11 +105,7 @@ impl Llm for super::OpenAi {
         effort: Some(ReasoningEffort::Low),
         summary: None,
       })
-      // TODO: Add history items
-      .input(InputParam::Items(vec![
-        InputItem::EasyMessage(system),
-        InputItem::EasyMessage(prompt),
-      ]))
+      .input(input)
       .build()
       .expect("Responses request can be built from the provided args");
 
