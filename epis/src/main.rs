@@ -14,7 +14,7 @@ use crate::{
   config::Config,
   http::server::{AppState, ClerkWrapper, HttpServer},
   lingoo::lingoo::Lingoo,
-  openai::adapter::{OpenAi, OpenAiModels},
+  openai::adapters::{OpenAi, OpenAiModels},
   postgres::Postgres,
 };
 
