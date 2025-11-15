@@ -20,6 +20,7 @@ pub struct Config {
   pub tts_model: String,
   /// Clerk secret key
   pub clerk_sk: String,
+  #[allow(dead_code)]
   /// OpenAI api key
   pub openai_api_key: String,
 }
