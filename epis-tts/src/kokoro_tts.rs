@@ -127,7 +127,7 @@ pub enum KokoroTtsError {
 impl<T: Ttp> Tts for KokoroTts<T> {
   type Error = KokoroTtsError;
 
-  fn text_to_speech(
+  async fn text_to_speech(
     &mut self,
     text: &NonEmptyString,
     // FIXME: Either use this parameter, or drop it in favor of chunk-based language detection

@@ -16,16 +16,12 @@ pub struct Config {
   pub transcription_model: String,
   /// Responses model name
   pub responses_model: String,
-  /// The ByT5 encoder model path
-  pub byt5_encoder_model_path: String,
-  /// The ByT5 decoder path
-  pub byt5_decoder_model_path: String,
-  /// The Kokoro voice data dir
-  pub kokoro_voice_data_dir: String,
-  /// The Kokoro model path
-  pub kokoro_model_path: String,
+  /// Tts model name
+  pub tts_model: String,
   /// Clerk secret key
   pub clerk_sk: String,
+  /// OpenAI api key
+  pub openai_api_key: String,
 }
 
 impl Config {
@@ -40,15 +36,10 @@ impl Config {
         .context("TRANSCRIPTION_MODEL env var not provided")?,
       responses_model: std::env::var("RESPONSES_MODEL")
         .context("RESPONSES_MODEL env var not provided")?,
-      byt5_encoder_model_path: std::env::var("BYT5_ENCODER_MODEL_PATH")
-        .context("BYT5_ENCODER_MODEL_PATH env var not provided")?,
-      byt5_decoder_model_path: std::env::var("BYT5_DECODER_MODEL_PATH")
-        .context("BYT5_DECODER_MODEL_PATH env var not provided")?,
-      kokoro_voice_data_dir: std::env::var("KOKORO_VOICE_DATA_DIR")
-        .context("KOKORO_VOICE_DATA_DIR env var not provided")?,
-      kokoro_model_path: std::env::var("KOKORO_MODEL_PATH")
-        .context("KOKORO_MODEL_PATH env var not provided")?,
+      tts_model: std::env::var("TTS_MODEL").context("TTS_MODEL env var not provided")?,
       clerk_sk: std::env::var("CLERK_SK").context("CLERK_SK env var not provided")?,
+      openai_api_key: std::env::var("OPENAI_API_KEY")
+        .context("OPENAI_API_KEY env var not provided")?,
     })
   }
 }

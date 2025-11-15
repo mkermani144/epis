@@ -5,8 +5,7 @@
 
 use anyhow::Result;
 use clerk_rs::{ClerkConfiguration, clerk::Clerk};
-use epis_tts::{byt5_ttp::ByT5Ttp, kokoro_tts::KokoroTts, models::TtsLanguage};
-use std::{net::SocketAddr, path::Path, sync::Arc};
+use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::Mutex;
 use tracing::info;
 
@@ -40,22 +39,12 @@ async fn main() -> Result<()> {
     OpenAiModels::new(
       config.transcription_model,
       config.responses_model,
-      "".into(),
+      config.tts_model,
     ),
     None,
   )));
   let postgres = Arc::new(Postgres::try_new(&config.database_url).await?);
   let lingoo = Arc::new(Lingoo::new(openai.clone(), postgres.clone()));
-  let byt5 = ByT5Ttp::new(
-    Path::new(&config.byt5_encoder_model_path),
-    Path::new(&config.byt5_decoder_model_path),
-  )?;
-  let kokoro = Arc::new(Mutex::new(KokoroTts::new(
-    byt5,
-    Path::new(&config.kokoro_model_path),
-    vec![TtsLanguage::En, TtsLanguage::Es],
-    Path::new(&config.kokoro_voice_data_dir),
-  )?));
 
   let clerk_config = ClerkConfiguration::new(None, None, Some(config.clerk_sk), None);
   let clerk = ClerkWrapper::new(Clerk::new(clerk_config));
@@ -67,7 +56,7 @@ async fn main() -> Result<()> {
       conversation_repository: postgres,
       llm: openai.clone(),
       stt: openai.clone(),
-      tts: kokoro,
+      tts: openai.clone(),
       clerk,
     },
   )?

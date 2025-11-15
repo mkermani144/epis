@@ -202,6 +202,7 @@ impl<L: Llm, CR: ConversationRepository, S: Stt, T: Tts> VoiceChatSession<L, CR,
         .await
         // FIXME: Support other ai languages
         .text_to_speech(&ai_reply_text, &TtsLanguage::En)
+        .await
         .map_err(|_| VoiceChatReplyMessage::InternalError)?
         .into_iter()
         .collect();

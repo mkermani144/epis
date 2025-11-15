@@ -12,5 +12,5 @@ pub trait Tts: Send + Sync + 'static {
     &mut self,
     text: &NonEmptyString,
     language: &TtsLanguage,
-  ) -> Result<impl IntoIterator<Item = AudioChunk>, Self::Error>;
+  ) -> impl Future<Output = Result<impl IntoIterator<Item = AudioChunk>, Self::Error>> + Send;
 }

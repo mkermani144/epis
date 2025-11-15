@@ -11,14 +11,14 @@ use async_openai::{
 pub struct OpenAiModels {
   transcription: String,
   responses: String,
-  stt: String,
+  tts: String,
 }
 impl OpenAiModels {
-  pub fn new(transcription: String, responses: String, stt: String) -> Self {
+  pub fn new(transcription: String, responses: String, tts: String) -> Self {
     Self {
       transcription,
       responses,
-      stt,
+      tts,
     }
   }
 }
