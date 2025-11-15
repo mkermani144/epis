@@ -7,37 +7,38 @@ use crate::{
 };
 use anyhow::bail;
 use async_openai::types::{
-  ReasoningEffort, ResponseFormatJsonSchema,
+  chat::{ReasoningEffort, ResponseFormatJsonSchema},
+  evals::EasyInputMessage,
   responses::{
-    Content, CreateResponseArgs, Input, InputContent, InputItem, InputMessage, InputMessageArgs,
-    OutputContent, OutputMessage, OutputStatus, OutputText, ReasoningConfigArgs, Role, TextConfig,
-    TextResponseFormat, Verbosity,
+    CreateResponseArgs, EasyInputContent, EasyInputMessageArgs, InputItem, InputParam, Reasoning,
+    ResponseTextParam, Role, TextResponseFormatConfiguration, Verbosity,
   },
 };
 use schemars::{JsonSchema, schema_for};
-use tracing::{debug, instrument, warn};
+use serde::Deserialize;
+use tracing::{debug, instrument};
 
-impl From<ChatMessage> for InputMessage {
+impl From<ChatMessage> for EasyInputMessage {
   fn from(chat_message: ChatMessage) -> Self {
     let role = match chat_message.role {
       ChatMessageRole::User => Role::User,
       ChatMessageRole::Ai => Role::Assistant,
       ChatMessageRole::System => Role::Developer,
     };
-    InputMessageArgs::default()
+    EasyInputMessageArgs::default()
       .role(role)
-      .content(InputContent::TextInput(chat_message.message.into_inner()))
+      .content(EasyInputContent::Text(chat_message.message.into_inner()))
       .build()
       .expect("Input message can be built from role and content")
   }
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct LearnedMaterial {
   vocab: Vec<String>,
 }
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct LingooAiResponse {
   response: String,
@@ -57,17 +58,16 @@ impl Llm for super::OpenAi {
     &self,
     prompt: &str,
     system: &str,
-    history: &[ChatMessage],
+    _history: &[ChatMessage],
   ) -> anyhow::Result<Message> {
-    let prompt = InputMessageArgs::default()
+    let prompt = EasyInputMessageArgs::default()
       .role(Role::User)
-      .content(InputContent::TextInput(prompt.to_string()))
+      .content(EasyInputContent::Text(prompt.to_string()))
       .build()
       .expect("Prompt can be built from role and content");
-
-    let system = InputMessageArgs::default()
+    let system = EasyInputMessageArgs::default()
       .role(Role::Developer)
-      .content(InputContent::TextInput(system.to_string()))
+      .content(EasyInputContent::Text(system.to_string()))
       .build()
       .expect("System message can be built from role and content");
 
@@ -78,8 +78,8 @@ impl Llm for super::OpenAi {
       // TODO: Set max tokens based on data
       .max_output_tokens(10000u32)
       .model(&self.models.responses)
-      .text(TextConfig {
-        format: TextResponseFormat::JsonSchema(ResponseFormatJsonSchema {
+      .text(ResponseTextParam {
+        format: TextResponseFormatConfiguration::JsonSchema(ResponseFormatJsonSchema {
           description: None,
           name: "lingoo_ai_response".to_string(),
           strict: Some(true),
@@ -87,47 +87,28 @@ impl Llm for super::OpenAi {
         }),
         verbosity: Some(Verbosity::Medium),
       })
-      .reasoning(
-        ReasoningConfigArgs::default()
-          .effort(ReasoningEffort::Low)
-          .build()
-          .expect("Reasoning config can be built from effort"),
-      )
+      .reasoning(Reasoning {
+        effort: Some(ReasoningEffort::Low),
+        summary: None,
+      })
       // TODO: Add history items
-      .input(Input::Items(vec![
-        InputItem::Message(system),
-        InputItem::Message(prompt),
+      .input(InputParam::Items(vec![
+        InputItem::EasyMessage(system),
+        InputItem::EasyMessage(prompt),
       ]))
       .build()
       .expect("Responses request can be built from the provided args");
 
-    // TODO: Do something with learned material
-
     let response = self.client.responses().create(request).await?;
-    let ai_reply: Option<String> = response.output.into_iter().find_map(|output_content| {
-      if let OutputContent::Message(OutputMessage {
-        mut content,
-        role: Role::Assistant,
-        status: OutputStatus::Completed,
-        ..
-      }) = output_content
-      {
-        if let Content::OutputText(OutputText { text, .. }) = content.remove(0) {
-          return Some(text);
-        }
-      }
-      None
-    });
+    if let Some(output_text) = response.output_text() {
+      let ai_reply: LingooAiResponse = serde_json::from_str(&output_text)?;
+      debug!("Response generation was done successfully");
 
-    match ai_reply {
-      Some(ai_reply) => {
-        debug!("Response generation was done successfully");
-        Ok(ai_reply.try_into()?)
-      }
-      None => {
-        warn!(response_id = %response.id, "Received an empty response from ai");
-        bail!("Ai reply is empty");
-      }
+      // TODO: Do something with learned material
+
+      Ok(ai_reply.response.try_into()?)
+    } else {
+      bail!("Expected ai reply was not received")
     }
   }
 }

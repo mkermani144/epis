@@ -1,4 +1,4 @@
-use async_openai::types::{AudioInput, CreateTranscriptionRequestArgs};
+use async_openai::types::audio::{AudioInput, CreateTranscriptionRequestArgs};
 use epis_stt::{
   models::{AudioBytes, SttLanguage},
   stt::{Stt, SttError},
@@ -29,7 +29,8 @@ impl Stt for super::OpenAi {
     let text = self
       .client
       .audio()
-      .transcribe(request)
+      .transcription()
+      .create(request)
       .await
       .map_err(|e| {
         warn!(%e, "Transcription request failed");
