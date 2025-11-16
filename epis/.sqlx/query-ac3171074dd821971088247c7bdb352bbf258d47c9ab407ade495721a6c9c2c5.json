@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM conversation",
+  "query": "SELECT * FROM conversation WHERE user_id = $1",
   "describe": {
     "columns": [
       {
@@ -35,7 +35,9 @@
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Text"
+      ]
     },
     "nullable": [
       false,
@@ -46,5 +48,5 @@
       false
     ]
   },
-  "hash": "a21cbb539948a486cb8c160ad36857d3ab0ca9f40be5881799d280a8203ac111"
+  "hash": "ac3171074dd821971088247c7bdb352bbf258d47c9ab407ade495721a6c9c2c5"
 }

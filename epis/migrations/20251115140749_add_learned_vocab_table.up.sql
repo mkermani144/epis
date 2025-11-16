@@ -1,0 +1,10 @@
+CREATE EXTENSION citext;
+CREATE TABLE learned_vocab (
+	user_id TEXT NOT NULL,
+	vocab CITEXT NOT NULL,
+	last_used TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+	usage_count INT NOT NULL DEFAULT 1,
+	streak SMALLINT NOT NULL DEFAULT 1,
+	created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+	PRIMARY KEY (user_id, vocab)
+);
