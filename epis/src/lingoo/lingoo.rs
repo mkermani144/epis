@@ -13,10 +13,13 @@ use crate::{
   ai::llm::Llm,
   conversation::{models::CreateConversationError, repository::ConversationRepository},
   entities::common::{Category, ChatMessage, ChatMessageRole, Id, Message},
-  lingoo::{models::LingooChatError, repository::LingooRepository},
+  lingoo::{
+    models::{LearnedVocabData, LearnedVocabStatus, LingooChatError},
+    repository::LingooRepository,
+  },
 };
 
-fn generate_system_message(previously_learned: Vec<NonEmptyString>) -> String {
+fn generate_system_message(previously_learned: &Vec<NonEmptyString>) -> String {
   if previously_learned.is_empty() {
     format!(
       r#"You are a language learning assistant.
@@ -128,17 +131,30 @@ impl<L: Llm, CR: ConversationRepository, LR: LingooRepository> Lingoo<L, CR, LR>
       .await
       .map_err(|_| LingooChatError::StoreLearnedVocab)?;
 
-    let (reply, learned_vocab_data_vec) = self
+    let (reply, mut learned_vocab_data_vec) = self
       .llm
       .lock()
       .await
       .ask_with_history(
         message.as_ref(),
-        &generate_system_message(due_vocab),
+        &generate_system_message(&due_vocab),
         &conversation_history,
       )
       .await
       .map_err(|_| LingooChatError::Llm)?;
+
+    let reviewed_vocab = due_vocab
+      .into_iter()
+      .filter_map(|word| {
+        if reply.as_ref().to_lowercase().contains(word.as_str()) {
+          Some(LearnedVocabData::new(word, LearnedVocabStatus::Reviewed))
+        } else {
+          None
+        }
+      })
+      .collect::<Vec<_>>();
+
+    learned_vocab_data_vec.extend(reviewed_vocab);
 
     self
       .lingoo_repository
