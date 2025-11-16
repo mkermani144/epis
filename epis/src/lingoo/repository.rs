@@ -7,7 +7,7 @@ use crate::{
 };
 
 pub trait LingooRepository: Clone + Send + Sync + 'static {
-  type StoreLearnedVocabError;
+  type LingooRepositoryError;
 
   fn find_similar_docs(
     &self,
@@ -23,5 +23,10 @@ pub trait LingooRepository: Clone + Send + Sync + 'static {
     &self,
     user_id: &NonEmptyString,
     learned_vocab_data_list: &Vec<LearnedVocabData>,
-  ) -> impl Future<Output = Result<(), Self::StoreLearnedVocabError>> + Send;
+  ) -> impl Future<Output = Result<(), Self::LingooRepositoryError>> + Send;
+  fn fetch_due_vocab(
+    &self,
+    user_id: &NonEmptyString,
+    limit: Option<u8>,
+  ) -> impl Future<Output = Result<Vec<NonEmptyString>, Self::LingooRepositoryError>> + Send;
 }

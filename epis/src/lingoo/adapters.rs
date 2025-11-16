@@ -16,14 +16,18 @@ use crate::{
 
 use super::models::LearnedVocabData;
 
+const DEFAULT_DUE_VOCAB_LIMIT: u8 = 10;
+
 #[derive(Debug, Clone, Error)]
-pub enum PostgresStoreLearnedVocabError {
+pub enum PostgresLingooRepositoryError {
   #[error("Unknown error during storing learned vocab")]
-  Unknown,
+  StoreVocabUnknown,
+  #[error("Unknown error during fetching due vocab")]
+  FetchDueUnknown,
 }
 
 impl LingooRepository for Postgres {
-  type StoreLearnedVocabError = PostgresStoreLearnedVocabError;
+  type LingooRepositoryError = PostgresLingooRepositoryError;
 
   async fn find_similar_docs(
     &self,
@@ -70,7 +74,7 @@ impl LingooRepository for Postgres {
     &self,
     user_id: &NonEmptyString,
     learned_vocab_data_list: &Vec<LearnedVocabData>,
-  ) -> Result<(), Self::StoreLearnedVocabError> {
+  ) -> Result<(), Self::LingooRepositoryError> {
     // FIXME: Batch upsert when sqlx supports it, this is very slow
     // https://github.com/launchbadge/sqlx/issues/294
     for learned_vocab_data in learned_vocab_data_list {
@@ -86,7 +90,7 @@ impl LingooRepository for Postgres {
           .execute(self.pool())
           .await
           .inspect_err(|error| warn!(%error, "Storing new learned vocab failed"))
-          .map_err(|_| PostgresStoreLearnedVocabError::Unknown)?;
+          .map_err(|_| PostgresLingooRepositoryError::StoreVocabUnknown)?;
         }
         LearnedVocabStatus::Reviewed => {
           query!(
@@ -97,7 +101,7 @@ impl LingooRepository for Postgres {
           .execute(self.pool())
           .await
           .inspect_err(|error| warn!(%error, "Storing reviewed vocab failed"))
-          .map_err(|_| PostgresStoreLearnedVocabError::Unknown)?;
+          .map_err(|_| PostgresLingooRepositoryError::StoreVocabUnknown)?;
         }
         LearnedVocabStatus::Reset => {
           query!(
@@ -108,11 +112,48 @@ impl LingooRepository for Postgres {
           .execute(self.pool())
           .await
           .inspect_err(|error| warn!(%error, "Storing reset vocab failed"))
-          .map_err(|_| PostgresStoreLearnedVocabError::Unknown)?;
+          .map_err(|_| PostgresLingooRepositoryError::StoreVocabUnknown)?;
         }
       }
     }
 
     Ok(())
+  }
+
+  async fn fetch_due_vocab(
+    &self,
+    user_id: &NonEmptyString,
+    limit: Option<u8>,
+  ) -> Result<Vec<NonEmptyString>, Self::LingooRepositoryError> {
+    let result = query!(
+      r#"WITH due_words AS (
+            SELECT vocab, EXTRACT(EPOCH FROM(now() - (last_used + ((2 ^ (streak - 1)) * INTERVAL '1 day')))) AS due
+            FROM learned_vocab
+            WHERE user_id = $1
+        )
+        SELECT vocab
+        FROM due_words
+        WHERE due > 0
+        ORDER BY due DESC
+        LIMIT $2"#,
+      user_id.as_ref() as &str,
+      limit.unwrap_or(DEFAULT_DUE_VOCAB_LIMIT) as i16
+    )
+    .fetch_all(self.pool())
+    .await
+    .inspect_err(|error| warn!(%error, "Fetching due vocab failed"))
+    .map_err(|_| PostgresLingooRepositoryError::FetchDueUnknown)?;
+
+    let due_vocab = result
+      .into_iter()
+      .map(|word_record| {
+        word_record
+          .vocab
+          .try_into()
+          .expect("Learned vocab fetched from database are never empty")
+      })
+      .collect::<Vec<_>>();
+
+    Ok(due_vocab)
   }
 }

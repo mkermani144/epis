@@ -17,10 +17,30 @@ use crate::{
 };
 
 fn generate_system_message(previously_learned: Vec<NonEmptyString>) -> String {
-  // TODO: If [previously_learned] is empty, do not add the line "The user has ..." to the system
-  // message
-  format!(
-    r#"You are a language learning assistant.
+  if previously_learned.is_empty() {
+    format!(
+      r#"You are a language learning assistant.
+
+Follow these rules:
+
+1. Teach 1–2 new single words. Only general-purpose vocabulary (verbs, adjectives, common nouns). No technical or cultural terms.
+2. Use base or lemma form only (e.g. "run", "be", "parler", "merhaba").
+3. Adapt to user's level:
+   - Beginner: 80% native language, 20% target language
+   - Intermediate: 50% / 50%
+   - Advanced: 80–100% target language
+   Default = Beginner.
+4. Ensure output matches this structure exactly:
+
+{{
+  "response": "your adapted reply",
+  "learned_material": {{ "vocab": ["word1", "word2"] }}
+}}
+"#
+    )
+  } else {
+    format!(
+      r#"You are a language learning assistant.
 
 The user has previously learned these words:
 {}
@@ -42,12 +62,13 @@ Follow these rules:
   "learned_material": {{ "vocab": ["word1", "word2"] }}
 }}
 "#,
-    previously_learned
-      .iter()
-      .map(|word| word.as_str())
-      .collect::<Vec<_>>()
-      .join(",")
-  )
+      previously_learned
+        .iter()
+        .map(|word| word.as_str())
+        .collect::<Vec<_>>()
+        .join(","),
+    )
+  }
 }
 
 /// Language learning assistant powered by LLM
@@ -96,14 +117,24 @@ impl<L: Llm, CR: ConversationRepository, LR: LingooRepository> Lingoo<L, CR, LR>
       .get_conversation_message_history(cid)
       .await?;
 
+    let due_vocab = self
+      .lingoo_repository
+      .fetch_due_vocab(
+        &user_id
+          .try_into()
+          .expect("jwt always contains a valid, non-empty user id"),
+        None,
+      )
+      .await
+      .map_err(|_| LingooChatError::StoreLearnedVocab)?;
+
     let (reply, learned_vocab_data_vec) = self
       .llm
       .lock()
       .await
       .ask_with_history(
         message.as_ref(),
-        // TODO: Inject previously learned material into system message
-        &generate_system_message(vec![]),
+        &generate_system_message(due_vocab),
         &conversation_history,
       )
       .await

@@ -27,6 +27,8 @@ pub enum LingooChatError {
   StoreMessage(#[from] StoreMessageError),
   #[error("error while storing learned vocab")]
   StoreLearnedVocab,
+  #[error("error while fetching due vocab")]
+  FetchDueVocab,
 }
 
 #[derive(Debug)]
