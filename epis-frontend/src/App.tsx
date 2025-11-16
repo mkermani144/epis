@@ -8,6 +8,7 @@ import {
   SignInButton,
   SignUpButton,
   UserButton,
+  useAuth,
 } from "@clerk/clerk-react";
 import { Button } from "./components/ui/button";
 
@@ -24,6 +25,7 @@ function App() {
     wsRef,
     setState
   );
+  const { sessionClaims } = useAuth();
 
   const handleMouseDown = () => {
     if (state === "idle") {
@@ -63,7 +65,10 @@ function App() {
             </SignUpButton>
           </SignedOut>
           <SignedIn>
+	  <div className="flex items-center gap-2 border-2 border-solid border-slate-300 rounded cursor-default p-1 px-2">
+	    <p>{sessionClaims?.charge ?? "?"} ⚡️</p>
             <UserButton />
+	  </div>
           </SignedIn>
         </div>
       </header>
