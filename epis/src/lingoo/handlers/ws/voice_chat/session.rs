@@ -26,10 +26,13 @@ use crate::{
   conversation::{models::GetConversationUserIdError, repository::ConversationRepository},
   entities::common::Id,
   http::server::LingooAppState,
-  lingoo::handlers::ws::voice_chat::{
-    charge::Charge,
-    message::{VoiceChatMessage, VoiceChatReplyMessage},
-    state::VoiceChatState,
+  lingoo::{
+    handlers::ws::voice_chat::{
+      charge::Charge,
+      message::{VoiceChatMessage, VoiceChatReplyMessage},
+      state::VoiceChatState,
+    },
+    repository::LingooRepository,
   },
 };
 
@@ -37,14 +40,22 @@ const DEFAULT_CHARGE: u16 = 10;
 
 /// A voice chat session, through which a complete voice chat scenario is done. Multiple cycles of
 /// sending and receiving Lingoo messages can be done through it.
-pub struct VoiceChatSession<L: Llm, CR: ConversationRepository, S: Stt, T: Tts> {
+pub struct VoiceChatSession<
+  L: Llm,
+  CR: ConversationRepository,
+  LR: LingooRepository,
+  S: Stt,
+  T: Tts,
+> {
   state: VoiceChatState,
-  app_state: LingooAppState<L, CR, S, T>,
+  app_state: LingooAppState<L, CR, LR, S, T>,
   jwt: ClerkJwt,
 }
 
-impl<L: Llm, CR: ConversationRepository, S: Stt, T: Tts> VoiceChatSession<L, CR, S, T> {
-  pub fn new(app_state: LingooAppState<L, CR, S, T>, jwt: ClerkJwt) -> Self {
+impl<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts>
+  VoiceChatSession<L, CR, LR, S, T>
+{
+  pub fn new(app_state: LingooAppState<L, CR, LR, S, T>, jwt: ClerkJwt) -> Self {
     Self {
       state: VoiceChatState::Uninit,
       app_state,
@@ -177,10 +188,13 @@ impl<L: Llm, CR: ConversationRepository, S: Stt, T: Tts> VoiceChatSession<L, CR,
         })?;
       debug!("Message audio converted to text");
 
+      let user_id = &self.jwt.sub;
+
       let ai_reply_text_unchecked = self
         .app_state
         .lingoo
         .chat(
+          user_id,
           &id,
           prompt_text.try_into().map_err(|_| {
             warn!("Cannot pass an empty prompt to Lingoo Ai");
@@ -216,7 +230,6 @@ impl<L: Llm, CR: ConversationRepository, S: Stt, T: Tts> VoiceChatSession<L, CR,
       let ai_reply_audio_base64 = BASE64_STANDARD.encode(ai_reply_audio.into_inner());
       debug!("Ai reply audio converted to base64");
 
-      let user_id = &self.jwt.sub;
       User::update_user_metadata(
         &self.app_state.clerk.clone().into_inner(),
         user_id,

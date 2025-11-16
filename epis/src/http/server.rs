@@ -19,6 +19,7 @@ use crate::{
   conversation::{repository::ConversationRepository, router::ConversationRouter},
   lingoo::{
     lingoo::Lingoo,
+    repository::LingooRepository,
     router::{LingooRouter, LingooWebsocketRouter},
   },
 };
@@ -47,8 +48,8 @@ impl std::fmt::Debug for ClerkWrapper {
 }
 
 #[derive(Debug)]
-pub struct AppState<L: Llm, CR: ConversationRepository, S: Stt, T: Tts> {
-  pub lingoo: Arc<Lingoo<L, CR>>,
+pub struct AppState<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts> {
+  pub lingoo: Arc<Lingoo<L, CR, LR>>,
   pub conversation_repository: Arc<CR>,
   pub llm: Arc<Mutex<L>>,
   pub stt: Arc<Mutex<S>>,
@@ -56,7 +57,9 @@ pub struct AppState<L: Llm, CR: ConversationRepository, S: Stt, T: Tts> {
   pub clerk: ClerkWrapper,
 }
 // Stt is not Clone for now, so we need to impl Clone
-impl<L: Llm, CR: ConversationRepository, S: Stt, T: Tts> Clone for AppState<L, CR, S, T> {
+impl<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts> Clone
+  for AppState<L, CR, LR, S, T>
+{
   fn clone(&self) -> Self {
     Self {
       lingoo: self.lingoo.clone(),
@@ -76,8 +79,9 @@ pub struct ConversationAppState<CR: ConversationRepository> {
 
 // TODO: Extract WS state so it's not part of REST Lingoo state
 #[derive(Debug)]
-pub struct LingooAppState<L: Llm, CR: ConversationRepository, S: Stt, T: Tts> {
-  pub lingoo: Arc<Lingoo<L, CR>>,
+pub struct LingooAppState<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts>
+{
+  pub lingoo: Arc<Lingoo<L, CR, LR>>,
   // FIXME: Remove this field when /lingoo/conversation/list API is fixed
   pub conversation_repository: Arc<CR>,
   pub stt: Arc<Mutex<S>>,
@@ -85,7 +89,9 @@ pub struct LingooAppState<L: Llm, CR: ConversationRepository, S: Stt, T: Tts> {
   pub clerk: ClerkWrapper,
 }
 // Stt is not Clone for now, so we need to impl Clone
-impl<L: Llm, CR: ConversationRepository, S: Stt, T: Tts> Clone for LingooAppState<L, CR, S, T> {
+impl<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts> Clone
+  for LingooAppState<L, CR, LR, S, T>
+{
   fn clone(&self) -> Self {
     Self {
       lingoo: self.lingoo.clone(),
@@ -107,9 +113,9 @@ struct ApiDoc;
 
 impl HttpServer {
   /// Creates a new HTTP server
-  pub fn try_new<L: Llm, CR: ConversationRepository, S: Stt, T: Tts>(
+  pub fn try_new<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts>(
     addr: SocketAddr,
-    app_state: AppState<L, CR, S, T>,
+    app_state: AppState<L, CR, LR, S, T>,
     // TODO: Switch to a solution-agnostic trait
   ) -> Result<Self> {
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())

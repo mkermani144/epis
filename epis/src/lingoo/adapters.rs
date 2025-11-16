@@ -1,3 +1,4 @@
+use epis_core::non_empty_text::NonEmptyString;
 use pgvector::Vector;
 use sqlx::query;
 use thiserror::Error;
@@ -79,7 +80,7 @@ impl LingooRepository for Postgres {
             // NOTE: For now, on vocab conflict we do nothing. In future, we may want to change
             // usage_count, etc.
             "INSERT INTO learned_vocab (user_id, vocab) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-            user_id,
+            user_id.as_ref() as &str,
             learned_vocab_data.vocab().as_ref() as &str,
           )
           .execute(self.pool())
@@ -90,7 +91,7 @@ impl LingooRepository for Postgres {
         LearnedVocabStatus::Reviewed => {
           query!(
             "UPDATE learned_vocab SET last_used = now(), usage_count = usage_count + 1, streak = streak + 1 WHERE user_id = $1 AND vocab = $2",
-            user_id,
+            user_id.as_ref() as &str,
             learned_vocab_data.vocab().as_ref() as &str,
           )
           .execute(self.pool())
@@ -101,7 +102,7 @@ impl LingooRepository for Postgres {
         LearnedVocabStatus::Reset => {
           query!(
             "UPDATE learned_vocab SET last_used = now(), usage_count = usage_count + 1, streak = 0 WHERE user_id = $1 AND vocab = $2",
-            user_id,
+            user_id.as_ref() as &str,
             learned_vocab_data.vocab().as_ref() as &str,
           )
           .execute(self.pool())

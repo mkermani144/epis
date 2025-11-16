@@ -1,9 +1,11 @@
+use crate::lingoo::models::LearnedVocabData;
 use crate::{
   ai::llm::Llm,
   entities::{
     common::{AnyText, ChatMessage, ChatMessageRole, Message},
     embedding::Embedding,
   },
+  lingoo::models::LearnedVocabStatus,
 };
 use anyhow::bail;
 use async_openai::types::{
@@ -59,7 +61,7 @@ impl Llm for super::OpenAi {
     prompt: &str,
     system: &str,
     history: &[ChatMessage],
-  ) -> anyhow::Result<Message> {
+  ) -> anyhow::Result<(Message, Vec<LearnedVocabData>)> {
     let prompt = EasyInputMessageArgs::default()
       .role(Role::User)
       .content(EasyInputContent::Text(prompt.to_string()))
@@ -114,9 +116,20 @@ impl Llm for super::OpenAi {
       let ai_reply: LingooAiResponse = serde_json::from_str(&output_text)?;
       debug!("Response generation was done successfully");
 
-      // TODO: Do something with learned material
+      let learned_vocab = ai_reply
+        .learned_material
+        .vocab
+        .into_iter()
+        .filter_map(|vocab| {
+          if let Ok(vocab) = vocab.try_into() {
+            Some(LearnedVocabData::new(vocab, LearnedVocabStatus::New))
+          } else {
+            None
+          }
+        })
+        .collect::<Vec<_>>();
 
-      Ok(ai_reply.response.try_into()?)
+      Ok((ai_reply.response.try_into()?, learned_vocab))
     } else {
       bail!("Expected ai reply was not received")
     }

@@ -15,7 +15,7 @@ use crate::{
   ai::llm::Llm,
   conversation::{models::Conversation, repository::ConversationRepository},
   http::server::LingooAppState,
-  lingoo::router::LINGOO_CATEGORY,
+  lingoo::{repository::LingooRepository, router::LINGOO_CATEGORY},
 };
 
 #[derive(Error, Debug, Serialize, Deserialize)]
@@ -103,8 +103,14 @@ impl ListLingooConversationsResponseData {
     (status = INTERNAL_SERVER_ERROR, body = String, content_type = "application/json"),
   )
 )]
-pub async fn list_conversations<L: Llm, CR: ConversationRepository, S: Stt, T: Tts>(
-  State(app_state): State<LingooAppState<L, CR, S, T>>,
+pub async fn list_conversations<
+  L: Llm,
+  CR: ConversationRepository,
+  LR: LingooRepository,
+  S: Stt,
+  T: Tts,
+>(
+  State(app_state): State<LingooAppState<L, CR, LR, S, T>>,
   Extension(jwt): Extension<ClerkJwt>,
 ) -> Result<Json<ListLingooConversationsResponseData>, ListConversationsApiError> {
   let user_id = jwt.sub;

@@ -13,7 +13,7 @@ use crate::{
   ai::llm::Llm,
   conversation::{models::CreateConversationError, repository::ConversationRepository},
   entities::common::{Category, ChatMessage, ChatMessageRole, Id, Message},
-  lingoo::models::LingooChatError,
+  lingoo::{models::LingooChatError, repository::LingooRepository},
 };
 
 fn generate_system_message(previously_learned: Vec<NonEmptyString>) -> String {
@@ -52,17 +52,23 @@ Follow these rules:
 
 /// Language learning assistant powered by LLM
 #[derive(Debug)]
-pub struct Lingoo<L: Llm, CR: ConversationRepository> {
+pub struct Lingoo<L: Llm, CR: ConversationRepository, LR: LingooRepository> {
   llm: Arc<Mutex<L>>,
   conversation_repository: Arc<CR>,
+  lingoo_repository: Arc<LR>,
 }
 
-impl<L: Llm, CR: ConversationRepository> Lingoo<L, CR> {
+impl<L: Llm, CR: ConversationRepository, LR: LingooRepository> Lingoo<L, CR, LR> {
   /// Creates a new Lingoo language learning assistant
-  pub fn new(llm: Arc<Mutex<L>>, conversation_repository: Arc<CR>) -> Self {
+  pub fn new(
+    llm: Arc<Mutex<L>>,
+    conversation_repository: Arc<CR>,
+    lingoo_repository: Arc<LR>,
+  ) -> Self {
     Self {
       llm,
       conversation_repository,
+      lingoo_repository,
     }
   }
 
@@ -79,13 +85,18 @@ impl<L: Llm, CR: ConversationRepository> Lingoo<L, CR> {
     Ok(conversation_id)
   }
 
-  pub async fn chat(&self, cid: &Id, message: Message) -> Result<Message, LingooChatError> {
+  pub async fn chat(
+    &self,
+    user_id: &str,
+    cid: &Id,
+    message: Message,
+  ) -> Result<Message, LingooChatError> {
     let conversation_history: Vec<ChatMessage> = self
       .conversation_repository
       .get_conversation_message_history(cid)
       .await?;
 
-    let reply = self
+    let (reply, learned_vocab_data_vec) = self
       .llm
       .lock()
       .await
@@ -97,6 +108,18 @@ impl<L: Llm, CR: ConversationRepository> Lingoo<L, CR> {
       )
       .await
       .map_err(|_| LingooChatError::Llm)?;
+
+    self
+      .lingoo_repository
+      .store_learned_vocab(
+        &user_id
+          .try_into()
+          .expect("jwt always contains a valid, non-empty user id"),
+        &learned_vocab_data_vec,
+      )
+      .await
+      .map_err(|_| LingooChatError::StoreLearnedVocab)?;
+
     // TODO: This copy is ugly and can be prevented, but requires further model changes
     let reply_copy = reply.clone();
 

@@ -21,21 +21,30 @@ use crate::{
   ai::llm::Llm,
   conversation::repository::ConversationRepository,
   http::server::LingooAppState,
-  lingoo::handlers::ws::voice_chat::{message::VoiceChatReplyMessage, session::VoiceChatSession},
+  lingoo::{
+    handlers::ws::voice_chat::{message::VoiceChatReplyMessage, session::VoiceChatSession},
+    repository::LingooRepository,
+  },
 };
 
-pub async fn voice_chat<L: Llm, CR: ConversationRepository, S: Stt, T: Tts>(
+pub async fn voice_chat<
+  L: Llm,
+  CR: ConversationRepository,
+  LR: LingooRepository,
+  S: Stt,
+  T: Tts,
+>(
   ws: WebSocketUpgrade,
-  State(app_state): State<LingooAppState<L, CR, S, T>>,
+  State(app_state): State<LingooAppState<L, CR, LR, S, T>>,
   Extension(jwt): Extension<ClerkJwt>,
 ) -> Response {
   ws.on_upgrade(|socket| handle_socket(socket, app_state, jwt))
 }
 
 #[instrument(skip_all)]
-async fn handle_socket<L: Llm, CR: ConversationRepository, S: Stt, T: Tts>(
+async fn handle_socket<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts>(
   mut socket: WebSocket,
-  app_state: LingooAppState<L, CR, S, T>,
+  app_state: LingooAppState<L, CR, LR, S, T>,
   jwt: ClerkJwt,
 ) {
   // Replay to client with a [VoiceChatReplyMessage]. Error is returned if the client is

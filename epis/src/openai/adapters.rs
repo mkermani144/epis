@@ -1,6 +1,6 @@
-mod openai_llm;
-mod openai_transcription;
-mod openai_tts;
+pub mod openai_llm;
+pub mod openai_transcription;
+pub mod openai_tts;
 
 use async_openai::{
   Client,

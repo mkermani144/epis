@@ -6,9 +6,12 @@
 
 use anyhow::Result;
 
-use crate::entities::{
-  common::{AnyText, ChatMessage, Message},
-  embedding::Embedding,
+use crate::{
+  entities::{
+    common::{AnyText, ChatMessage, Message},
+    embedding::Embedding,
+  },
+  lingoo::models::LearnedVocabData,
 };
 
 /// Core trait for LLM providers
@@ -18,7 +21,7 @@ pub trait Llm: Clone + Send + Sync + 'static {
     prompt: &str,
     system: &str,
     history: &[ChatMessage],
-  ) -> impl Future<Output = Result<Message>> + Send;
+  ) -> impl Future<Output = Result<(Message, Vec<LearnedVocabData>)>> + Send;
 
   /// Generates embeddings for a given text
   fn generate_embeddings(&self, text: &str) -> impl Future<Output = Result<Embedding>> + Send;

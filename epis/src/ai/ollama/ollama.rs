@@ -7,6 +7,7 @@ use super::ollama_models::OllamaModels;
 use crate::ai::llm::Llm;
 use crate::entities::common::{AnyText, ChatMessage, ChatMessageRole, Message};
 use crate::entities::embedding::Embedding;
+use crate::lingoo::models::LearnedVocabData;
 use anyhow::Result;
 use ollama_rs::generation::chat::request::ChatMessageRequest;
 use ollama_rs::generation::chat::{ChatMessage as OllamaChatMessage, MessageRole};
@@ -42,7 +43,7 @@ impl Llm for Ollama {
     message: &str,
     system: &str,
     history: &[ChatMessage],
-  ) -> Result<Message> {
+  ) -> Result<(Message, Vec<LearnedVocabData>)> {
     let mut ollama_history: Vec<OllamaChatMessage> =
       vec![OllamaChatMessage::system(system.to_string())];
 
@@ -69,7 +70,8 @@ impl Llm for Ollama {
       .send_chat_messages(chat_message_request)
       .await?;
 
-    Ok(chat_message_response.message.content.try_into()?)
+    // NOTE: We don't care about ollama anymore, hence the empty learned vocab vec
+    Ok((chat_message_response.message.content.try_into()?, vec![]))
   }
 
   /// Generates embeddings for a given text

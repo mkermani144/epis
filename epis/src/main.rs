@@ -44,7 +44,11 @@ async fn main() -> Result<()> {
     None,
   )));
   let postgres = Arc::new(Postgres::try_new(&config.database_url).await?);
-  let lingoo = Arc::new(Lingoo::new(openai.clone(), postgres.clone()));
+  let lingoo = Arc::new(Lingoo::new(
+    openai.clone(),
+    postgres.clone(),
+    postgres.clone(),
+  ));
 
   let clerk_config = ClerkConfiguration::new(None, None, Some(config.clerk_sk), None);
   let clerk = ClerkWrapper::new(Clerk::new(clerk_config));
