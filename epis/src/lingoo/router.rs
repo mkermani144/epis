@@ -41,7 +41,6 @@ impl<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts>
   }
 }
 
-// TODO: Move into its own module
 #[derive(Debug)]
 pub struct LingooWebsocketRouter<
   L: Llm,

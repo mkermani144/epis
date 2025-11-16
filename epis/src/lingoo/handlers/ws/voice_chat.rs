@@ -49,8 +49,6 @@ async fn handle_socket<L: Llm, CR: ConversationRepository, LR: LingooRepository,
 ) {
   // Replay to client with a [VoiceChatReplyMessage]. Error is returned if the client is
   // disconnected.
-  //
-  // TODO: Maybe use a newtype to extract these as its methods
   let reply =
     async |socket: &mut WebSocket, message: &VoiceChatReplyMessage| -> Result<(), anyhow::Error> {
       let result = socket

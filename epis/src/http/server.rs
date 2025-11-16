@@ -77,7 +77,6 @@ pub struct ConversationAppState<CR: ConversationRepository> {
   pub conversation_repository: Arc<CR>,
 }
 
-// TODO: Extract WS state so it's not part of REST Lingoo state
 #[derive(Debug)]
 pub struct LingooAppState<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts>
 {
@@ -116,7 +115,6 @@ impl HttpServer {
   pub fn try_new<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts>(
     addr: SocketAddr,
     app_state: AppState<L, CR, LR, S, T>,
-    // TODO: Switch to a solution-agnostic trait
   ) -> Result<Self> {
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
       .nest("/conversation", ConversationRouter::new().into_inner())
@@ -138,7 +136,6 @@ impl HttpServer {
       .split_for_parts();
 
     // TODO: Add a root WS router and put the logic there
-    // TODO: Document the WS router somehow
     let router = router
       .nest("/ws/lingoo", LingooWebsocketRouter::new().into_inner())
       .with_state(LingooAppState {

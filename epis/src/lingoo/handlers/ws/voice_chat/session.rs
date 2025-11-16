@@ -175,11 +175,7 @@ impl<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts>
         .stt
         .lock()
         .await
-        .speech_to_text(
-          prompt_audio_bytes_vec.into(),
-          // FIXME: Support other base languages
-          SttLanguage::En,
-        )
+        .speech_to_text(prompt_audio_bytes_vec.into(), SttLanguage::En)
         .await
         .map_err(|e| match e {
           SttError::InvalidBytes => VoiceChatReplyMessage::InvalidAudioBase64,
@@ -214,7 +210,6 @@ impl<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts>
         .tts
         .lock()
         .await
-        // FIXME: Support other ai languages
         .text_to_speech(&ai_reply_text, &TtsLanguage::En)
         .await
         .map_err(|_| VoiceChatReplyMessage::InternalError)?

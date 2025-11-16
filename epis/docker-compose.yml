@@ -35,8 +35,6 @@ services:
     networks:
       - epis-network
 
-  # TODO: Add Ollama when GPU support is supported on major OSes
-
 volumes:
   postgres_data:
 

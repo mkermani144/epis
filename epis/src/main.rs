@@ -35,7 +35,6 @@ async fn main() -> Result<()> {
   let config = Config::init()?;
 
   let openai = Arc::new(Mutex::new(OpenAi::new(
-    // FIXME: Pass correct responses and tts models
     OpenAiModels::new(
       config.transcription_model,
       config.responses_model,

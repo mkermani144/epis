@@ -8,7 +8,6 @@ impl AudioBytes {
   }
 }
 
-// TODO: Add new languages when needed
 #[derive(Debug, Clone, Display)]
 pub enum SttLanguage {
   #[display("en")]

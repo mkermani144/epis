@@ -54,13 +54,9 @@ impl ConversationRepository for Postgres {
         .iter()
         .map(|conversation| {
           let id = Id::new(conversation.id);
-          let title = conversation
-            .title
-            .as_ref()
-            // TODO: Do not unwrap. Or maybe should we?
-            .map(|t| {
-              ConversationTitle::try_new(t).expect("Stored conversation titles are never empty")
-            });
+          let title = conversation.title.as_ref().map(|t| {
+            ConversationTitle::try_new(t).expect("Stored conversation titles are never empty")
+          });
           let category = match conversation.category.as_str() {
             "languages" => Category::Languages,
             _ => Category::Invalid,

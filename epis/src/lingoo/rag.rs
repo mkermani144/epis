@@ -32,7 +32,6 @@ impl<L: Llm, LR: LingooRepository> Rag for LingooRag<L, LR> {
     &self,
     source_text: &AnyText,
   ) -> Result<Option<SimilarityVec>, RetrieveSimilaritiesError> {
-    // TODO: Extract into a tokenizer/preprocessor that returns an Option<NonEmptyText>
     let preprocessed_text = DefaultTokenizer::default()
       .tokenize(source_text.as_ref())
       .join(" ");
