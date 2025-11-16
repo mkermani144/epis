@@ -1,3 +1,4 @@
+use epis_core::non_empty_text::NonEmptyString;
 use thiserror::Error;
 
 use crate::{
@@ -84,4 +85,33 @@ pub enum FindSimilarDocsError {
 pub enum StoreDocError {
   #[error("unknown error while storing doc")]
   Unknown,
+}
+
+#[derive(Debug, Clone)]
+pub enum LearnedVocabStatus {
+  New,
+  Reviewed,
+  Reset,
+}
+
+#[derive(Debug, Clone)]
+pub struct LearnedVocabData {
+  vocab: NonEmptyString,
+  status: LearnedVocabStatus,
+}
+
+impl LearnedVocabData {
+  pub fn new(vocab: NonEmptyString, status: LearnedVocabStatus) -> Self {
+    Self { vocab, status }
+  }
+  pub fn vocab(&self) -> &NonEmptyString {
+    &self.vocab
+  }
+  pub fn status(&self) -> &LearnedVocabStatus {
+    &self.status
+  }
+  #[allow(dead_code)]
+  pub fn into_parts(self) -> (NonEmptyString, LearnedVocabStatus) {
+    (self.vocab, self.status)
+  }
 }
