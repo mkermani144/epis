@@ -20,8 +20,8 @@ impl Stt for super::OpenAi {
       .model(&self.models.transcription)
       .build()
       // TODO: Either handle more cases, or remove the [SttError] type
-      .map_err(|e| {
-        warn!(%e, "Cannot build transcription request");
+      .map_err(|error| {
+        warn!(%error, "Cannot build transcription request");
         SttError::Unknown
       })?;
     debug!("Transcription request built");
@@ -32,8 +32,8 @@ impl Stt for super::OpenAi {
       .transcription()
       .create(request)
       .await
-      .map_err(|e| {
-        warn!(%e, "Transcription request failed");
+      .map_err(|error| {
+        warn!(%error, "Transcription request failed");
         SttError::Unknown
       })?
       .text;
