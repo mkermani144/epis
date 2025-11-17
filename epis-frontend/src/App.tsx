@@ -66,7 +66,7 @@ function App() {
           </SignedOut>
           <SignedIn>
 	  <div className="flex items-center gap-2 border-2 border-solid border-slate-300 rounded cursor-default p-1 px-2">
-	    <p>{sessionClaims?.charge ?? "?"} ⚡️</p>
+	    <p>{sessionClaims?.charge as string | undefined ?? "?"} ⚡️</p>
             <UserButton />
 	  </div>
           </SignedIn>
