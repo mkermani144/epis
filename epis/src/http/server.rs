@@ -1,5 +1,8 @@
 use anyhow::Result;
-use axum::Router;
+use axum::{
+  Router,
+  http::{self, HeaderValue, Method},
+};
 use clerk_rs::{
   clerk::Clerk,
   validators::{axum::ClerkLayer, jwks::MemoryCacheJwksProvider},
@@ -8,7 +11,7 @@ use epis_stt::stt::Stt;
 use epis_tts::tts::Tts;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::{net::TcpListener, sync::Mutex};
-use tower_http::trace::TraceLayer;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::info;
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
@@ -115,6 +118,7 @@ impl HttpServer {
   pub fn try_new<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts>(
     addr: SocketAddr,
     app_state: AppState<L, CR, LR, S, T>,
+    app_url: &str,
   ) -> Result<Self> {
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
       .nest("/conversation", ConversationRouter::new().into_inner())
@@ -153,11 +157,13 @@ impl HttpServer {
         None,
         true,
       ))
-      .layer(TraceLayer::new_for_http());
-
-    if cfg!(debug_assertions) {
-      router = router.layer(tower_http::cors::CorsLayer::very_permissive());
-    }
+      .layer(TraceLayer::new_for_http())
+      .layer(
+        CorsLayer::new()
+          .allow_origin(app_url.parse::<HeaderValue>()?)
+          .allow_credentials(true)
+          .allow_headers([http::header::CONTENT_TYPE, http::header::AUTHORIZATION]),
+      );
 
     router = router.merge(Scalar::with_url("/scalar", api));
 

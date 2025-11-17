@@ -20,6 +20,8 @@ pub struct Config {
   pub tts_model: String,
   /// Clerk secret key
   pub clerk_sk: String,
+  /// App url, used for CORS
+  pub app_url: String,
   #[allow(dead_code)]
   /// OpenAI api key
   pub openai_api_key: String,
@@ -39,6 +41,7 @@ impl Config {
         .context("RESPONSES_MODEL env var not provided")?,
       tts_model: std::env::var("TTS_MODEL").context("TTS_MODEL env var not provided")?,
       clerk_sk: std::env::var("CLERK_SK").context("CLERK_SK env var not provided")?,
+      app_url: std::env::var("APP_URL").context("APP_URL env var not provided")?,
       openai_api_key: std::env::var("OPENAI_API_KEY")
         .context("OPENAI_API_KEY env var not provided")?,
     })

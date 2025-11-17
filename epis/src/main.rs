@@ -62,6 +62,7 @@ async fn main() -> Result<()> {
       tts: openai.clone(),
       clerk,
     },
+    &config.app_url,
   )?
   .start()
   .await?;
