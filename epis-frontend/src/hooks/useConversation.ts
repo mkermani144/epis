@@ -24,6 +24,7 @@ export interface VoiceChatReplyMessage {
     | "InvalidSorroundAudio"
     | "InternalError"
     | "EmptyPrompt"
+    | "LongPrompt"
     | "VoiceChatInitOk"
     | "VoiceChatAiReply"
     | "ZeroCharge";
