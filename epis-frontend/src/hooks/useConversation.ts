@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import { config } from "../config";
 
 export type VoiceChatState = "idle" | "recording" | "waiting" | "responding";
@@ -38,12 +39,15 @@ export function useConversation() {
   const [cid, setCid] = useState<string | null>(null);
   const conversationCreatedRef = useRef<boolean>(false);
 
+  const { getToken } = useAuth();
+
   useEffect(() => {
     const createConversation = async () => {
       if (conversationCreatedRef.current) return;
       conversationCreatedRef.current = true;
 
       try {
+	const token = await getToken();
         const response = await fetch(
           `${config.episServerUrl}/lingoo/conversation/create`,
           {
@@ -51,6 +55,7 @@ export function useConversation() {
 	    credentials: "include",
             headers: {
               "Content-Type": "application/json",
+	      Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -68,7 +73,7 @@ export function useConversation() {
     };
 
     createConversation();
-  }, []);
+  }, [getToken]);
 
   return cid;
 }
