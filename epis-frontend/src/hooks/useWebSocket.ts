@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@clerk/clerk-react"
 import { config } from "../config";
 import type {
   VoiceChatState,
@@ -55,12 +56,15 @@ export function useWebSocket(
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
+  const { getToken } = useAuth()
+
   useEffect(() => {
     if (!cid) return;
 
-    const connectWebSocket = () => {
+    const connectWebSocket = async () => {
+      const token = await getToken();
       const ws = new WebSocket(
-        `${config.episServerUrl.replace("http", "ws")}/ws/lingoo/voice-chat`
+        `${config.episServerUrl.replace("http", "ws")}/ws/lingoo/voice-chat?token=${token}`
       );
 
       ws.onopen = () => {

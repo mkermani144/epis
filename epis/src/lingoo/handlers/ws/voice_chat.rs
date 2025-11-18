@@ -3,16 +3,21 @@ mod message;
 mod session;
 mod state;
 
+use std::{collections::HashMap, sync::Arc};
+
 use anyhow::bail;
 use axum::{
-  Extension,
   extract::{
-    State,
+    Query, State,
     ws::{Message, WebSocket, WebSocketUpgrade},
   },
-  response::Response,
+  http::StatusCode,
+  response::{IntoResponse, Response},
 };
-use clerk_rs::validators::authorizer::ClerkJwt;
+use clerk_rs::validators::{
+  authorizer::{ClerkJwt, validate_jwt},
+  jwks::MemoryCacheJwksProvider,
+};
 use epis_stt::stt::Stt;
 use epis_tts::tts::Tts;
 use tracing::{debug, instrument, trace, warn};
@@ -36,9 +41,25 @@ pub async fn voice_chat<
 >(
   ws: WebSocketUpgrade,
   State(app_state): State<LingooAppState<L, CR, LR, S, T>>,
-  Extension(jwt): Extension<ClerkJwt>,
+  Query(query): Query<HashMap<String, String>>,
 ) -> Response {
-  ws.on_upgrade(|socket| handle_socket(socket, app_state, jwt))
+  if let Some(token) = query.get("token") {
+    if let Ok(jwt) = validate_jwt(
+      token,
+      Arc::new(MemoryCacheJwksProvider::new(
+        app_state.clerk.clone().into_inner(),
+      )),
+    )
+    .await
+    {
+      ws.on_upgrade(|socket| handle_socket(socket, app_state, jwt))
+    } else {
+      (StatusCode::UNAUTHORIZED, "Token is not valid").into_response()
+    }
+  } else {
+    (StatusCode::UNAUTHORIZED, "Missing token query param").into_response()
+  }
+  // FIXME: This is an ugly way to validate JWT and should be changed
 }
 
 #[instrument(skip_all)]

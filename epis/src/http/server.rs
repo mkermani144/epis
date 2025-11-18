@@ -1,7 +1,7 @@
 use anyhow::Result;
 use axum::{
   Router,
-  http::{self, HeaderValue, Method},
+  http::{self, HeaderValue},
 };
 use clerk_rs::{
   clerk::Clerk,
