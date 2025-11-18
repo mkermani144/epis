@@ -139,6 +139,12 @@ impl HttpServer {
       })
       .split_for_parts();
 
+    let router = router.layer(ClerkLayer::new(
+      MemoryCacheJwksProvider::new(app_state.clerk.clone().into_inner()),
+      None,
+      true,
+    ));
+
     // TODO: Add a root WS router and put the logic there
     let router = router
       .nest("/ws/lingoo", LingooWebsocketRouter::new().into_inner())
@@ -151,19 +157,12 @@ impl HttpServer {
       });
 
     // Layers that apply to both REST and WS
-    let mut router = router
-      .layer(ClerkLayer::new(
-        MemoryCacheJwksProvider::new(app_state.clerk.clone().into_inner()),
-        None,
-        true,
-      ))
-      .layer(TraceLayer::new_for_http())
-      .layer(
-        CorsLayer::new()
-          .allow_origin(app_url.parse::<HeaderValue>()?)
-          .allow_credentials(true)
-          .allow_headers([http::header::CONTENT_TYPE, http::header::AUTHORIZATION]),
-      );
+    let mut router = router.layer(TraceLayer::new_for_http()).layer(
+      CorsLayer::new()
+        .allow_origin(app_url.parse::<HeaderValue>()?)
+        .allow_credentials(true)
+        .allow_headers([http::header::CONTENT_TYPE, http::header::AUTHORIZATION]),
+    );
 
     router = router.merge(Scalar::with_url("/scalar", api));
 
