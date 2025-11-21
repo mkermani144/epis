@@ -95,6 +95,7 @@ pub enum StoreDocError {
 pub enum LearnedVocabStatus {
   New,
   Reviewed,
+  #[allow(dead_code)]
   Reset,
 }
 
