@@ -1,5 +1,5 @@
 [workspace]
-members = ["epis", "epis-cli", "epis-core", "epis-stt", "epis-tts"]
+members = ["epis", "epis-core", "epis-stt", "epis-tts"]
 
 [workspace.lints.rust]
 missing_debug_implementations = "warn"
