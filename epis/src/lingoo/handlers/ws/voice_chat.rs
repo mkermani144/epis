@@ -97,13 +97,16 @@ async fn handle_socket<L: Llm, CR: ConversationRepository, LR: LingooRepository,
               debug!(message = %parsed_message, "Message received and parsed");
               let message_to_reply = session.handle_message(parsed_message).await;
 
-              if let Err(_) = reply(&mut socket, &message_to_reply).await {
+              if reply(&mut socket, &message_to_reply).await.is_err() {
                 debug!("Failed to reply to message");
                 return;
               };
             } else {
               trace!("An invalid text message received");
-              if let Err(_) = reply(&mut socket, &VoiceChatReplyMessage::Invalid).await {
+              if reply(&mut socket, &VoiceChatReplyMessage::Invalid)
+                .await
+                .is_err()
+              {
                 trace!("Failed to reply to message");
                 return;
               }
@@ -111,7 +114,10 @@ async fn handle_socket<L: Llm, CR: ConversationRepository, LR: LingooRepository,
           }
           _ => {
             trace!("An invalid non-text message received");
-            if let Err(_) = reply(&mut socket, &VoiceChatReplyMessage::Invalid).await {
+            if reply(&mut socket, &VoiceChatReplyMessage::Invalid)
+              .await
+              .is_err()
+            {
               trace!("Failed to reply to message");
               return;
             }

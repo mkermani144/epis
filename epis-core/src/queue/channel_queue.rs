@@ -19,6 +19,7 @@ pub struct ChannelQueue<I> {
 }
 
 impl<I: Send + 'static> ChannelQueue<I> {
+  #[allow(clippy::new_without_default, missing_docs)]
   pub fn new() -> Self {
     let (tx, rx) = mpsc::channel();
     Self { tx, rx }
@@ -28,7 +29,7 @@ impl<I: Send + 'static> ChannelQueue<I> {
 impl<I: Send + 'static> Queue for ChannelQueue<I> {
   type Item = I;
 
-  fn enqueue(&mut self, item: Self::Item) -> () {
+  fn enqueue(&mut self, item: Self::Item) {
     self
       .tx
       .send(item)

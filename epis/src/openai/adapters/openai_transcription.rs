@@ -7,8 +7,8 @@ use tracing::{debug, instrument, warn};
 
 impl Stt for super::OpenAi {
   #[instrument(skip_all)]
-  async fn speech_to_text<'stt>(
-    &'stt mut self,
+  async fn speech_to_text(
+    &mut self,
     wav_bytes: AudioBytes,
     _language: SttLanguage,
   ) -> Result<String, SttError> {

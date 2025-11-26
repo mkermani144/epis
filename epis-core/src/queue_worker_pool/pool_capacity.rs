@@ -9,6 +9,7 @@ pub struct PoolCapacityError;
 #[derive(Debug, Clone, Copy, Deref, AsRef, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct PoolCapacity(usize);
 impl PoolCapacity {
+  #[allow(clippy::missing_errors_doc)]
   pub fn new(value: usize) -> Result<Self, PoolCapacityError> {
     if value > 0 {
       return Ok(Self(value));

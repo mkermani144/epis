@@ -33,7 +33,7 @@ pub struct Similarity(String);
 pub struct SimilarityVec(Vec<Similarity>);
 impl SimilarityVec {
   pub fn new(similarity_vec: Vec<Similarity>) -> Option<Self> {
-    if similarity_vec.len() > 0 {
+    if !similarity_vec.is_empty() {
       Some(Self(similarity_vec))
     } else {
       None

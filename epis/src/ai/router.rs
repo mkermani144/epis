@@ -8,7 +8,7 @@ use crate::{
   http::server::AiAppState,
 };
 
-pub const AI_CATEGORY: &'static str = "Ai";
+pub const AI_CATEGORY: &str = "Ai";
 
 #[derive(Debug)]
 pub struct AiRouter<L: Llm>(OpenApiRouter<AiAppState<L>>);

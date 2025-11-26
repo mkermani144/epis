@@ -82,7 +82,7 @@ impl<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts>
       let charge = fetched_charge
         .unwrap_or(&default_charge.clone().into())
         .as_number()
-        .unwrap_or(&default_charge.into())
+        .unwrap_or(&default_charge)
         .as_u64()
         .unwrap()
         .try_into()
@@ -115,15 +115,15 @@ impl<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts>
           if conversation_user_id != user_id {
             return (None, VoiceChatReplyMessage::Unauthorized);
           }
-          return (
+          (
             Some(VoiceChatState::Init {
               cid,
               remaining_charge,
             }),
             VoiceChatReplyMessage::VoiceChatInitOk,
-          );
+          )
         }
-        Err(e) => return (None, e),
+        Err(e) => (None, e),
       }
     } else {
       (None, VoiceChatReplyMessage::Invalid)
@@ -139,7 +139,7 @@ impl<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts>
   ///
   /// # Notes
   /// - This function supposes a message language of [SttLanguage::En] and an ai language of
-  /// [TtsLanguage::En]. This will be fixed in the near future.
+  ///   [TtsLanguage::En]. This will be fixed in the near future.
   async fn handle_init(
     &mut self,
     message: VoiceChatMessage,
@@ -191,7 +191,7 @@ impl<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts>
         .lingoo
         .chat(
           user_id,
-          &id,
+          id,
           prompt_text.try_into().map_err(|_| {
             warn!("Cannot pass an empty prompt to Lingoo Ai");
             VoiceChatReplyMessage::EmptyPrompt
@@ -254,7 +254,7 @@ impl<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts>
   /// socket.
   #[instrument(skip_all, ret)]
   pub async fn handle_message(&mut self, message: VoiceChatMessage) -> VoiceChatReplyMessage {
-    let reply = match std::mem::take(&mut self.state) {
+    match std::mem::take(&mut self.state) {
       VoiceChatState::Uninit => {
         let (new_state, reply) = self.handle_uninit(message).await;
 
@@ -278,15 +278,13 @@ impl<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts>
 
         let new_state = VoiceChatState::Init {
           cid,
-          remaining_charge: remaining_charge,
+          remaining_charge,
         };
         debug!(old=%self.state, new=%new_state, "Session state updated");
         self.state = new_state;
 
         reply
       }
-    };
-
-    reply
+    }
   }
 }

@@ -2,6 +2,7 @@
 ///
 /// ## Thread safety
 /// - [Queue] is [Send] because it needs to be sent to workers.
+#[allow(missing_docs)]
 pub trait Queue: Send + 'static {
   type Item;
 

@@ -16,6 +16,9 @@ pub enum NonEmptyStringError {
 
 impl NonEmptyString {
   /// Create a new [NonEmptyString] from a [String]
+  ///
+  /// # Errors
+  /// - [NonEmptyStringError::Empty] if the string is empty
   pub fn new(value: String) -> Result<Self, NonEmptyStringError> {
     if value.is_empty() {
       return Err(NonEmptyStringError::Empty);
@@ -45,12 +48,6 @@ impl TryFrom<&str> for NonEmptyString {
   type Error = NonEmptyStringError;
   fn try_from(value: &str) -> Result<Self, Self::Error> {
     Self::new(value.to_owned())
-  }
-}
-
-impl From<NonEmptyString> for &str {
-  fn from(value: NonEmptyString) -> Self {
-    value.into()
   }
 }
 

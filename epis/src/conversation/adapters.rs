@@ -113,9 +113,7 @@ impl ConversationRepository for Postgres {
     )
     .fetch_one(self.pool())
     .await
-    .map_err(|e| match e {
-      _ => StoreMessageError::Unknown,
-    })?;
+    .map_err(|_| StoreMessageError::Unknown)?;
 
     Ok(message.id.into())
   }

@@ -22,7 +22,7 @@ pub trait LingooRepository: Clone + Send + Sync + 'static {
   fn store_learned_vocab(
     &self,
     user_id: &NonEmptyString,
-    learned_vocab_data_list: &Vec<LearnedVocabData>,
+    learned_vocab_data_list: &[LearnedVocabData],
   ) -> impl Future<Output = Result<(), Self::LingooRepositoryError>> + Send;
   fn fetch_due_vocab(
     &self,

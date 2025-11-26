@@ -5,6 +5,7 @@
 
 pub mod adapters;
 pub mod handlers;
+#[allow(clippy::module_inception)]
 pub mod lingoo;
 pub mod models;
 pub mod rag;

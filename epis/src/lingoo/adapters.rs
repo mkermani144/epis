@@ -47,7 +47,7 @@ impl LingooRepository for Postgres {
       LingooRagDocument::new(
         d.id.into(),
         d.embedding.to_vec().into(),
-        d.content.into(),
+        d.content,
         (d.created_at.unix_timestamp() as u64).into(),
         (d.updated_at.unix_timestamp() as u64).into()
       )
@@ -73,7 +73,7 @@ impl LingooRepository for Postgres {
   async fn store_learned_vocab(
     &self,
     user_id: &NonEmptyString,
-    learned_vocab_data_list: &Vec<LearnedVocabData>,
+    learned_vocab_data_list: &[LearnedVocabData],
   ) -> Result<(), Self::LingooRepositoryError> {
     // FIXME: Batch upsert when sqlx supports it, this is very slow
     // https://github.com/launchbadge/sqlx/issues/294

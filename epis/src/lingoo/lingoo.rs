@@ -19,10 +19,9 @@ use crate::{
   },
 };
 
-fn generate_system_message(previously_learned: &Vec<NonEmptyString>) -> String {
+fn generate_system_message(previously_learned: &[NonEmptyString]) -> String {
   if previously_learned.is_empty() {
-    format!(
-      r#"You are a language learning assistant.
+    r#"You are a language learning assistant.
 
 Follow these rules:
 
@@ -39,8 +38,7 @@ Follow these rules:
   "response": "your adapted reply",
   "learned_material": {{ "vocab": ["word1", "word2"] }}
 }}
-"#
-    )
+"#.to_string()
   } else {
     format!(
       r#"You are a language learning assistant.

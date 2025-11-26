@@ -24,6 +24,7 @@ impl OpenAiModels {
 }
 
 #[derive(Debug, Clone)]
+#[warn(missing_docs)]
 pub struct OpenAi {
   client: Client<OpenAIConfig>,
   models: OpenAiModels,

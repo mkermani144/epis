@@ -1,4 +1,4 @@
-#![allow(missing_docs)]
+//! The core epis service
 #![cfg(feature = "types")]
 pub mod ai;
 pub mod config;

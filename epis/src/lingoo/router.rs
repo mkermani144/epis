@@ -18,7 +18,7 @@ use crate::{
   },
 };
 
-pub const LINGOO_CATEGORY: &'static str = "Lingoo";
+pub const LINGOO_CATEGORY: &str = "Lingoo";
 
 #[derive(Debug, Clone)]
 pub struct LingooRouter<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts>(

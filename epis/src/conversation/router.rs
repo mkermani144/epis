@@ -8,7 +8,7 @@ use crate::{
   http::server::ConversationAppState,
 };
 
-pub const CONVERSATION_CATEGORY: &'static str = "Conversation";
+pub const CONVERSATION_CATEGORY: &str = "Conversation";
 
 #[derive(Debug)]
 pub struct ConversationRouter<CR: ConversationRepository>(OpenApiRouter<ConversationAppState<CR>>);

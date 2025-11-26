@@ -83,8 +83,6 @@ pub async fn generate_title<L: Llm>(
     .await
     .generate_title_for(&title)
     .await
-    .map_err(|e| match e {
-      _ => GenerateTitleApiError::Unknown,
-    })?;
+    .map_err(|_| GenerateTitleApiError::Unknown)?;
   Ok(Json(GenerateTitleResponseData::new(generated_title)))
 }
