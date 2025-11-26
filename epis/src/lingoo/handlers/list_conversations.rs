@@ -78,7 +78,7 @@ impl ListLingooConversationsResponseData {
         ListLingooConversationsResponseDatum::new(
           conversation.id().to_string(),
           conversation.title().as_ref().map(|title| title.to_string()),
-          conversation.category().to_string(),
+          "languages".to_string(),
           *conversation.created_at().as_ref(),
           *conversation.updated_at().as_ref(),
         )

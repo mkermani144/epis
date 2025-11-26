@@ -10,24 +10,18 @@ use crate::{
     },
     repository::ConversationRepository,
   },
-  entities::common::{Category, ChatMessage, ChatMessageRole, Id},
+  entities::common::{ChatMessage, ChatMessageRole, Id},
   postgres::Postgres,
 };
 
 impl ConversationRepository for Postgres {
   async fn create_conversation(
     &self,
-    category: &Category,
     user_id: &NonEmptyString,
   ) -> Result<Id, CreateConversationError> {
-    let category_str = match category {
-      Category::Languages => "languages",
-      Category::Invalid => "invalid",
-    };
-
     let conversation = query!(
       "INSERT INTO conversation (category, user_id) VALUES ($1, $2) RETURNING id",
-      category_str,
+      "languages",
       user_id.as_str(),
     )
     .fetch_one(self.pool())
@@ -57,14 +51,10 @@ impl ConversationRepository for Postgres {
           let title = conversation.title.as_ref().map(|t| {
             ConversationTitle::try_new(t).expect("Stored conversation titles are never empty")
           });
-          let category = match conversation.category.as_str() {
-            "languages" => Category::Languages,
-            _ => Category::Invalid,
-          };
           let created_at = Timestamp::new(conversation.created_at.unix_timestamp() as u64);
           let updated_at = Timestamp::new(conversation.updated_at.unix_timestamp() as u64);
 
-          Conversation::new(id, title, category, created_at, updated_at)
+          Conversation::new(id, title, created_at, updated_at)
         })
         .collect(),
     )

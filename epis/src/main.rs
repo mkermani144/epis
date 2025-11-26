@@ -25,7 +25,6 @@ mod http;
 mod lingoo;
 mod openai;
 mod postgres;
-mod rag;
 
 /// Main entry point for the Epis application
 #[tokio::main]

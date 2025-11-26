@@ -7,10 +7,7 @@
 use anyhow::Result;
 
 use crate::{
-  entities::{
-    common::{AnyText, ChatMessage, Message},
-    embedding::Embedding,
-  },
+  entities::common::{AnyText, ChatMessage, Message},
   lingoo::models::LearnedVocabData,
 };
 
@@ -22,9 +19,6 @@ pub trait Llm: Clone + Send + Sync + 'static {
     system: &str,
     history: &[ChatMessage],
   ) -> impl Future<Output = Result<(Message, Vec<LearnedVocabData>)>> + Send;
-
-  /// Generates embeddings for a given text
-  fn generate_embeddings(&self, text: &str) -> impl Future<Output = Result<Embedding>> + Send;
 
   fn generate_title_for(&self, text: &AnyText) -> impl Future<Output = Result<AnyText>> + Send;
 }

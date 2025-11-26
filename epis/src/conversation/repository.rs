@@ -6,13 +6,12 @@ use crate::{
     GetConversationUserIdError, ListConversationsError, SetConversationTitleError,
     StoreMessageError,
   },
-  entities::common::{Category, ChatMessage, Id},
+  entities::common::{ChatMessage, Id},
 };
 
 pub trait ConversationRepository: Clone + Send + Sync + 'static {
   fn create_conversation(
     &self,
-    category: &Category,
     user_id: &NonEmptyString,
   ) -> impl Future<Output = Result<Id, CreateConversationError>> + Send;
   fn list_conversations(

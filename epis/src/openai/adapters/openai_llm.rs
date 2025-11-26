@@ -1,10 +1,7 @@
 use crate::lingoo::models::LearnedVocabData;
 use crate::{
   ai::llm::Llm,
-  entities::{
-    common::{AnyText, ChatMessage, ChatMessageRole, Message},
-    embedding::Embedding,
-  },
+  entities::common::{AnyText, ChatMessage, ChatMessageRole, Message},
   lingoo::models::LearnedVocabStatus,
 };
 use anyhow::bail;
@@ -49,9 +46,6 @@ pub struct LingooAiResponse {
 
 impl Llm for super::OpenAi {
   async fn generate_title_for(&self, _text: &AnyText) -> anyhow::Result<AnyText> {
-    unimplemented!()
-  }
-  async fn generate_embeddings(&self, _text: &str) -> anyhow::Result<Embedding> {
     unimplemented!()
   }
 

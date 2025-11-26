@@ -12,7 +12,7 @@ use tokio::sync::Mutex;
 use crate::{
   ai::llm::Llm,
   conversation::{models::CreateConversationError, repository::ConversationRepository},
-  entities::common::{Category, ChatMessage, ChatMessageRole, Id, Message},
+  entities::common::{ChatMessage, ChatMessageRole, Id, Message},
   lingoo::{
     models::{LearnedVocabData, LearnedVocabStatus, LingooChatError},
     repository::LingooRepository,
@@ -101,7 +101,7 @@ impl<L: Llm, CR: ConversationRepository, LR: LingooRepository> Lingoo<L, CR, LR>
   ) -> Result<Id, CreateConversationError> {
     let conversation_id = self
       .conversation_repository
-      .create_conversation(&Category::Languages, user_id)
+      .create_conversation(user_id)
       .await?;
 
     Ok(conversation_id)

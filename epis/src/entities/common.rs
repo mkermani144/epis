@@ -54,18 +54,3 @@ impl TryFrom<String> for Id {
 /// A wrapper for any text
 #[nutype(derive(Debug, Clone, From, AsRef))]
 pub struct AnyText(String);
-
-/// Supported knowledge categories for user requests
-#[derive(JsonSchema, Debug, Serialize, Deserialize, Clone)]
-pub enum Category {
-  Languages,
-  Invalid,
-}
-impl Display for Category {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      Category::Languages => write!(f, "languages"),
-      Category::Invalid => write!(f, "invalid"),
-    }
-  }
-}
