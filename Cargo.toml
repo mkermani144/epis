@@ -8,3 +8,4 @@ missing_docs = "warn"
 [workspace.lints.clippy]
 missing_errors_doc = "warn"
 missing_panics_doc = "warn"
+missing_docs_in_private_items = "warn"
