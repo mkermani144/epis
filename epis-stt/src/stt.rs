@@ -2,7 +2,9 @@ use thiserror::Error;
 
 use crate::models::{AudioBytes, SttLanguage};
 
+/// All possible errors during a full stt process
 #[derive(Debug, Clone, Error)]
+#[allow(missing_docs)]
 pub enum SttError {
   #[error("Invalid audio bytes")]
   InvalidBytes,
@@ -16,7 +18,9 @@ pub enum SttError {
   Unknown,
 }
 
+/// Represet a speech to text transformer
 pub trait Stt: Clone + Send + Sync + 'static {
+  /// Transcribes the speech in provided bytes
   fn speech_to_text<'stt>(
     &'stt mut self,
     wav_bytes: AudioBytes,

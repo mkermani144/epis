@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 use derive_more::{AsRef, Display, From};
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, From, AsRef, Display, Default)]

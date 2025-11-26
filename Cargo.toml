@@ -3,4 +3,4 @@ members = ["epis", "epis-core", "epis-stt", "epis-tts"]
 
 [workspace.lints.rust]
 missing_debug_implementations = "warn"
-
+missing_docs = "warn"

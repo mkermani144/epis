@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 use derive_more::{AsRef, Deref};
 use thiserror::Error;
 

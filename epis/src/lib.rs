@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 #![cfg(feature = "types")]
 pub mod ai;
 pub mod config;

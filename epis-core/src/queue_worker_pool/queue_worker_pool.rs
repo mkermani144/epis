@@ -10,6 +10,7 @@ use crate::{
   queue_worker_pool::{entities::Job, pool_capacity::PoolCapacity, queue_worker::QueueWorker},
 };
 
+#[allow(missing_docs)]
 #[derive(Debug, Error)]
 pub enum QueueWorkerPoolError {
   #[error("Cannot grap queue lock for some reason")]
@@ -35,6 +36,7 @@ where
   O: Send,
   Q: Queue<Item = Option<(Job<O>, Sender<O>)>>,
 {
+  #[allow(missing_docs)]
   pub fn new(queue: Arc<Mutex<Q>>, pool_capacity: &Option<PoolCapacity>) -> Self {
     let mut workers = Vec::with_capacity(*pool_capacity.unwrap_or_default());
     for _ in 0..workers.capacity() {
