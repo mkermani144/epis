@@ -2,11 +2,7 @@
 //!
 //! This module defines shared data structures for chat messages and conversation handling.
 
-use std::fmt::Display;
-
 use nutype::nutype;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
 

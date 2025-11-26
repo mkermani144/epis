@@ -1,10 +1,7 @@
 use epis_core::non_empty_text::NonEmptyString;
 use thiserror::Error;
 
-use crate::{
-  conversation::models::{GetConversationMessageHistoryError, StoreMessageError, Timestamp},
-  entities::common::Id,
-};
+use crate::conversation::models::{GetConversationMessageHistoryError, StoreMessageError};
 
 #[derive(Error, Debug)]
 #[allow(dead_code)]

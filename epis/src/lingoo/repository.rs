@@ -1,6 +1,6 @@
 use epis_core::non_empty_text::NonEmptyString;
 
-use crate::{entities::common::AnyText, lingoo::models::LearnedVocabData};
+use crate::lingoo::models::LearnedVocabData;
 
 pub trait LingooRepository: Clone + Send + Sync + 'static {
   type LingooRepositoryError;

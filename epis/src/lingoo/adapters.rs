@@ -1,11 +1,9 @@
 use epis_core::non_empty_text::NonEmptyString;
-use pgvector::Vector;
 use sqlx::query;
 use thiserror::Error;
 use tracing::{instrument, warn};
 
 use crate::{
-  entities::common::AnyText,
   lingoo::{models::LearnedVocabStatus, repository::LingooRepository},
   postgres::Postgres,
 };
