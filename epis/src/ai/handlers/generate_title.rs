@@ -14,19 +14,14 @@ use crate::{
   http::server::AiAppState,
 };
 
+/// Represent the error occuring while generating title
 #[derive(Error, Debug)]
-pub enum GenerateTitleApiError {
-  #[error("unknown error while generating title")]
-  Unknown,
-}
+#[error("unknown error while generating title")]
+pub struct GenerateTitleApiError;
 
 impl IntoResponse for GenerateTitleApiError {
   fn into_response(self) -> Response {
-    match self {
-      GenerateTitleApiError::Unknown => {
-        (StatusCode::INTERNAL_SERVER_ERROR, Json(self.to_string())).into_response()
-      }
-    }
+    (StatusCode::INTERNAL_SERVER_ERROR, Json(self.to_string())).into_response()
   }
 }
 
@@ -83,6 +78,6 @@ pub async fn generate_title<L: Llm>(
     .await
     .generate_title_for(&title)
     .await
-    .map_err(|_| GenerateTitleApiError::Unknown)?;
+    .map_err(|_| GenerateTitleApiError)?;
   Ok(Json(GenerateTitleResponseData::new(generated_title)))
 }
