@@ -31,8 +31,10 @@ pub struct OpenAi {
 }
 
 impl OpenAi {
-  pub fn new(models: OpenAiModels, base_url: Option<String>) -> Self {
-    let config = OpenAIConfig::default().with_api_base(base_url.unwrap_or(OPENAI_API_BASE.into()));
+  pub fn new(models: OpenAiModels, api_key: &str, base_url: Option<String>) -> Self {
+    let config = OpenAIConfig::default()
+      .with_api_base(base_url.unwrap_or(OPENAI_API_BASE.into()))
+      .with_api_key(api_key);
     let client = Client::with_config(config);
     Self { client, models }
   }

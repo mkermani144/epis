@@ -1,49 +1,69 @@
-//! Configuration module for the Epis application
-//!
-//! This module handles application configuration including LLM providers and model settings.
-//! Configuration is loaded from environment variables.
+//! Configuration module for the Epis service
 
-use anyhow::{Context, Result};
+// FIXME: The current implementation doesn't parse strict types for configs, e.g. a URL for
+// database_url config, but that is the intended behavior.
+// https://github.com/mkermani144/epis/issues/1
 
-/// Application configuration structure
-#[derive(Debug)]
-pub struct Config {
-  /// The postgres URL
-  pub database_url: String,
-  /// The HTTP server address
-  pub listen_port: u16,
-  /// Transcription model name
-  pub transcription_model: String,
-  /// Responses model name
-  pub responses_model: String,
-  /// Tts model name
-  pub tts_model: String,
-  /// Clerk secret key
-  pub clerk_sk: String,
-  /// App url, used for CORS
-  pub app_url: String,
+use std::path::Path;
+
+use derive_getters::Getters;
+use figment::{
+  Figment,
+  providers::{Format, Yaml},
+};
+use serde::Deserialize;
+
+/// Represent an AI model, containing its name and provider
+#[derive(Debug, Clone, Deserialize, Getters)]
+pub struct AiModel {
+  // TODO: Support different providers, other than OpenAI
+  // https://github.com/mkermani144/epis/issues/2
+  /// Model proovider
   #[allow(dead_code)]
+  provider: String,
+  /// Model name
+  model: String,
+}
+
+/// Details of all ai models needed
+#[derive(Debug, Clone, Deserialize, Getters)]
+pub struct AiModels {
+  /// Speech to text, aka transcription
+  stt: AiModel,
+  /// The LLM itself, used for generating text
+  llm: AiModel,
+  /// Text to speech
+  tts: AiModel,
+}
+
+/// All of the configs needed
+#[derive(Debug, Clone, Deserialize, Getters)]
+pub struct Config {
+  /// A full database url
+  database_url: String,
+  /// Server port to listen to
+  port: u16,
+  /// Ai models config used by service
+  ai_models: AiModels,
+  /// Clerk auth provider secret
+  clerk_sk: String,
+  /// App (frontend) URL, used for adding CORS headers
+  app_url: String,
   /// OpenAI api key
-  pub openai_api_key: String,
+  openai_api_key: String,
 }
 
 impl Config {
-  /// Initializes the configuration from environment variables
-  pub fn init() -> Result<Self> {
-    Ok(Self {
-      database_url: std::env::var("DATABASE_URL").context("DATABASE_URL env var not provided")?,
-      listen_port: std::env::var("LISTEN_PORT")
-        .context("LISTEN_PORT env var not provided")?
-        .parse()?,
-      transcription_model: std::env::var("TRANSCRIPTION_MODEL")
-        .context("TRANSCRIPTION_MODEL env var not provided")?,
-      responses_model: std::env::var("RESPONSES_MODEL")
-        .context("RESPONSES_MODEL env var not provided")?,
-      tts_model: std::env::var("TTS_MODEL").context("TTS_MODEL env var not provided")?,
-      clerk_sk: std::env::var("CLERK_SK").context("CLERK_SK env var not provided")?,
-      app_url: std::env::var("APP_URL").context("APP_URL env var not provided")?,
-      openai_api_key: std::env::var("OPENAI_API_KEY")
-        .context("OPENAI_API_KEY env var not provided")?,
-    })
+  /// Initialize the config by reading it from config.yaml
+  ///
+  /// # Panics
+  /// This method panics if config file is not a valid one
+  pub fn init<P: AsRef<Path>>(path: Option<P>) -> Self {
+    let path = path
+      .as_ref()
+      .map(|p| p.as_ref())
+      .unwrap_or(Path::new("config.yaml"));
+
+    Figment::from(Yaml::file(path)).extract().unwrap()
   }
 }

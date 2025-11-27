@@ -31,28 +31,29 @@ mod postgres;
 async fn main() -> Result<()> {
   tracing_subscriber::fmt::init();
 
-  let config = Config::init()?;
+  let config = Config::init::<&str>(None);
 
   let openai = Arc::new(Mutex::new(OpenAi::new(
     OpenAiModels::new(
-      config.transcription_model,
-      config.responses_model,
-      config.tts_model,
+      config.ai_models().stt().model().to_string(),
+      config.ai_models().llm().model().to_string(),
+      config.ai_models().tts().model().to_string(),
     ),
+    config.openai_api_key(),
     None,
   )));
-  let postgres = Arc::new(Postgres::try_new(&config.database_url).await?);
+  let postgres = Arc::new(Postgres::try_new(config.database_url()).await?);
   let lingoo = Arc::new(Lingoo::new(
     openai.clone(),
     postgres.clone(),
     postgres.clone(),
   ));
 
-  let clerk_config = ClerkConfiguration::new(None, None, Some(config.clerk_sk), None);
+  let clerk_config = ClerkConfiguration::new(None, None, Some(config.clerk_sk().to_string()), None);
   let clerk = ClerkWrapper::new(Clerk::new(clerk_config));
 
   HttpServer::try_new(
-    SocketAddr::from(([0, 0, 0, 0], config.listen_port)),
+    SocketAddr::from(([0, 0, 0, 0], config.port().to_owned())),
     AppState {
       lingoo,
       conversation_repository: postgres,
@@ -61,12 +62,12 @@ async fn main() -> Result<()> {
       tts: openai.clone(),
       clerk,
     },
-    &config.app_url,
+    config.app_url(),
   )?
   .start()
   .await?;
 
-  info!("HTTP server started on port {}", config.listen_port);
+  info!("HTTP server started on port {}", config.port());
 
   Ok(())
 }
