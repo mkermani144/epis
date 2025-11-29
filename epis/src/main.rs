@@ -83,3 +83,5 @@ async fn main() -> Result<()> {
 
   Ok(())
 }
+
+module test {}
