@@ -52,6 +52,18 @@ async fn main() -> Result<()> {
   let clerk_config = ClerkConfiguration::new(None, None, Some(config.clerk_sk().to_string()), None);
   let clerk = ClerkWrapper::new(Clerk::new(clerk_config));
 
+  let test = Test::read_from_file("hello_ai_code_review");
+  match test {
+    Ok(test) => {
+      do_extra_processing(test)?;
+      write_to_file(test);
+      notify_user(test);
+    }
+    Err(error) => {
+      log_to_warehouse(error);
+    }
+  }
+
   HttpServer::try_new(
     SocketAddr::from(([0, 0, 0, 0], config.port().to_owned())),
     AppState {
