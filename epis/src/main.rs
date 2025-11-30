@@ -20,6 +20,7 @@ use crate::{
 mod ai;
 mod config;
 mod conversation;
+mod domain;
 mod entities;
 mod http;
 mod lingoo;
