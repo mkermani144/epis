@@ -14,7 +14,7 @@ use utoipa::ToSchema;
 use crate::{
   ai::llm::Llm,
   conversation::{models::Conversation, repository::ConversationRepository},
-  http::server::LingooAppState,
+  inbound::http::LingooAppState,
   lingoo::{repository::LingooRepository, router::LINGOO_CATEGORY},
 };
 

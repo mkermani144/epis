@@ -5,7 +5,7 @@ use crate::{
     handlers::set_conversation_title::{__path_set_conversation_title, set_conversation_title},
     repository::ConversationRepository,
   },
-  http::server::ConversationAppState,
+  inbound::http::ConversationAppState,
 };
 
 pub const CONVERSATION_CATEGORY: &str = "Conversation";

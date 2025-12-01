@@ -20,6 +20,8 @@ use utoipa_scalar::{Scalar, Servable};
 use crate::{
   ai::{llm::Llm, router::AiRouter},
   conversation::{repository::ConversationRepository, router::ConversationRouter},
+  domain::ports::Epis,
+  inbound::routers::epis::EpisRouter,
   lingoo::{
     lingoo::Lingoo,
     repository::LingooRepository,
@@ -75,6 +77,11 @@ impl<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts> C
   }
 }
 
+#[derive(Debug, Clone, derive_getters::Getters)]
+pub struct AppStateV2<E: Epis> {
+  epis: Arc<E>,
+}
+
 #[derive(Debug, Clone)]
 pub struct ConversationAppState<CR: ConversationRepository> {
   pub conversation_repository: Arc<CR>,
@@ -115,10 +122,18 @@ struct ApiDoc;
 
 impl HttpServer {
   /// Creates a new HTTP server
-  pub fn try_new<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts>(
+  pub fn try_new<
+    L: Llm,
+    CR: ConversationRepository,
+    LR: LingooRepository,
+    S: Stt,
+    T: Tts,
+    E: Epis,
+  >(
     addr: SocketAddr,
     app_state: AppState<L, CR, LR, S, T>,
     app_url: &str,
+    epis: Arc<E>,
   ) -> Result<Self> {
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
       .nest("/conversation", ConversationRouter::new().into_inner())
@@ -137,6 +152,8 @@ impl HttpServer {
       .with_state(AiAppState {
         llm: app_state.llm.clone(),
       })
+      .nest("/v2/epis", EpisRouter::new().into_inner())
+      .with_state(AppStateV2 { epis })
       .split_for_parts();
 
     let router = router.layer(ClerkLayer::new(

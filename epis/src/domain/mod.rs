@@ -1,3 +1,5 @@
+//! All domain related stuff of Epis
+
 /// Canonical implementation of the main Epis service
 pub mod epis;
 /// Domain models

@@ -25,7 +25,7 @@ use tracing::{debug, instrument, trace, warn};
 use crate::{
   ai::llm::Llm,
   conversation::repository::ConversationRepository,
-  http::server::LingooAppState,
+  inbound::http::LingooAppState,
   lingoo::{
     handlers::ws::voice_chat::{message::VoiceChatReplyMessage, session::VoiceChatSession},
     repository::LingooRepository,

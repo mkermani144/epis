@@ -11,7 +11,7 @@ use crate::{
     router::CONVERSATION_CATEGORY,
   },
   entities::common::{Id, InvalidIdError},
-  http::server::ConversationAppState,
+  inbound::http::ConversationAppState,
 };
 
 #[derive(Error, Debug)]

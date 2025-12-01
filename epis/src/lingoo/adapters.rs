@@ -5,7 +5,7 @@ use tracing::{instrument, warn};
 
 use crate::{
   lingoo::{models::LearnedVocabStatus, repository::LingooRepository},
-  postgres::Postgres,
+  outbound::postgres::Postgres,
 };
 
 use super::models::LearnedVocabData;

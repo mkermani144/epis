@@ -10,7 +10,7 @@ use crate::{
   ai::llm::Llm,
   conversation::{models::CreateConversationError, repository::ConversationRepository},
   entities::common::Id,
-  http::server::LingooAppState,
+  inbound::http::LingooAppState,
   lingoo::{repository::LingooRepository, router::LINGOO_CATEGORY},
 };
 

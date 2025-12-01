@@ -25,7 +25,7 @@ use crate::{
   ai::llm::Llm,
   conversation::{models::GetConversationUserIdError, repository::ConversationRepository},
   entities::common::Id,
-  http::server::LingooAppState,
+  inbound::http::LingooAppState,
   lingoo::{
     handlers::ws::voice_chat::{
       charge::Charge,

@@ -13,7 +13,7 @@ use crate::{
     repository::ConversationRepository,
   },
   entities::common::{Id, InvalidIdError, Message, MessageError},
-  http::server::LingooAppState,
+  inbound::http::LingooAppState,
   lingoo::{models::LingooChatError, repository::LingooRepository, router::LINGOO_CATEGORY},
 };
 

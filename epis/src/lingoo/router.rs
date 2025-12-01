@@ -6,7 +6,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
   ai::llm::Llm,
   conversation::repository::ConversationRepository,
-  http::server::LingooAppState,
+  inbound::http::LingooAppState,
   lingoo::{
     handlers::{
       chat::{__path_chat, chat},

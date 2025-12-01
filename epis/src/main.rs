@@ -11,10 +11,11 @@ use tracing::info;
 
 use crate::{
   config::Config,
-  http::server::{AppState, ClerkWrapper, HttpServer},
+  domain::epis::Epis,
+  inbound::http::{AppState, ClerkWrapper, HttpServer},
   lingoo::lingoo::Lingoo,
   openai::adapters::{OpenAi, OpenAiModels},
-  postgres::Postgres,
+  outbound::postgres::Postgres,
 };
 
 mod ai;
@@ -22,10 +23,10 @@ mod config;
 mod conversation;
 mod domain;
 mod entities;
-mod http;
+mod inbound;
 mod lingoo;
 mod openai;
-mod postgres;
+mod outbound;
 
 /// Main entry point for the Epis application
 #[tokio::main]
@@ -53,6 +54,9 @@ async fn main() -> Result<()> {
   let clerk_config = ClerkConfiguration::new(None, None, Some(config.clerk_sk().to_string()), None);
   let clerk = ClerkWrapper::new(Clerk::new(clerk_config));
 
+  let postgres_new = Postgres::try_new(config.database_url()).await?;
+  let epis = Arc::new(Epis::new(postgres_new));
+
   HttpServer::try_new(
     SocketAddr::from(([0, 0, 0, 0], config.port().to_owned())),
     AppState {
@@ -64,6 +68,7 @@ async fn main() -> Result<()> {
       clerk,
     },
     config.app_url(),
+    epis,
   )?
   .start()
   .await?;

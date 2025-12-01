@@ -28,7 +28,7 @@ pub trait EpisRepository: Clone + Send + Sync + 'static {
 }
 
 /// Core Epis service where main business logic exists
-pub(super) trait Epis: Clone + Send + Sync + 'static {
+pub trait Epis: Clone + Send + Sync + 'static {
   /// Handshake with a chatmate for chat initiation. Handshake consists of:
   /// - Making sure no chatmate with the same language exists
   /// - Storing chatmate
@@ -39,6 +39,7 @@ pub(super) trait Epis: Clone + Send + Sync + 'static {
   /// - Otherwise, it's related to repo, so return [EpisError::RepoError]
   fn handshake(
     &self,
+    user_id: &UserId,
     language: &ChatMateLanguage,
   ) -> impl Future<Output = Result<ChatMate, EpisError>> + Send;
 }

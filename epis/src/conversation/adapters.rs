@@ -11,7 +11,7 @@ use crate::{
     repository::ConversationRepository,
   },
   entities::common::{ChatMessage, ChatMessageRole, Id},
-  postgres::Postgres,
+  outbound::postgres::Postgres,
 };
 
 impl ConversationRepository for Postgres {

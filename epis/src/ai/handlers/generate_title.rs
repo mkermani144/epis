@@ -11,7 +11,7 @@ use utoipa::ToSchema;
 use crate::{
   ai::{llm::Llm, router::AI_CATEGORY},
   entities::common::AnyText,
-  http::server::AiAppState,
+  inbound::http::AiAppState,
 };
 
 /// Represent the error occuring while generating title

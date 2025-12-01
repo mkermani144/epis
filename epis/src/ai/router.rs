@@ -5,7 +5,7 @@ use crate::{
     handlers::generate_title::{__path_generate_title, generate_title},
     llm::Llm,
   },
-  http::server::AiAppState,
+  inbound::http::AiAppState,
 };
 
 pub const AI_CATEGORY: &str = "Ai";
