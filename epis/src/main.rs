@@ -11,7 +11,7 @@ use tracing::info;
 
 use crate::{
   config::Config,
-  domain::epis::Epis,
+  domain::{epis::Epis, ports::RealtimeAiAgent},
   inbound::http::{AppState, ClerkWrapper, HttpServer},
   lingoo::lingoo::Lingoo,
   openai::adapters::{OpenAi, OpenAiModels},
@@ -55,7 +55,8 @@ async fn main() -> Result<()> {
   let clerk = ClerkWrapper::new(Clerk::new(clerk_config));
 
   let postgres_new = Postgres::try_new(config.database_url()).await?;
-  let epis = Arc::new(Epis::new(postgres_new));
+  let openai_new = crate::outbound::openai::OpenAi;
+  let epis = Arc::new(Epis::new(postgres_new, openai_new));
 
   HttpServer::try_new(
     SocketAddr::from(([0, 0, 0, 0], config.port().to_owned())),

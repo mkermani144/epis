@@ -21,7 +21,7 @@ use crate::{
   ai::{llm::Llm, router::AiRouter},
   conversation::{repository::ConversationRepository, router::ConversationRouter},
   domain::ports::Epis,
-  inbound::routers::epis::EpisRouter,
+  inbound::{rest::epis::EpisRouter, ws::epis::EpisWsRouter},
   lingoo::{
     lingoo::Lingoo,
     repository::LingooRepository,
@@ -153,7 +153,7 @@ impl HttpServer {
         llm: app_state.llm.clone(),
       })
       .nest("/v2/epis", EpisRouter::new().into_inner())
-      .with_state(AppStateV2 { epis })
+      .with_state(AppStateV2 { epis: epis.clone() })
       .split_for_parts();
 
     let router = router.layer(ClerkLayer::new(
@@ -172,6 +172,10 @@ impl HttpServer {
         tts: app_state.tts.clone(),
         clerk: app_state.clerk.clone(),
       });
+
+    let router = router
+      .nest("/v2/epis/ws", EpisWsRouter::new().into_inner())
+      .with_state(AppStateV2 { epis: epis.clone() });
 
     // Layers that apply to both REST and WS
     let mut router = router.layer(TraceLayer::new_for_http()).layer(

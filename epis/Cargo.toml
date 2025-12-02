@@ -18,7 +18,7 @@ base64 = "0.22.1"
 bm25 = { version = "2.3.1", features = ["language_detection"] }
 clerk-rs = { version = "0.4.1", features = ["axum"] }
 derive-getters = "0.5.0"
-derive_more = { version = "2.0.1", features = ["from", "into_iterator", "debug", "from_str"] }
+derive_more = { version = "2.0.1", features = ["from", "into_iterator", "debug", "from_str", "constructor"] }
 epis-core = { path = "../epis-core" }
 epis-stt = { path = "../epis-stt" }
 epis-tts = { path = "../epis-tts" }

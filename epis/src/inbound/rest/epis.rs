@@ -8,7 +8,7 @@ use crate::{
   domain::ports::Epis,
   inbound::{
     http::AppStateV2,
-    routers::epis::handlers::handshake_chatmate::{__path_handshake_chatmate, handshake_chatmate},
+    rest::epis::handlers::handshake_chatmate::{__path_handshake_chatmate, handshake_chatmate},
   },
 };
 

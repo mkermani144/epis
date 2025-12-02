@@ -14,7 +14,7 @@ use crate::{
     models::{ChatMateLanguage, EpisError},
     ports::Epis,
   },
-  inbound::{http::AppStateV2, routers::epis::EPIS_CATEGORY},
+  inbound::{http::AppStateV2, rest::epis::EPIS_CATEGORY},
 };
 
 #[allow(clippy::missing_docs_in_private_items)]
