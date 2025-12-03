@@ -52,11 +52,12 @@ async fn main() -> Result<()> {
   ));
 
   let clerk_config = ClerkConfiguration::new(None, None, Some(config.clerk_sk().to_string()), None);
-  let clerk = ClerkWrapper::new(Clerk::new(clerk_config));
+  let clerk = ClerkWrapper::new(Clerk::new(clerk_config.clone()));
 
   let postgres_new = Postgres::try_new(config.database_url()).await?;
   let openai_new = crate::outbound::openai::OpenAi;
   let epis = Arc::new(Epis::new(postgres_new, openai_new));
+  let clerk_new = Arc::new(crate::outbound::clerk::Clerk::new(Clerk::new(clerk_config)));
 
   HttpServer::try_new(
     SocketAddr::from(([0, 0, 0, 0], config.port().to_owned())),
@@ -70,6 +71,7 @@ async fn main() -> Result<()> {
     },
     config.app_url(),
     epis,
+    clerk_new,
   )?
   .start()
   .await?;

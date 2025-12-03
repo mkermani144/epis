@@ -12,7 +12,7 @@ use utoipa::ToSchema;
 use crate::{
   domain::{
     models::{ChatMateLanguage, EpisError},
-    ports::Epis,
+    ports::{Epis, UserManagement},
   },
   inbound::{http::AppStateV2, rest::epis::EPIS_CATEGORY},
 };
@@ -59,8 +59,8 @@ pub struct HandshakeChatmateRequestBody {
     (status = INTERNAL_SERVER_ERROR, body = String, content_type = "application/json"),
   )
 )]
-pub async fn handshake_chatmate<E: Epis>(
-  State(app_state): State<AppStateV2<E>>,
+pub async fn handshake_chatmate<E: Epis, UM: UserManagement>(
+  State(app_state): State<AppStateV2<E, UM>>,
   Extension(jwt): Extension<ClerkJwt>,
   Json(request): Json<HandshakeChatmateRequestBody>,
 ) -> Result<Json<()>, HandshakeChatmateApiError> {

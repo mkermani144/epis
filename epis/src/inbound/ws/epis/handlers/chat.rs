@@ -12,7 +12,7 @@ use tracing::{debug, instrument, warn};
 use crate::{
   domain::{
     models::{EpisAudioMessageFormat, UserId},
-    ports::Epis,
+    ports::{Epis, UserManagement},
   },
   entities::common::Id,
   inbound::http::AppStateV2,
@@ -29,9 +29,9 @@ pub struct VoiceChatQueryParams {
 
 /// voice chat ws handler
 #[instrument(skip_all)]
-pub async fn chat<E: Epis>(
+pub async fn chat<E: Epis, UM: UserManagement>(
   ws: WebSocketUpgrade,
-  State(app_state): State<AppStateV2<E>>,
+  State(app_state): State<AppStateV2<E, UM>>,
   Path(chatmate_id): Path<Id>,
   Query(query): Query<VoiceChatQueryParams>,
 ) -> Response {
@@ -54,9 +54,9 @@ pub async fn chat<E: Epis>(
 }
 
 /// The socket handler for voice_chat handler
-async fn handle_socket<E: Epis>(
+async fn handle_socket<E: Epis, UM: UserManagement>(
   socket: WebSocket,
-  app_state: AppStateV2<E>,
+  app_state: AppStateV2<E, UM>,
   user_id: UserId,
   chatmate_id: Id,
   audio_format: EpisAudioMessageFormat,

@@ -1,7 +1,10 @@
 use anyhow::Result;
 use axum::{
   Router,
-  http::{self, HeaderValue},
+  extract::{Query, State},
+  http::{self, HeaderValue, StatusCode},
+  middleware::{Next, from_fn_with_state},
+  response::IntoResponse,
 };
 use clerk_rs::{
   clerk::Clerk,
@@ -9,7 +12,7 @@ use clerk_rs::{
 };
 use epis_stt::stt::Stt;
 use epis_tts::tts::Tts;
-use std::{net::SocketAddr, sync::Arc};
+use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 use tokio::{net::TcpListener, sync::Mutex};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::info;
@@ -20,8 +23,8 @@ use utoipa_scalar::{Scalar, Servable};
 use crate::{
   ai::{llm::Llm, router::AiRouter},
   conversation::{repository::ConversationRepository, router::ConversationRouter},
-  domain::ports::Epis,
-  inbound::{rest::epis::EpisRouter, ws::epis::EpisWsRouter},
+  domain::ports::{Epis, UserManagement},
+  inbound::{rest::epis::EpisRouter, ws::epis::EpisWsRouter, ws_auth_layer::ws_auth_layer},
   lingoo::{
     lingoo::Lingoo,
     repository::LingooRepository,
@@ -78,8 +81,9 @@ impl<L: Llm, CR: ConversationRepository, LR: LingooRepository, S: Stt, T: Tts> C
 }
 
 #[derive(Debug, Clone, derive_getters::Getters)]
-pub struct AppStateV2<E: Epis> {
+pub struct AppStateV2<E: Epis, UM: UserManagement> {
   epis: Arc<E>,
+  user_management: Arc<UM>,
 }
 
 #[derive(Debug, Clone)]
@@ -129,11 +133,13 @@ impl HttpServer {
     S: Stt,
     T: Tts,
     E: Epis,
+    UM: UserManagement,
   >(
     addr: SocketAddr,
     app_state: AppState<L, CR, LR, S, T>,
     app_url: &str,
     epis: Arc<E>,
+    user_management: Arc<UM>,
   ) -> Result<Self> {
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
       .nest("/conversation", ConversationRouter::new().into_inner())
@@ -153,7 +159,10 @@ impl HttpServer {
         llm: app_state.llm.clone(),
       })
       .nest("/v2/epis", EpisRouter::new().into_inner())
-      .with_state(AppStateV2 { epis: epis.clone() })
+      .with_state(AppStateV2 {
+        epis: epis.clone(),
+        user_management: user_management.clone(),
+      })
       .split_for_parts();
 
     let router = router.layer(ClerkLayer::new(
@@ -175,7 +184,18 @@ impl HttpServer {
 
     let router = router
       .nest("/v2/epis/ws", EpisWsRouter::new().into_inner())
-      .with_state(AppStateV2 { epis: epis.clone() });
+      .with_state(AppStateV2 {
+        epis: epis.clone(),
+        user_management: user_management.clone(),
+      });
+
+    let router = router.layer(from_fn_with_state(
+      AppStateV2 {
+        epis: epis.clone(),
+        user_management: user_management.clone(),
+      },
+      ws_auth_layer,
+    ));
 
     // Layers that apply to both REST and WS
     let mut router = router.layer(TraceLayer::new_for_http()).layer(
