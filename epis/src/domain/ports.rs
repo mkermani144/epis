@@ -3,7 +3,7 @@
 
 use crate::{
   domain::models::{
-    ChatMate, ChatMateLanguage, EpisAudioMessage, EpisAudioMessageFormat, EpisError,
+    AuthStatus, ChatMate, ChatMateLanguage, EpisAudioMessage, EpisAudioMessageFormat, EpisError,
     RealtimeAiAgentChatContext, SimpleBytes, UserId,
   },
   entities::common::Id,
@@ -97,4 +97,17 @@ pub trait AudioDuplex: Send + Sync + Clone + 'static {
     &mut self,
     audio_message: SimpleBytes,
   ) -> impl Future<Output = Result<(), EpisError>> + Send;
+}
+
+/// User management port for everything related to users (e.g. auth, etc.)
+pub trait UserManagement: Clone + Send + Sync + 'static {
+  /// Authenticate a user via a jwt string. The auth status contains a [User]
+  /// object.
+  ///
+  /// # Errors
+  /// If any error occurs during auth, [EpisError::Unknown] is returned
+  fn authenticate_jwt(
+    &self,
+    jwt: &str,
+  ) -> impl Future<Output = Result<AuthStatus, EpisError>> + Send;
 }

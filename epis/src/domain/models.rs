@@ -85,3 +85,20 @@ pub struct RealtimeAiAgentChatContext {
 
 /// A type alias for a very basic bytes representation
 pub type SimpleBytes = Vec<u8>;
+
+/// A partial representation of a user independent of the provider
+#[derive(Debug, Clone, Constructor, Getters)]
+pub struct User {
+  /// User id in the external provider
+  id: UserId,
+  /// User credit
+  credit: i32,
+}
+
+/// Represents whether the user is authenticated
+#[derive(Debug, Clone)]
+#[allow(clippy::missing_docs_in_private_items)]
+pub enum AuthStatus {
+  Authenticated(User),
+  Unauthenticated,
+}
