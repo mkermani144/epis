@@ -12,10 +12,9 @@ use tracing::{debug, instrument, warn};
 
 use crate::{
   domain::{
-    models::{EpisAudioMessageFormat, User, UserId},
+    models::{EpisAudioMessageFormat, Id, User, UserId},
     ports::{Epis, UserManagement},
   },
-  entities::common::Id,
   inbound::http::AppStateV2,
 };
 

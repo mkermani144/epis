@@ -11,7 +11,10 @@ use tracing::info;
 
 use crate::{
   config::Config,
-  domain::{epis::Epis, ports::RealtimeAiAgent},
+  domain::{
+    epis::Epis,
+    realtime_ai_agent::{RealtimeAiAgent, RealtimeAiAgentModels},
+  },
   inbound::http::{AppState, ClerkWrapper, HttpServer},
   lingoo::lingoo::Lingoo,
   openai::adapters::{OpenAi, OpenAiModels},
@@ -54,10 +57,20 @@ async fn main() -> Result<()> {
   let clerk_config = ClerkConfiguration::new(None, None, Some(config.clerk_sk().to_string()), None);
   let clerk = ClerkWrapper::new(Clerk::new(clerk_config.clone()));
 
-  let postgres_new = Postgres::try_new(config.database_url()).await?;
-  let openai_new = crate::outbound::openai::OpenAi;
-  let epis = Arc::new(Epis::new(postgres_new, openai_new));
+  let postgres_new = Arc::new(Postgres::try_new(config.database_url()).await?);
+  let openai_new = Arc::new(crate::outbound::openai::OpenAi);
   let clerk_new = Arc::new(crate::outbound::clerk::Clerk::new(Clerk::new(clerk_config)));
+  let realtime_ai_agent = Arc::new(RealtimeAiAgent::new(
+    openai_new.clone(),
+    clerk_new.clone(),
+    postgres_new.clone(),
+    RealtimeAiAgentModels::new(
+      config.ai_models().llm().model().to_string(),
+      config.ai_models().stt().model().to_string(),
+      config.ai_models().tts().model().to_string(),
+    ),
+  ));
+  let epis = Arc::new(Epis::new(postgres_new.clone(), realtime_ai_agent.clone()));
 
   HttpServer::try_new(
     SocketAddr::from(([0, 0, 0, 0], config.port().to_owned())),

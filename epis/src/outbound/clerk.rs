@@ -6,7 +6,7 @@ use clerk_rs::validators::{authorizer::validate_jwt, jwks::MemoryCacheJwksProvid
 use derive_more::Constructor;
 
 use crate::domain::{
-  models::{AuthStatus, EpisError, User},
+  models::{AuthStatus, CefrLevel, EpisError, User, UserId},
   ports::UserManagement,
 };
 
@@ -30,5 +30,12 @@ impl UserManagement for Clerk {
       ))),
       Err(_) => Ok(AuthStatus::Unauthenticated),
     }
+  }
+  async fn spend_credit(&self, user_id: &UserId) -> Result<(), EpisError> {
+    todo!()
+  }
+
+  async fn get_cefr_level(&self, user_id: &UserId) -> Result<Option<CefrLevel>, EpisError> {
+    todo!()
   }
 }

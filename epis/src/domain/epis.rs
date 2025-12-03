@@ -1,34 +1,26 @@
+use std::sync::Arc;
+
+use derive_more::Constructor;
 use tracing::{debug, instrument, trace, warn};
 
-use crate::{
-  domain::{
-    models::{
-      ChatMate, ChatMateLanguage, EpisAudioMessage, EpisAudioMessageFormat, EpisError,
-      RealtimeAiAgentChatContext, UserId,
-    },
-    ports::{AudioDuplex, Epis as EpisService, EpisRepository, RealtimeAiAgent},
+use crate::domain::{
+  models::{
+    ChatMate, ChatMateLanguage, EpisAudioMessage, EpisAudioMessageFormat, EpisError, Id,
+    RealtimeAiAgentChatContext, UserId,
   },
-  entities::common::Id,
+  ports::{AudioDuplex, Epis as EpisService, EpisRepository, RealtimeAiAgent},
 };
 
 /// The canonical implementation of [EpisService]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Constructor)]
 pub struct Epis<ER: EpisRepository, RAA: RealtimeAiAgent> {
   /// The epis repo
-  repository: ER,
+  repository: Arc<ER>,
   /// Realtime AI agent
-  realtime_ai_agent: RAA,
+  realtime_ai_agent: Arc<RAA>,
 }
 
 impl<ER: EpisRepository, RAA: RealtimeAiAgent> Epis<ER, RAA> {
-  /// Construct Epis
-  pub fn new(repository: ER, realtime_ai_agent: RAA) -> Self {
-    Self {
-      repository,
-      realtime_ai_agent,
-    }
-  }
-
   /// Assert that the chatmate with the provided language is not already handshaken
   ///
   /// # Errors

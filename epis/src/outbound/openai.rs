@@ -1,17 +1,39 @@
 use crate::domain::{
-  models::{EpisAudioMessage, EpisError, RealtimeAiAgentChatContext},
-  ports::RealtimeAiAgent,
+  models::{
+    ChatMessage, EpisAudioMessageFormat, EpisError, GenerationResponse, TextToSpeechResponse,
+    TranscriptionResponse,
+  },
+  ports::AiGateway,
 };
 
+/// Implementation of [AiGateway] for OpenAI
 #[derive(Debug, Clone)]
 pub struct OpenAi;
 
-impl RealtimeAiAgent for OpenAi {
-  async fn chat(
+impl AiGateway for OpenAi {
+  async fn text_to_speech(
     &self,
-    audio_message: EpisAudioMessage,
-    context: &RealtimeAiAgentChatContext,
-  ) -> Result<EpisAudioMessage, EpisError> {
+    model: &str,
+    text: String,
+    instructions: Option<&str>,
+  ) -> Result<TextToSpeechResponse, EpisError> {
+    todo!()
+  }
+
+  async fn transcribe(
+    &self,
+    model: &str,
+    audio_bytes: Vec<u8>,
+    audio_format: EpisAudioMessageFormat,
+  ) -> Result<TranscriptionResponse, EpisError> {
+    todo!()
+  }
+
+  async fn generate(
+    &self,
+    model: &str,
+    messages: &[ChatMessage],
+  ) -> Result<GenerationResponse, EpisError> {
     todo!()
   }
 }

@@ -1,8 +1,12 @@
 use derive_getters::{Dissolve, Getters};
-use derive_more::{Constructor, Debug, Display, FromStr};
+use derive_more::{Constructor, Debug, Display, From, FromStr};
+use serde::Deserialize;
 use thiserror::Error;
+use uuid::Uuid;
 
-use crate::entities::common::Id;
+/// A wrapper around [Uuid]
+#[derive(Debug, Clone, Constructor, Display, From, Deserialize)]
+pub struct Id(Uuid);
 
 // TODO: Decide on the languages supported by Epis
 // https://github.com/mkermani144/epis/issues/5
@@ -17,16 +21,12 @@ pub enum ChatMateLanguage {
 }
 
 /// Represent a chatmate, skilled in a specific language
-#[derive(Debug, Clone, Getters)]
+#[derive(Debug, Clone, Getters, Constructor)]
 pub struct ChatMate {
   /// The language of the chatmate
   language: ChatMateLanguage,
-}
-impl ChatMate {
-  /// Construct a chatmate
-  pub fn new(language: ChatMateLanguage) -> Self {
-    Self { language }
-  }
+  /// Chatmate id
+  id: Id,
 }
 
 /// All possible errors of Epis
@@ -101,4 +101,86 @@ pub struct User {
 pub enum AuthStatus {
   Authenticated(User),
   Unauthenticated,
+}
+
+/// The main content of [GenerationResponse]
+#[derive(Debug, Clone, Getters)]
+#[allow(clippy::missing_docs_in_private_items)]
+pub struct GenerationResponseOutput {
+  text: String,
+  learned_vocab: Vec<String>,
+}
+
+/// Structured response of ai generation
+#[derive(Debug, Clone, Getters)]
+#[allow(clippy::missing_docs_in_private_items)]
+pub struct GenerationResponse {
+  output: GenerationResponseOutput,
+  usage: i32,
+}
+
+/// Structured response of ai transcription
+#[derive(Debug, Clone, Getters)]
+#[allow(clippy::missing_docs_in_private_items)]
+pub struct TranscriptionResponse {
+  transcript: String,
+  usage: i32,
+}
+
+/// Structured response of ai text to speech
+#[derive(Debug, Clone, Getters)]
+#[allow(clippy::missing_docs_in_private_items)]
+pub struct TextToSpeechResponse {
+  audio_bytes: SimpleBytes,
+  usage: i32,
+}
+
+/// CEFR level of user
+#[derive(Debug, Clone, Display, Default)]
+#[allow(clippy::missing_docs_in_private_items)]
+pub enum CefrLevel {
+  #[default]
+  A1,
+  A2,
+  B1,
+  B2,
+  C1,
+  C2,
+}
+
+/// Represents the role of a participant in a chat conversation
+#[derive(Debug, Clone)]
+pub enum ChatMessageRole {
+  /// Messages sent by the user
+  User,
+  /// Messages sent by the AI assistant
+  Ai,
+  /// System messages (prompts, instructions, etc.)
+  System,
+}
+
+/// Representation of a chat message, containing its role and text
+#[derive(Debug, Clone, Constructor, Getters)]
+#[allow(clippy::missing_docs_in_private_items)]
+pub struct ChatMessage {
+  role: ChatMessageRole,
+  message: String,
+}
+
+/// Status of a learned word
+#[derive(Debug, Clone)]
+#[allow(clippy::missing_docs_in_private_items)]
+pub enum LearnedVocabStatus {
+  New,
+  Reviewed,
+  #[allow(dead_code)]
+  Reset,
+}
+
+/// Represent a word and its learning status
+#[derive(Debug, Clone, Constructor, Getters)]
+#[allow(clippy::missing_docs_in_private_items)]
+pub struct LearnedVocabData {
+  vocab: String,
+  status: LearnedVocabStatus,
 }

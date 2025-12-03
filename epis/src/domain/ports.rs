@@ -1,12 +1,10 @@
 // All of the following traits are bound by the super traits in order to make them multithread
 // friendly
 
-use crate::{
-  domain::models::{
-    AuthStatus, ChatMate, ChatMateLanguage, EpisAudioMessage, EpisAudioMessageFormat, EpisError,
-    RealtimeAiAgentChatContext, SimpleBytes, UserId,
-  },
-  entities::common::Id,
+use crate::domain::models::{
+  AuthStatus, CefrLevel, ChatMate, ChatMateLanguage, ChatMessage, EpisAudioMessage,
+  EpisAudioMessageFormat, EpisError, GenerationResponse, Id, LearnedVocabData,
+  RealtimeAiAgentChatContext, SimpleBytes, TextToSpeechResponse, TranscriptionResponse, UserId,
 };
 
 /// Represent a data store for managing any data related to Epis
@@ -31,6 +29,55 @@ pub trait EpisRepository: Clone + Send + Sync + 'static {
     user_id: &UserId,
     chatmate_language: &ChatMateLanguage,
   ) -> impl Future<Output = Result<Option<ChatMate>, EpisError>> + Send;
+
+  /// Get a chatmate by its id
+  ///
+  /// # Errors
+  /// - If any repo error occurs, return [EpisError::RepoError]
+  fn get_chatmate_by_id(
+    &self,
+    chatmate_id: &Id,
+  ) -> impl Future<Output = Result<Option<ChatMate>, EpisError>> + Send;
+
+  /// Fetch due vocab up to a limit based on an exponential algorithm
+  ///
+  /// # Errors
+  /// - If any repo error occurs, return [EpisError::RepoError]
+  fn fetch_due_vocab(
+    &self,
+    user_id: &UserId,
+    limit: Option<u8>,
+  ) -> impl Future<Output = Result<Vec<String>, EpisError>> + Send;
+
+  /// Store (upsert) learned vocab
+  ///
+  /// # Errors
+  /// - If any repo error occurs, return [EpisError::RepoError]
+  fn store_learned_vocab(
+    &self,
+    user_id: &UserId,
+    learned_vocab_data_list: &[LearnedVocabData],
+  ) -> impl Future<Output = Result<(), EpisError>> + Send;
+
+  /// Store a chat message
+  ///
+  /// # Errors
+  /// - If any repo error occurs, return [EpisError::RepoError]
+  fn store_message(
+    &self,
+    chatmate_id: &Id,
+    message: &ChatMessage,
+  ) -> impl Future<Output = Result<Id, EpisError>> + Send;
+
+  /// Get a list of previous messages in a chat up to a limit
+  ///
+  /// # Errors
+  /// - If any repo error occurs, return [EpisError::RepoError]
+  fn get_chat_message_history(
+    &self,
+    chatmate_id: &Id,
+    limit: Option<u8>,
+  ) -> impl Future<Output = Result<Vec<ChatMessage>, EpisError>> + Send;
 }
 
 /// Core Epis service where main business logic exists
@@ -71,6 +118,7 @@ pub trait RealtimeAiAgent: Clone + Send + Sync + 'static {
   ///
   /// # Errors
   /// - If an external provider error occurs, [EpisError::ProviderError] is returned
+  /// - If error is related to data store, [EpisError::RepoError] is returned
   /// - Otherwise [EpisError::Unknown] is returned
   fn chat(
     &self,
@@ -105,9 +153,59 @@ pub trait UserManagement: Clone + Send + Sync + 'static {
   /// object.
   ///
   /// # Errors
-  /// If any error occurs during auth, [EpisError::Unknown] is returned
+  /// If any error occurs, [EpisError::Unknown] is returned
   fn authenticate_jwt(
     &self,
     jwt: &str,
   ) -> impl Future<Output = Result<AuthStatus, EpisError>> + Send;
+
+  /// Reduce credit of the user by one
+  ///
+  /// # Errors
+  /// If any error occurs, [EpisError::Unknown] is returned
+  fn spend_credit(&self, user_id: &UserId) -> impl Future<Output = Result<(), EpisError>> + Send;
+
+  /// Get CEFR level of a user
+  ///
+  /// # Errors
+  /// If any error occurs, [EpisError::Unknown] is returned
+  fn get_cefr_level(
+    &self,
+    user_id: &UserId,
+  ) -> impl Future<Output = Result<Option<CefrLevel>, EpisError>> + Send;
+}
+
+/// An abstraction over an AI provider which takes and returns structured data
+pub trait AiGateway: Clone + Send + Sync + 'static {
+  /// Normal text to text generation
+  ///
+  /// # Errors
+  /// If any error occurs, [EpisError::ProviderError] is returned
+  fn generate(
+    &self,
+    model: &str,
+    messages: &[ChatMessage],
+  ) -> impl Future<Output = Result<GenerationResponse, EpisError>> + Send;
+
+  /// Transcribe audio of a specific format
+  ///
+  /// # Errors
+  /// If any error occurs, [EpisError::ProviderError] is returned
+  fn transcribe(
+    &self,
+    model: &str,
+    audio_bytes: SimpleBytes,
+    audio_format: EpisAudioMessageFormat,
+  ) -> impl Future<Output = Result<TranscriptionResponse, EpisError>> + Send;
+
+  /// Convert text to speech with optional instructions
+  ///
+  /// # Errors
+  /// If any error occurs, [EpisError::ProviderError] is returned
+  fn text_to_speech(
+    &self,
+    model: &str,
+    text: String,
+    instructions: Option<&str>,
+  ) -> impl Future<Output = Result<TextToSpeechResponse, EpisError>> + Send;
 }
