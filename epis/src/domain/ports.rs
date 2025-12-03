@@ -3,7 +3,8 @@
 
 use crate::{
   domain::models::{
-    ChatMate, ChatMateLanguage, EpisAudioMessage, EpisError, RealtimeAiAgentChatContext, UserId,
+    ChatMate, ChatMateLanguage, EpisAudioMessage, EpisAudioMessageFormat, EpisError,
+    RealtimeAiAgentChatContext, SimpleBytes, UserId,
   },
   entities::common::Id,
 };
@@ -48,7 +49,8 @@ pub trait Epis: Clone + Send + Sync + 'static {
     language: &ChatMateLanguage,
   ) -> impl Future<Output = Result<ChatMate, EpisError>> + Send;
 
-  /// Speech-to-speech chat, connecting a user with a chatmate through a duplex
+  /// Speech-to-speech chat, connecting a user with a chatmate through a duplex with messages of a
+  /// specific format
   ///
   /// # Errors
   /// - If error is during sending or receiving messages, [EpisError::DuplexError] is returned
@@ -59,6 +61,7 @@ pub trait Epis: Clone + Send + Sync + 'static {
     user_id: &UserId,
     chatemate_id: &Id,
     duplex: &mut impl AudioDuplex,
+    message_format: &EpisAudioMessageFormat,
   ) -> impl Future<Output = Result<(), EpisError>> + Send;
 }
 
@@ -76,22 +79,22 @@ pub trait RealtimeAiAgent: Clone + Send + Sync + 'static {
   ) -> impl Future<Output = Result<EpisAudioMessage, EpisError>> + Send;
 }
 
-/// A very basic audio duplex, for sending and receiving [EpisAudioMessage]s
+/// A very basic audio duplex, for sending and receiving [SimpleBytes]'s
 pub trait AudioDuplex: Send + Sync + Clone + 'static {
-  /// Receive a message from the duplex
+  /// Receive audio [SimpleBytes] from the duplex
   ///
   /// # Notes
-  /// This should block until audio message is available.
+  /// This should block until audio bytes is available.
   ///
   /// # Errors
   /// If any error occurs, an [EpisError::DuplexError] is returned
-  fn receive(&mut self) -> impl Future<Output = Result<EpisAudioMessage, EpisError>> + Send;
-  /// Send a message over the duplex
+  fn receive(&mut self) -> impl Future<Output = Result<SimpleBytes, EpisError>> + Send;
+  /// Send audio [SimpleBytes] over the duplex
   ///
   /// # Errors
   /// If any error occurs, an [EpisError::DuplexError] is returned
   fn send(
     &mut self,
-    audio_message: EpisAudioMessage,
+    audio_message: SimpleBytes,
   ) -> impl Future<Output = Result<(), EpisError>> + Send;
 }

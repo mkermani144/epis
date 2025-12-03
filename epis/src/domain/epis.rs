@@ -2,7 +2,10 @@ use tracing::{debug, instrument, trace, warn};
 
 use crate::{
   domain::{
-    models::{ChatMate, ChatMateLanguage, EpisError, RealtimeAiAgentChatContext, UserId},
+    models::{
+      ChatMate, ChatMateLanguage, EpisAudioMessage, EpisAudioMessageFormat, EpisError,
+      RealtimeAiAgentChatContext, UserId,
+    },
     ports::{AudioDuplex, Epis as EpisService, EpisRepository, RealtimeAiAgent},
   },
   entities::common::Id,
@@ -68,13 +71,16 @@ impl<ER: EpisRepository, RAA: RealtimeAiAgent> EpisService for Epis<ER, RAA> {
     user_id: &UserId,
     chatmate_id: &Id,
     duplex: &mut impl AudioDuplex,
+    audio_format: &EpisAudioMessageFormat,
   ) -> Result<(), EpisError> {
     loop {
-      let message = duplex
+      let audio_bytes = duplex
         .receive()
         .await
         .inspect_err(|error| warn!(%error, "Receiving message from the duplex failed"))
         .map_err(|_| EpisError::DuplexError)?;
+
+      let audio_message = EpisAudioMessage::new(audio_bytes, audio_format.clone());
 
       trace!("Message received");
 
@@ -82,15 +88,17 @@ impl<ER: EpisRepository, RAA: RealtimeAiAgent> EpisService for Epis<ER, RAA> {
 
       let response = self
         .realtime_ai_agent
-        .chat(message, &chat_context)
+        .chat(audio_message, &chat_context)
         .await
         .inspect_err(|error| warn!(%error, "Ai agent chat failed"))
         .map_err(|_| EpisError::AiAgentFailure)?;
 
       trace!("Ai agent generated a response");
 
+      let (reponse_bytes, _) = response.into_parts();
+
       duplex
-        .send(response)
+        .send(reponse_bytes)
         .await
         .inspect_err(|error| warn!(%error, "Sending message over the duplex failed"))
         .map_err(|_| EpisError::DuplexError)?;

@@ -1,4 +1,4 @@
-use derive_getters::Getters;
+use derive_getters::{Dissolve, Getters};
 use derive_more::{Constructor, Debug, Display, FromStr};
 use thiserror::Error;
 
@@ -66,7 +66,8 @@ pub enum EpisAudioMessageFormat {
 }
 
 /// The domain message supported by Epis
-#[derive(Debug, Clone, Getters)]
+#[derive(Debug, Clone, Getters, Constructor, Dissolve)]
+#[dissolve(rename = "into_parts")]
 pub struct EpisAudioMessage {
   /// Audio bytes
   bytes: Vec<u8>,
@@ -81,3 +82,6 @@ pub struct RealtimeAiAgentChatContext {
   user_id: UserId,
   chatmate_id: Id,
 }
+
+/// A type alias for a very basic bytes representation
+pub type SimpleBytes = Vec<u8>;
