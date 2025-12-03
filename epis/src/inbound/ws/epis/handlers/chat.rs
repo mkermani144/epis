@@ -1,6 +1,7 @@
 use std::{str::FromStr, sync::Arc};
 
 use axum::{
+  Extension,
   extract::{Path, Query, State, WebSocketUpgrade, ws::WebSocket},
   http::StatusCode,
   response::{IntoResponse, Response},
@@ -11,7 +12,7 @@ use tracing::{debug, instrument, warn};
 
 use crate::{
   domain::{
-    models::{EpisAudioMessageFormat, UserId},
+    models::{EpisAudioMessageFormat, User, UserId},
     ports::{Epis, UserManagement},
   },
   entities::common::Id,
@@ -33,15 +34,16 @@ pub async fn chat<E: Epis, UM: UserManagement>(
   ws: WebSocketUpgrade,
   State(app_state): State<AppStateV2<E, UM>>,
   Path(chatmate_id): Path<Id>,
+  Extension(user): Extension<User>,
   Query(query): Query<VoiceChatQueryParams>,
 ) -> Response {
-  // TODO: Validate JWT, authorize by charge, and extract user id
-
   if let Ok(audio_format) = EpisAudioMessageFormat::from_str(&query.audio_format) {
-    debug!(user_id="", %chatmate_id, audio_format=%query.audio_format, "Chat session started");
+    let user_id = user.id().to_string();
+
+    debug!(%user_id, %chatmate_id, audio_format=%query.audio_format, "Chat session started");
 
     return ws
-      .on_upgrade(|socket| handle_socket(socket, app_state, "".into(), chatmate_id, audio_format));
+      .on_upgrade(|socket| handle_socket(socket, app_state, user_id, chatmate_id, audio_format));
   }
 
   debug!(user_id="", %chatmate_id, audio_format=%query.audio_format, "Chat session did not start because of invalid audio format");
