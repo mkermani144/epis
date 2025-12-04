@@ -1,25 +1,15 @@
 import { useState, useEffect, useRef } from "react";
-import { useAuth } from "@clerk/clerk-react"
+import { useAuth } from "@clerk/clerk-react";
 import { config } from "../config";
-import type {
-  VoiceChatState,
-  VoiceChatMessage,
-  VoiceChatReplyMessage,
-} from "./useConversation";
+import type { VoiceChatState } from "./useConversation";
 
 // Audio playback utility
 async function playAudio(
-  base64Audio: string,
+  arrayBuffer: ArrayBuffer,
   onStateChange: (state: VoiceChatState) => void
 ) {
   try {
-    const audioData = atob(base64Audio);
-    const audioBuffer = new Uint8Array(audioData.length);
-    for (let i = 0; i < audioData.length; i++) {
-      audioBuffer[i] = audioData.charCodeAt(i);
-    }
-
-    const blob = new Blob([audioBuffer], {
+    const blob = new Blob([arrayBuffer], {
       type: "audio/wav; codecs=1",
     });
     const audioUrl = URL.createObjectURL(blob);
@@ -56,7 +46,7 @@ export function useWebSocket(
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
-  const { getToken } = useAuth()
+  const { getToken } = useAuth();
 
   useEffect(() => {
     if (!cid) return;
@@ -64,46 +54,20 @@ export function useWebSocket(
     const connectWebSocket = async () => {
       const token = await getToken();
       const ws = new WebSocket(
-        `${config.episServerUrl.replace("http", "ws")}/ws/lingoo/voice-chat?token=${token}`
+        `${config.episServerUrl.replace(
+          "http",
+          "ws"
+        )}/v2/epis/ws/chat/${cid}?jwt=${token}`
       );
 
       ws.onopen = () => {
         console.log("WebSocket connected");
         setIsConnected(true);
-
-        const initMessage: VoiceChatMessage = {
-          type: "VoiceChatInit",
-          data: { cid },
-        };
-        ws.send(JSON.stringify(initMessage));
       };
 
       ws.onmessage = (event) => {
         try {
-          const message: VoiceChatReplyMessage = JSON.parse(event.data);
-          console.log("Received message:", message);
-
-          switch (message.type) {
-            case "VoiceChatInitOk":
-              console.log("Voice chat initialized successfully");
-              break;
-            case "VoiceChatAiReply":
-              if (message.data?.audio_bytes_base64) {
-                playAudio(message.data.audio_bytes_base64, onStateChange);
-                onStateChange("responding");
-              }
-              break;
-            case "Invalid":
-            case "InvalidAudioBase64":
-            case "InvalidSorroundAudio":
-            case "InternalError":
-            case "EmptyPrompt":
-            case "ZeroCharge":
-            case "LongPrompt":
-              console.error("Server error:", message.type);
-              onStateChange("idle");
-              break;
-          }
+          playAudio(event.data, onStateChange);
         } catch (error) {
           console.error("Failed to parse websocket message:", error);
         }

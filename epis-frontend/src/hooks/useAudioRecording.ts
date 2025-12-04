@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import type { VoiceChatState, VoiceChatPrompt } from "./useConversation";
+import type { VoiceChatState } from "./useConversation";
 
 // Audio conversion utilities
 async function convertToWav(webmBlob: Blob): Promise<Blob> {
@@ -73,18 +73,6 @@ function audioBufferToWav(audioBuffer: AudioBuffer): ArrayBuffer {
   return buffer;
 }
 
-async function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      resolve(result.split(",")[1]);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}
-
 // Custom hook for audio recording
 export function useAudioRecording(
   state: VoiceChatState,
@@ -114,14 +102,9 @@ export function useAudioRecording(
       mediaRecorder.onstop = async () => {
         const blob = new Blob(chunks, { type: "audio/webm" });
         const wavBlob = await convertToWav(blob);
-        const base64 = await blobToBase64(wavBlob);
 
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-          const promptMessage: VoiceChatPrompt = {
-            type: "VoiceChatPrompt",
-            data: { audio_bytes_base64: base64 },
-          };
-          wsRef.current.send(JSON.stringify(promptMessage));
+          wsRef.current.send(await wavBlob.arrayBuffer());
           onStateChange("waiting");
         }
 
@@ -144,5 +127,3 @@ export function useAudioRecording(
 
   return { startRecording, stopRecording };
 }
-
-
