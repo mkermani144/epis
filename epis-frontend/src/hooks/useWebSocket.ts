@@ -40,7 +40,7 @@ async function playAudio(
 
 // Custom hook for WebSocket connection
 export function useWebSocket(
-  cid: string | null,
+  chatmateId: string | null,
   onStateChange: (state: VoiceChatState) => void
 ) {
   const [isConnected, setIsConnected] = useState(false);
@@ -49,7 +49,7 @@ export function useWebSocket(
   const { getToken } = useAuth();
 
   useEffect(() => {
-    if (!cid) return;
+    if (!chatmateId) return;
 
     const connectWebSocket = async () => {
       const token = await getToken();
@@ -57,7 +57,7 @@ export function useWebSocket(
         `${config.episServerUrl.replace(
           "http",
           "ws"
-        )}/v2/epis/ws/chat/${cid}?jwt=${token}`
+        )}/v2/epis/ws/chat/${chatmateId}?jwt=${token}`
       );
 
       ws.onopen = () => {
@@ -95,7 +95,7 @@ export function useWebSocket(
         wsRef.current.close();
       }
     };
-  }, [cid, onStateChange]);
+  }, [chatmateId, onStateChange, getToken]);
 
   return { isConnected, wsRef };
 }

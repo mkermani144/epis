@@ -1,7 +1,3 @@
-import { useState, useEffect, useRef } from "react";
-import { useAuth } from "@clerk/clerk-react";
-import { config } from "../config";
-
 export type VoiceChatState = "idle" | "recording" | "waiting" | "responding";
 
 export interface VoiceChatMessage {
@@ -34,49 +30,9 @@ export interface VoiceChatReplyMessage {
   };
 }
 
-// Custom hook for conversation management
-export function useConversation() {
-  const [cid, setCid] = useState<string | null>(null);
-  const conversationCreatedRef = useRef<boolean>(false);
-
-  const { getToken } = useAuth();
-
-  useEffect(() => {
-    const createConversation = async () => {
-      if (conversationCreatedRef.current) return;
-      conversationCreatedRef.current = true;
-
-      try {
-	const token = await getToken();
-        const response = await fetch(
-          `${config.episServerUrl}/lingoo/conversation/create`,
-          {
-            method: "POST",
-	    credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-	      Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setCid(data.conversation_id);
-        console.log("Conversation created:", data.conversation_id);
-      } catch (error) {
-        console.error("Failed to create conversation:", error);
-      }
-    };
-
-    createConversation();
-  }, [getToken]);
-
-  return cid;
+// Custom hook for chatmate management
+// This hook now simply returns the chatmate_id that is passed to it
+// The chatmate_id should be set when a chatmate is selected or created
+export function useChatmate(chatmateId: string | null) {
+  return chatmateId;
 }
-
-
-
