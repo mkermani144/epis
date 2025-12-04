@@ -210,6 +210,7 @@ impl<AG: AiGateway, UM: UserManagement, ER: EpisRepository> RealtimeAiAgentServi
       return Ok(EpisAudioMessage::new(text_to_speech_response, audio_format));
     }
 
+    warn!(chatmate_id=%context.chatmate_id(), "Chatmate not found");
     Err(EpisError::Unknown)
   }
 }

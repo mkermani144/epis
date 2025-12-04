@@ -10,6 +10,7 @@ use derive_getters::Getters;
 use derive_more::Constructor;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use tracing::warn;
 
 use crate::domain::{
   models::{AuthStatus, CefrLevel, ChatMateLanguage, CreditAuthStatus, EpisError, User, UserId},
@@ -71,6 +72,9 @@ impl UserManagement for Clerk {
     let user_metadata = self
       .get_user_metadata(user_id)
       .await
+      .inspect_err(|error| {
+        warn!(%error, "Error while getting user metadata");
+      })
       .map_err(|_| EpisError::Unknown)?;
 
     Ok(if user_metadata.credit == 0 {
