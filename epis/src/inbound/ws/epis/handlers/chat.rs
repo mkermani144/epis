@@ -24,7 +24,7 @@ use crate::{
 /// Query params of this route
 pub struct VoiceChatQueryParams {
   /// Format of audio messages
-  audio_format: String,
+  audio_format: Option<String>,
   /// JWT for authorization
   #[allow(dead_code)]
   jwt: String,
@@ -39,16 +39,20 @@ pub async fn chat<E: Epis, UM: UserManagement>(
   Extension(user): Extension<User>,
   Query(query): Query<VoiceChatQueryParams>,
 ) -> Response {
-  if let Ok(audio_format) = EpisAudioMessageFormat::from_str(&query.audio_format) {
+  let audio_format = query
+    .audio_format
+    .unwrap_or(EpisAudioMessageFormat::default().to_string());
+
+  if let Ok(audio_format) = EpisAudioMessageFormat::from_str(&audio_format) {
     let user_id = user.id().to_string();
 
-    debug!(%user_id, %chatmate_id, audio_format=%query.audio_format, "Chat session started");
+    debug!(%user_id, %chatmate_id, %audio_format, "Chat session started");
 
     return ws
       .on_upgrade(|socket| handle_socket(socket, app_state, user_id, chatmate_id, audio_format));
   }
 
-  debug!(user_id="", %chatmate_id, audio_format=%query.audio_format, "Chat session did not start because of invalid audio format");
+  debug!(user_id="", %chatmate_id, %audio_format, "Chat session did not start because of invalid audio format");
 
   (
     StatusCode::BAD_REQUEST,
