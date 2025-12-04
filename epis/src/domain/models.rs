@@ -118,7 +118,7 @@ pub type TranscriptionResponse = String;
 pub type TextToSpeechResponse = SimpleBytes;
 
 /// CEFR level of user
-#[derive(Debug, Clone, Display, Default)]
+#[derive(Debug, Clone, Display, Default, FromStr)]
 #[allow(clippy::missing_docs_in_private_items)]
 pub enum CefrLevel {
   #[default]

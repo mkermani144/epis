@@ -165,13 +165,14 @@ pub trait UserManagement: Clone + Send + Sync + 'static {
   /// If any error occurs, [EpisError::Unknown] is returned
   fn spend_credit(&self, user_id: &UserId) -> impl Future<Output = Result<(), EpisError>> + Send;
 
-  /// Get CEFR level of a user
+  /// Get CEFR level of a user for a language
   ///
   /// # Errors
   /// If any error occurs, [EpisError::Unknown] is returned
   fn get_cefr_level(
     &self,
     user_id: &UserId,
+    language: &ChatMateLanguage,
   ) -> impl Future<Output = Result<Option<CefrLevel>, EpisError>> + Send;
 }
 

@@ -100,7 +100,7 @@ impl<AG: AiGateway, UM: UserManagement, ER: EpisRepository> RealtimeAiAgentServi
       // https://github.com/mkermani144/epis/issues/6
       let user_cefr_level = self
         .user_management
-        .get_cefr_level(context.user_id())
+        .get_cefr_level(context.user_id(), chatmate.language())
         .await
         .inspect_err(|error| warn!(%error, "Error while getting user CEFR level"))
         .map_err(|_| EpisError::RepoError)?
