@@ -1,14 +1,80 @@
+use async_openai::{
+  Client,
+  config::{OPENAI_API_BASE, OpenAIConfig},
+  types::{
+    audio::{
+      AudioInput, CreateSpeechRequestArgs, CreateTranscriptionRequestArgs, SpeechModel, Voice,
+    },
+    chat::{ReasoningEffort, ResponseFormatJsonSchema},
+    evals::EasyInputMessage,
+    responses::{
+      CreateResponseArgs, EasyInputContent, EasyInputMessageArgs, InputItem, InputParam, Reasoning,
+      ResponseTextParam, Role, TextResponseFormatConfiguration, Verbosity,
+    },
+  },
+};
+use schemars::{JsonSchema, schema_for};
+use serde::Deserialize;
+use tracing::{debug, warn};
+
 use crate::domain::{
   models::{
-    ChatMessage, EpisAudioMessageFormat, EpisError, GenerationResponse, TextToSpeechResponse,
-    TranscriptionResponse,
+    ChatMessage, ChatMessageRole, EpisAudioMessageFormat, EpisError, GenerationResponse,
+    TextToSpeechResponse, TranscriptionResponse,
   },
   ports::AiGateway,
 };
 
 /// Implementation of [AiGateway] for OpenAI
 #[derive(Debug, Clone)]
-pub struct OpenAi;
+pub struct OpenAi {
+  /// [async_openai] client
+  client: Client<OpenAIConfig>,
+}
+
+impl OpenAi {
+  /// Construct an [OpenAi] with an api key for a base url
+  pub fn new(api_key: &str, base_url: Option<String>) -> Self {
+    let config = OpenAIConfig::default()
+      .with_api_base(base_url.unwrap_or(OPENAI_API_BASE.into()))
+      .with_api_key(api_key);
+    let client = Client::with_config(config);
+    Self { client }
+  }
+}
+
+impl From<&ChatMessage> for EasyInputMessage {
+  fn from(chat_message: &ChatMessage) -> Self {
+    let role = match chat_message.role() {
+      ChatMessageRole::User => Role::User,
+      ChatMessageRole::Ai => Role::Assistant,
+      ChatMessageRole::System => Role::Developer,
+    };
+    EasyInputMessageArgs::default()
+      .role(role)
+      .content(EasyInputContent::Text(chat_message.message().to_string()))
+      .build()
+      .expect("Input message can be built from role and content")
+  }
+}
+
+/// Deserialized learned material returned by API
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ApiLearnedMaterial {
+  /// List of learned vocab
+  vocab: Vec<String>,
+}
+
+/// Deserialized generation API response
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ApiLingooAiResponse {
+  /// The text output
+  response: String,
+  /// List of learned vocab
+  learned_material: ApiLearnedMaterial,
+}
 
 impl AiGateway for OpenAi {
   async fn text_to_speech(
@@ -17,7 +83,26 @@ impl AiGateway for OpenAi {
     text: String,
     instructions: Option<&str>,
   ) -> Result<TextToSpeechResponse, EpisError> {
-    todo!()
+    let request = CreateSpeechRequestArgs::default()
+      .input(text.to_string())
+      .model(SpeechModel::Other(model.into()))
+      .instructions(instructions.unwrap_or_default())
+      .voice(Voice::Alloy)
+      .build()
+      .expect("Speech request can be built from text");
+    debug!("Speech request built");
+
+    let response = self
+      .client
+      .audio()
+      .speech()
+      .create(request)
+      .await
+      .inspect_err(|error| warn!(%error, "Tts request failed"))
+      .map_err(|_| EpisError::ProviderError)?;
+    debug!("Speech request done successfully");
+
+    Ok(response.bytes.to_vec())
   }
 
   async fn transcribe(
@@ -26,7 +111,33 @@ impl AiGateway for OpenAi {
     audio_bytes: Vec<u8>,
     audio_format: EpisAudioMessageFormat,
   ) -> Result<TranscriptionResponse, EpisError> {
-    todo!()
+    let request = CreateTranscriptionRequestArgs::default()
+      .file(AudioInput::from_vec_u8(
+        format!("input.{audio_format}"),
+        audio_bytes,
+      ))
+      .model(model)
+      .build()
+      // TODO: Either handle more cases, or remove the [SttError] type
+      .map_err(|error| {
+        warn!(%error, "Cannot build transcription request");
+        EpisError::ProviderError
+      })?;
+    debug!("Transcription request built");
+
+    let response = self
+      .client
+      .audio()
+      .transcription()
+      .create(request)
+      .await
+      .map_err(|error| {
+        warn!(%error, "Transcription request failed");
+        EpisError::ProviderError
+      })?;
+    debug!("Transcription was done successfully");
+
+    Ok(response.text)
   }
 
   async fn generate(
@@ -34,6 +145,60 @@ impl AiGateway for OpenAi {
     model: &str,
     messages: &[ChatMessage],
   ) -> Result<GenerationResponse, EpisError> {
-    todo!()
+    let input = InputParam::Items(
+      messages
+        .iter()
+        .map(|message| InputItem::EasyMessage(message.into()))
+        .collect::<Vec<_>>(),
+    );
+
+    let schema = schema_for!(ApiLingooAiResponse);
+    let schema_value = serde_json::to_value(schema).map_err(|_| EpisError::ProviderError)?;
+
+    let request = CreateResponseArgs::default()
+      // TODO: Set max tokens based on data
+      .max_output_tokens(10000u32)
+      .model(model)
+      .text(ResponseTextParam {
+        format: TextResponseFormatConfiguration::JsonSchema(ResponseFormatJsonSchema {
+          description: None,
+          name: "lingoo_ai_response".to_string(),
+          strict: Some(true),
+          schema: Some(schema_value),
+        }),
+        verbosity: Some(Verbosity::Medium),
+      })
+      .reasoning(Reasoning {
+        effort: Some(ReasoningEffort::Low),
+        summary: None,
+      })
+      .input(input)
+      .build()
+      .expect("Responses request can be built from the provided args");
+
+    let response = self
+      .client
+      .responses()
+      .create(request)
+      .await
+      .map_err(|error| {
+        warn!(%error, "Cannot generate a response");
+        EpisError::ProviderError
+      })?;
+
+    if let Some(output_text) = response.output_text() {
+      let ai_reply: ApiLingooAiResponse = serde_json::from_str(&output_text).map_err(|error| {
+        warn!(%error, "Cannot deserialize llm output");
+        EpisError::ProviderError
+      })?;
+      debug!("Response generation was done successfully");
+
+      Ok(GenerationResponse::new(
+        ai_reply.response,
+        ai_reply.learned_material.vocab,
+      ))
+    } else {
+      Err(EpisError::ProviderError)
+    }
   }
 }

@@ -127,7 +127,7 @@ impl<AG: AiGateway, UM: UserManagement, ER: EpisRepository> RealtimeAiAgentServi
       llm_input.extend(message_history);
       llm_input.push(ChatMessage::new(
         ChatMessageRole::User,
-        transcription_response.transcript().to_string(),
+        transcription_response.clone(),
       ));
 
       let generation_response = self
@@ -138,14 +138,12 @@ impl<AG: AiGateway, UM: UserManagement, ER: EpisRepository> RealtimeAiAgentServi
         .map_err(|_| EpisError::ProviderError)?;
 
       let mut learned_vocab_data_vec = generation_response
-        .output()
         .learned_vocab()
         .iter()
         .map(|word| LearnedVocabData::new(word.to_string(), LearnedVocabStatus::New))
         .collect::<Vec<_>>();
       learned_vocab_data_vec.extend(due_vocab.into_iter().filter_map(|word| {
         if generation_response
-          .output()
           .text()
           .to_lowercase()
           .contains(word.as_str())
@@ -167,10 +165,7 @@ impl<AG: AiGateway, UM: UserManagement, ER: EpisRepository> RealtimeAiAgentServi
         .epis_repo
         .store_message(
           chatmate.id(),
-          &ChatMessage::new(
-            ChatMessageRole::User,
-            transcription_response.transcript().to_string(),
-          ),
+          &ChatMessage::new(ChatMessageRole::User, transcription_response),
         )
         .await
         .inspect_err(|error| warn!(%error, "Error while storing user message"))
@@ -179,10 +174,7 @@ impl<AG: AiGateway, UM: UserManagement, ER: EpisRepository> RealtimeAiAgentServi
         .epis_repo
         .store_message(
           chatmate.id(),
-          &ChatMessage::new(
-            ChatMessageRole::Ai,
-            generation_response.output().text().to_string(),
-          ),
+          &ChatMessage::new(ChatMessageRole::Ai, generation_response.text().to_string()),
         )
         .await
         .inspect_err(|error| warn!(%error, "Error while storing ai message"))
@@ -192,7 +184,7 @@ impl<AG: AiGateway, UM: UserManagement, ER: EpisRepository> RealtimeAiAgentServi
         .ai_gateway
         .text_to_speech(
           &self.models.text_to_speech,
-          generation_response.output().text().to_string(),
+          generation_response.text().to_string(),
           None,
         )
         .await
@@ -208,10 +200,7 @@ impl<AG: AiGateway, UM: UserManagement, ER: EpisRepository> RealtimeAiAgentServi
         .inspect_err(|error| warn!(%error, "Error while spending credit"))
         .map_err(|_| EpisError::Unknown)?;
 
-      return Ok(EpisAudioMessage::new(
-        text_to_speech_response.audio_bytes().to_owned(),
-        audio_format,
-      ));
+      return Ok(EpisAudioMessage::new(text_to_speech_response, audio_format));
     }
 
     Err(EpisError::Unknown)

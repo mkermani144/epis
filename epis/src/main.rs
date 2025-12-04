@@ -58,7 +58,10 @@ async fn main() -> Result<()> {
   let clerk = ClerkWrapper::new(Clerk::new(clerk_config.clone()));
 
   let postgres_new = Arc::new(Postgres::try_new(config.database_url()).await?);
-  let openai_new = Arc::new(crate::outbound::openai::OpenAi);
+  let openai_new = Arc::new(crate::outbound::openai::OpenAi::new(
+    &config.openai_api_key(),
+    None,
+  ));
   let clerk_new = Arc::new(crate::outbound::clerk::Clerk::new(Clerk::new(clerk_config)));
   let realtime_ai_agent = Arc::new(RealtimeAiAgent::new(
     openai_new.clone(),

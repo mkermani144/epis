@@ -103,37 +103,19 @@ pub enum AuthStatus {
   Unauthenticated,
 }
 
-/// The main content of [GenerationResponse]
-#[derive(Debug, Clone, Getters)]
+/// Structured response of ai generation
+#[derive(Debug, Clone, Getters, Constructor)]
 #[allow(clippy::missing_docs_in_private_items)]
-pub struct GenerationResponseOutput {
+pub struct GenerationResponse {
   text: String,
   learned_vocab: Vec<String>,
 }
 
-/// Structured response of ai generation
-#[derive(Debug, Clone, Getters)]
-#[allow(clippy::missing_docs_in_private_items)]
-pub struct GenerationResponse {
-  output: GenerationResponseOutput,
-  usage: i32,
-}
-
 /// Structured response of ai transcription
-#[derive(Debug, Clone, Getters)]
-#[allow(clippy::missing_docs_in_private_items)]
-pub struct TranscriptionResponse {
-  transcript: String,
-  usage: i32,
-}
+pub type TranscriptionResponse = String;
 
 /// Structured response of ai text to speech
-#[derive(Debug, Clone, Getters)]
-#[allow(clippy::missing_docs_in_private_items)]
-pub struct TextToSpeechResponse {
-  audio_bytes: SimpleBytes,
-  usage: i32,
-}
+pub type TextToSpeechResponse = SimpleBytes;
 
 /// CEFR level of user
 #[derive(Debug, Clone, Display, Default)]
