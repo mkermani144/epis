@@ -83,7 +83,10 @@ impl<ER: EpisRepository, RAA: RealtimeAiAgent> EpisService for Epis<ER, RAA> {
         .chat(audio_message, &chat_context)
         .await
         .inspect_err(|error| warn!(%error, "Ai agent chat failed"))
-        .map_err(|_| EpisError::AiAgentFailure)?;
+        .map_err(|e| match e {
+          EpisError::NoCredit => EpisError::NoCredit,
+          _ => EpisError::AiAgentFailure,
+        })?;
 
       trace!("Ai agent generated a response");
 

@@ -47,6 +47,9 @@ pub enum EpisError {
   /// Any error that is returned from the ai provider
   #[error("Provider error")]
   ProviderError,
+  /// User has no credit and should top up
+  #[error("No credit remaining")]
+  NoCredit,
   /// A fallback error
   #[error("Unknown error")]
   Unknown,
@@ -101,6 +104,14 @@ pub struct User {
 pub enum AuthStatus {
   Authenticated(User),
   Unauthenticated,
+}
+
+/// Represents whether the user is authorized to do anything that requires enough credit
+#[derive(Debug, Clone)]
+#[allow(clippy::missing_docs_in_private_items)]
+pub enum CreditAuthStatus {
+  Authorized,
+  Unauthorized,
 }
 
 /// Structured response of ai generation

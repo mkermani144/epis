@@ -6,8 +6,8 @@ use tracing::warn;
 
 use crate::domain::{
   models::{
-    CefrLevel, ChatMateLanguage, ChatMessage, ChatMessageRole, EpisAudioMessage, LearnedVocabData,
-    LearnedVocabStatus,
+    CefrLevel, ChatMateLanguage, ChatMessage, ChatMessageRole, CreditAuthStatus, EpisAudioMessage,
+    LearnedVocabData, LearnedVocabStatus,
   },
   ports::{AiGateway, EpisRepository, RealtimeAiAgent as RealtimeAiAgentService, UserManagement},
 };
@@ -76,6 +76,15 @@ impl<AG: AiGateway, UM: UserManagement, ER: EpisRepository> RealtimeAiAgentServi
     audio_message: EpisAudioMessage,
     context: &RealtimeAiAgentChatContext,
   ) -> Result<EpisAudioMessage, EpisError> {
+    let credit_auth_status = self
+      .user_management
+      .authorize_by_credit(context.user_id())
+      .await?;
+
+    if let CreditAuthStatus::Unauthorized = credit_auth_status {
+      return Err(EpisError::NoCredit);
+    }
+
     let (audio_bytes, audio_format) = audio_message.into_parts();
 
     let transcription_response = self

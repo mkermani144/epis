@@ -2,8 +2,8 @@
 // friendly
 
 use crate::domain::models::{
-  AuthStatus, CefrLevel, ChatMate, ChatMateLanguage, ChatMessage, EpisAudioMessage,
-  EpisAudioMessageFormat, EpisError, GenerationResponse, Id, LearnedVocabData,
+  AuthStatus, CefrLevel, ChatMate, ChatMateLanguage, ChatMessage, CreditAuthStatus,
+  EpisAudioMessage, EpisAudioMessageFormat, EpisError, GenerationResponse, Id, LearnedVocabData,
   RealtimeAiAgentChatContext, SimpleBytes, TextToSpeechResponse, TranscriptionResponse, UserId,
 };
 
@@ -102,6 +102,7 @@ pub trait Epis: Clone + Send + Sync + 'static {
   /// # Errors
   /// - If error is during sending or receiving messages, [EpisError::DuplexError] is returned
   /// - If it's related to a failure in ai agent, [EpisError::AiAgentFailure] is returned
+  /// - If user has run out of credit, [EpisError::NoCredit] is returned
   /// - Otherwise [EpisError::Unknown] is returned
   fn chat(
     &self,
@@ -119,6 +120,7 @@ pub trait RealtimeAiAgent: Clone + Send + Sync + 'static {
   /// # Errors
   /// - If an external provider error occurs, [EpisError::ProviderError] is returned
   /// - If error is related to data store, [EpisError::RepoError] is returned
+  /// - If user has run out of credit, [EpisError::NoCredit] is returned
   /// - Otherwise [EpisError::Unknown] is returned
   fn chat(
     &self,
@@ -158,6 +160,15 @@ pub trait UserManagement: Clone + Send + Sync + 'static {
     &self,
     jwt: &str,
   ) -> impl Future<Output = Result<AuthStatus, EpisError>> + Send;
+
+  /// Authorize a user by checking if he has enough credit remaining
+  ///
+  /// # Errors
+  /// If any error occurs, [EpisError::Unknown] is returned
+  fn authorize_by_credit(
+    &self,
+    user_id: &UserId,
+  ) -> impl Future<Output = Result<CreditAuthStatus, EpisError>> + Send;
 
   /// Reduce credit of the user by one
   ///

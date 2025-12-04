@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use crate::domain::{
-  models::{AuthStatus, CefrLevel, ChatMateLanguage, EpisError, User, UserId},
+  models::{AuthStatus, CefrLevel, ChatMateLanguage, CreditAuthStatus, EpisError, User, UserId},
   ports::UserManagement,
 };
 
@@ -65,6 +65,19 @@ impl UserManagement for Clerk {
       ))),
       Err(_) => Ok(AuthStatus::Unauthenticated),
     }
+  }
+
+  async fn authorize_by_credit(&self, user_id: &UserId) -> Result<CreditAuthStatus, EpisError> {
+    let user_metadata = self
+      .get_user_metadata(user_id)
+      .await
+      .map_err(|_| EpisError::Unknown)?;
+
+    Ok(if user_metadata.credit == 0 {
+      CreditAuthStatus::Unauthorized
+    } else {
+      CreditAuthStatus::Authorized
+    })
   }
 
   async fn spend_credit(&self, user_id: &UserId) -> Result<(), EpisError> {
