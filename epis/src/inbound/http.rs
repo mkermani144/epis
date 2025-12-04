@@ -16,7 +16,7 @@ use utoipa_scalar::{Scalar, Servable};
 
 use crate::{
   domain::ports::{Epis, UserManagement},
-  inbound::{rest::epis::EpisRouter, ws::epis::EpisWsRouter, ws_auth_layer::ws_auth_layer},
+  inbound::{auth_layer::auth_layer, rest::epis::EpisRouter, ws::epis::EpisWsRouter},
 };
 
 /// Epis HTTP server
@@ -55,12 +55,6 @@ impl HttpServer {
       })
       .split_for_parts();
 
-    // let router = router.layer(ClerkLayer::new(
-    //   MemoryCacheJwksProvider::new(user_management.clone().into_inner()),
-    //   None,
-    //   true,
-    // ));
-
     let router = router
       .nest("/v2/epis/ws", EpisWsRouter::new().into_inner())
       .with_state(AppState {
@@ -68,21 +62,22 @@ impl HttpServer {
         user_management: user_management.clone(),
       });
 
-    let router = router.layer(from_fn_with_state(
-      AppState {
-        epis: epis.clone(),
-        user_management: user_management.clone(),
-      },
-      ws_auth_layer,
-    ));
-
     // Layers that apply to both REST and WS
-    let mut router = router.layer(TraceLayer::new_for_http()).layer(
-      CorsLayer::new()
-        .allow_origin(app_url.parse::<HeaderValue>()?)
-        .allow_credentials(true)
-        .allow_headers([http::header::CONTENT_TYPE, http::header::AUTHORIZATION]),
-    );
+    let mut router = router
+      .layer(from_fn_with_state(
+        AppState {
+          epis: epis.clone(),
+          user_management: user_management.clone(),
+        },
+        auth_layer,
+      ))
+      .layer(TraceLayer::new_for_http())
+      .layer(
+        CorsLayer::new()
+          .allow_origin(app_url.parse::<HeaderValue>()?)
+          .allow_credentials(true)
+          .allow_headers([http::header::CONTENT_TYPE, http::header::AUTHORIZATION]),
+      );
 
     router = router.merge(Scalar::with_url("/scalar", api));
 
