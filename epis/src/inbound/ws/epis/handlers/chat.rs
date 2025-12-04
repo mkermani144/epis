@@ -1,3 +1,5 @@
+//! Chat handler
+
 use std::{str::FromStr, sync::Arc};
 
 use axum::{
@@ -15,7 +17,7 @@ use crate::{
     models::{EpisAudioMessageFormat, Id, User, UserId},
     ports::{Epis, UserManagement},
   },
-  inbound::http::AppStateV2,
+  inbound::http::AppState,
 };
 
 #[derive(Debug, Clone, Deserialize)]
@@ -24,6 +26,7 @@ pub struct VoiceChatQueryParams {
   /// Format of audio messages
   audio_format: String,
   /// JWT for authorization
+  #[allow(dead_code)]
   jwt: String,
 }
 
@@ -31,7 +34,7 @@ pub struct VoiceChatQueryParams {
 #[instrument(skip_all)]
 pub async fn chat<E: Epis, UM: UserManagement>(
   ws: WebSocketUpgrade,
-  State(app_state): State<AppStateV2<E, UM>>,
+  State(app_state): State<AppState<E, UM>>,
   Path(chatmate_id): Path<Id>,
   Extension(user): Extension<User>,
   Query(query): Query<VoiceChatQueryParams>,
@@ -57,7 +60,7 @@ pub async fn chat<E: Epis, UM: UserManagement>(
 /// The socket handler for voice_chat handler
 async fn handle_socket<E: Epis, UM: UserManagement>(
   socket: WebSocket,
-  app_state: AppStateV2<E, UM>,
+  app_state: AppState<E, UM>,
   user_id: UserId,
   chatmate_id: Id,
   audio_format: EpisAudioMessageFormat,

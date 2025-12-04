@@ -1,3 +1,5 @@
+//! All inbound adapters
+
 pub mod http;
 pub mod rest;
 pub mod websocket;

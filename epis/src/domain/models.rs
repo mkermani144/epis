@@ -95,6 +95,7 @@ pub struct User {
   /// User id in the external provider
   id: UserId,
   /// User credit
+  #[allow(dead_code)]
   credit: i32,
 }
 

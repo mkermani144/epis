@@ -7,12 +7,10 @@ use tracing::warn;
 use crate::domain::{
   models::{
     CefrLevel, ChatMateLanguage, ChatMessage, ChatMessageRole, CreditAuthStatus, EpisAudioMessage,
-    LearnedVocabData, LearnedVocabStatus,
+    EpisError, LearnedVocabData, LearnedVocabStatus, RealtimeAiAgentChatContext,
   },
   ports::{AiGateway, EpisRepository, RealtimeAiAgent as RealtimeAiAgentService, UserManagement},
 };
-
-use super::models::{EpisError, RealtimeAiAgentChatContext};
 
 /// Models to use for each operation
 #[allow(clippy::missing_docs_in_private_items)]

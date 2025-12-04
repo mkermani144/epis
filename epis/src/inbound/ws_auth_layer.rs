@@ -14,12 +14,12 @@ use crate::{
     models::AuthStatus,
     ports::{Epis, UserManagement},
   },
-  inbound::http::AppStateV2,
+  inbound::http::AppState,
 };
 
 /// A middleware to authenticate websocket routes, adding user extension to request
 pub async fn ws_auth_layer<E: Epis, UM: UserManagement>(
-  State(state): State<AppStateV2<E, UM>>,
+  State(state): State<AppState<E, UM>>,
   query: Query<HashMap<String, String>>,
   mut request: axum::extract::Request,
   next: Next,

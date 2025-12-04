@@ -1,3 +1,5 @@
+//! OpenAI AI provider
+
 use async_openai::{
   Client,
   config::{OPENAI_API_BASE, OpenAIConfig},

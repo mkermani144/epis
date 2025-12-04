@@ -7,7 +7,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
   domain::ports::{Epis, UserManagement},
   inbound::{
-    http::AppStateV2,
+    http::AppState,
     rest::epis::handlers::handshake_chatmate::{__path_handshake_chatmate, handshake_chatmate},
   },
 };
@@ -17,7 +17,7 @@ pub const EPIS_CATEGORY: &str = "Epis";
 
 /// Epis subrouter
 #[derive(Debug, Clone)]
-pub struct EpisRouter<E: Epis, UM: UserManagement>(OpenApiRouter<AppStateV2<E, UM>>);
+pub struct EpisRouter<E: Epis, UM: UserManagement>(OpenApiRouter<AppState<E, UM>>);
 
 impl<E: Epis, UM: UserManagement> EpisRouter<E, UM> {
   /// Construct Epis router
@@ -28,7 +28,7 @@ impl<E: Epis, UM: UserManagement> EpisRouter<E, UM> {
   }
 
   /// Convert to inner router
-  pub fn into_inner(self) -> OpenApiRouter<AppStateV2<E, UM>> {
+  pub fn into_inner(self) -> OpenApiRouter<AppState<E, UM>> {
     self.0
   }
 }

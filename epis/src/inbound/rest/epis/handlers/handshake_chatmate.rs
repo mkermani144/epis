@@ -14,7 +14,7 @@ use crate::{
     models::{ChatMateLanguage, EpisError},
     ports::{Epis, UserManagement},
   },
-  inbound::{http::AppStateV2, rest::epis::EPIS_CATEGORY},
+  inbound::{http::AppState, rest::epis::EPIS_CATEGORY},
 };
 
 #[allow(clippy::missing_docs_in_private_items)]
@@ -60,7 +60,7 @@ pub struct HandshakeChatmateRequestBody {
   )
 )]
 pub async fn handshake_chatmate<E: Epis, UM: UserManagement>(
-  State(app_state): State<AppStateV2<E, UM>>,
+  State(app_state): State<AppState<E, UM>>,
   Extension(jwt): Extension<ClerkJwt>,
   Json(request): Json<HandshakeChatmateRequestBody>,
 ) -> Result<Json<()>, HandshakeChatmateApiError> {
