@@ -9,7 +9,7 @@ use tracing::{info, warn};
 use crate::domain::{
   models::{
     ChatMate, ChatMateLanguage, ChatMessage, ChatMessageRole, EpisError, Id, LearnedVocabData,
-    LearnedVocabStatus,
+    LearnedVocabStatus, UserId,
   },
   ports::EpisRepository,
 };
@@ -45,7 +45,7 @@ impl Postgres {
 impl EpisRepository for Postgres {
   async fn create_chatmate(
     &self,
-    user_id: &String,
+    user_id: &UserId,
     chatmate_language: &ChatMateLanguage,
   ) -> Result<ChatMate, EpisError> {
     let chatmate = query!(
@@ -95,7 +95,7 @@ impl EpisRepository for Postgres {
 
   async fn get_chatmate_by_language(
     &self,
-    user_id: &String,
+    user_id: &UserId,
     chatmate_language: &ChatMateLanguage,
   ) -> Result<Option<ChatMate>, EpisError> {
     let chatmate = query!(
@@ -117,6 +117,34 @@ impl EpisRepository for Postgres {
     }
 
     Ok(None)
+  }
+
+  async fn get_chatmates(
+    &self,
+    user_id: &UserId,
+    limit: Option<u8>,
+  ) -> Result<Vec<ChatMate>, EpisError> {
+    let chatmates = query!(
+      "SELECT id, language FROM chatmate WHERE user_id = $1 ORDER BY created_at ASC LIMIT $2",
+      user_id,
+      limit.unwrap_or(DEFAULT_PAGE_SIZE) as i16,
+    )
+    .fetch_all(self.pool())
+    .await
+    .inspect_err(|error| warn!(%error, "Sqlx error while getting list of chatmates"))
+    .map_err(|_| EpisError::RepoError)?;
+
+    let chatmates_list = chatmates
+      .into_iter()
+      .filter_map(|chatmate| {
+        ChatMateLanguage::from_str(&chatmate.language)
+          .inspect_err(|error| warn!(language=%chatmate.language, %error, "Language is unexpected and should not exist in the database"))
+          .ok()
+          .map(|language| ChatMate::new(language, chatmate.id.into()))
+      })
+      .collect();
+
+    Ok(chatmates_list)
   }
 
   async fn get_chat_message_history(

@@ -8,7 +8,10 @@ use crate::{
   domain::ports::{Epis, UserManagement},
   inbound::{
     http::AppState,
-    rest::epis::handlers::handshake_chatmate::{__path_handshake_chatmate, handshake_chatmate},
+    rest::epis::handlers::{
+      handshake_chatmate::{__path_handshake_chatmate, handshake_chatmate},
+      list_chatmates::{__path_list_chatmates, list_chatmates},
+    },
   },
 };
 
@@ -22,7 +25,7 @@ pub struct EpisRouter<E: Epis, UM: UserManagement>(OpenApiRouter<AppState<E, UM>
 impl<E: Epis, UM: UserManagement> EpisRouter<E, UM> {
   /// Construct Epis router
   pub fn new() -> Self {
-    let router = OpenApiRouter::new().routes(routes!(handshake_chatmate));
+    let router = OpenApiRouter::new().routes(routes!(handshake_chatmate, list_chatmates));
 
     Self(router)
   }

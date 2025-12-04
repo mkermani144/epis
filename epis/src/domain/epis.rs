@@ -101,4 +101,9 @@ impl<ER: EpisRepository, RAA: RealtimeAiAgent> EpisService for Epis<ER, RAA> {
       trace!("Response sent back to the user")
     }
   }
+
+  #[instrument(skip(self))]
+  async fn list_chatmates(&self, user_id: &UserId) -> Result<Vec<ChatMate>, EpisError> {
+    self.repository.get_chatmates(user_id, None).await
+  }
 }

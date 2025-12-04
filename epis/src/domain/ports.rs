@@ -39,6 +39,16 @@ pub trait EpisRepository: Clone + Send + Sync + 'static {
     chatmate_id: &Id,
   ) -> impl Future<Output = Result<Option<ChatMate>, EpisError>> + Send;
 
+  /// Get chatmates for a user with optional limit
+  ///
+  /// # Errors
+  /// - If any repo error occurs, return [EpisError::RepoError]
+  fn get_chatmates(
+    &self,
+    user_id: &UserId,
+    limit: Option<u8>,
+  ) -> impl Future<Output = Result<Vec<ChatMate>, EpisError>> + Send;
+
   /// Fetch due vocab up to a limit based on an exponential algorithm
   ///
   /// # Errors
@@ -111,6 +121,15 @@ pub trait Epis: Clone + Send + Sync + 'static {
     duplex: &mut impl AudioDuplex,
     message_format: &EpisAudioMessageFormat,
   ) -> impl Future<Output = Result<(), EpisError>> + Send;
+
+  /// List all chatmates for a user
+  ///
+  /// # Errors
+  /// - If any repo error occurs, return [EpisError::RepoError]
+  fn list_chatmates(
+    &self,
+    user_id: &UserId,
+  ) -> impl Future<Output = Result<Vec<ChatMate>, EpisError>> + Send;
 }
 
 /// An implementation-agnostic realtime ai agent, responsible for speech-to-speech generation
