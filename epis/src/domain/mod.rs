@@ -6,6 +6,5 @@ pub mod epis;
 pub mod models;
 /// Domain ports for communicating with external resources
 pub mod ports;
-
 /// Canonical implementation of a realtime ai agent
 pub mod realtime_ai_agent;

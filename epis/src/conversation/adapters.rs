@@ -96,7 +96,7 @@ impl ConversationRepository for Postgres {
     };
 
     let message = query!(
-      "INSERT INTO message (conversation_id, content, role) VALUES ($1, $2, $3) RETURNING id",
+      "INSERT INTO message (chatmate_id, content, role) VALUES ($1, $2, $3) RETURNING id",
       cid.as_ref(),
       message.message.as_ref(),
       role,
@@ -121,7 +121,7 @@ impl ConversationRepository for Postgres {
       })?;
 
     let messages = query!(
-      "SELECT id, content, role FROM message WHERE conversation_id = $1",
+      "SELECT id, content, role FROM message WHERE chatmate_id = $1",
       cid.as_ref(),
     )
     .fetch_all(self.pool())

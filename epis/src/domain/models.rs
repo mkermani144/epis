@@ -1,11 +1,11 @@
 use derive_getters::{Dissolve, Getters};
-use derive_more::{Constructor, Debug, Display, From, FromStr};
+use derive_more::{AsRef, Constructor, Debug, Display, From, FromStr};
 use serde::Deserialize;
 use thiserror::Error;
 use uuid::Uuid;
 
 /// A wrapper around [Uuid]
-#[derive(Debug, Clone, Constructor, Display, From, Deserialize)]
+#[derive(Debug, Clone, Constructor, Display, From, Deserialize, AsRef)]
 pub struct Id(Uuid);
 
 // TODO: Decide on the languages supported by Epis

@@ -108,7 +108,7 @@ impl<AG: AiGateway, UM: UserManagement, ER: EpisRepository> RealtimeAiAgentServi
 
       let due_vocab = self
         .epis_repo
-        .fetch_due_vocab(context.user_id(), None)
+        .fetch_due_vocab(context.chatmate_id(), None)
         .await
         .inspect_err(|error| warn!(%error, "Error while fetching due vocab"))
         .map_err(|_| EpisError::RepoError)?;
@@ -156,7 +156,7 @@ impl<AG: AiGateway, UM: UserManagement, ER: EpisRepository> RealtimeAiAgentServi
 
       self
         .epis_repo
-        .store_learned_vocab(context.user_id(), &learned_vocab_data_vec)
+        .store_learned_vocab(context.chatmate_id(), &learned_vocab_data_vec)
         .await
         .inspect_err(|error| warn!(%error, "Error while storing learned vocab"))
         .map_err(|_| EpisError::RepoError)?;

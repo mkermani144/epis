@@ -7,9 +7,15 @@ use sqlx::{PgPool, error::Error as SqlxError, migrate, postgres::PgPoolOptions, 
 use tracing::{info, warn};
 
 use crate::domain::{
-  models::{ChatMate, ChatMateLanguage, ChatMessage, EpisError, Id, LearnedVocabData},
+  models::{
+    ChatMate, ChatMateLanguage, ChatMessage, ChatMessageRole, EpisError, Id, LearnedVocabData,
+    LearnedVocabStatus,
+  },
   ports::EpisRepository,
 };
+
+/// Default page size for any paginated query
+const DEFAULT_PAGE_SIZE: u8 = 10;
 
 /// Database connection manager for PostgreSQL
 #[derive(Debug, Clone)]
@@ -69,6 +75,24 @@ impl EpisRepository for Postgres {
     ))
   }
 
+  async fn get_chatmate_by_id(&self, chatmate_id: &Id) -> Result<Option<ChatMate>, EpisError> {
+    let chatmate = query!("SELECT * FROM chatmate WHERE id = $1", chatmate_id.as_ref())
+      .fetch_optional(self.pool())
+      .await
+      .inspect_err(|error| warn!(%error, "Sqlx error while getting chatmate by id"))
+      .map_err(|_| EpisError::RepoError)?;
+
+    if let Some(chatmate) = chatmate {
+      return Ok(Some(ChatMate::new(
+        ChatMateLanguage::from_str(&chatmate.language)
+          .inspect_err(|error| warn!(language=%chatmate.language, %error, "Language is unexpected and should not exist in the database"))
+          .map_err(|_| EpisError::RepoError)?,
+       chatmate.id.into())));
+    }
+
+    Ok(None)
+  }
+
   async fn get_chatmate_by_language(
     &self,
     user_id: &String,
@@ -100,30 +124,152 @@ impl EpisRepository for Postgres {
     chatmate_id: &Id,
     limit: Option<u8>,
   ) -> Result<Vec<ChatMessage>, EpisError> {
-    todo!()
+    query!(
+      "SELECT * FROM chatmate WHERE id = $1 LIMIT $2",
+      chatmate_id.as_ref(),
+      limit.unwrap_or(DEFAULT_PAGE_SIZE) as i16
+    )
+    .fetch_one(self.pool())
+    .await
+    .inspect_err(|error| warn!(%error, "Getting chatmate failed"))
+    .map_err(|_| EpisError::RepoError)?;
+
+    let messages = query!(
+      "SELECT id, content, role FROM message WHERE chatmate_id = $1",
+      chatmate_id.as_ref(),
+    )
+    .fetch_all(self.pool())
+    .await
+    .inspect_err(|error| warn!(%error, "Getting chat message history failed"))
+    .map_err(|_| EpisError::RepoError)?;
+
+    let message_history = messages
+      .into_iter()
+      .filter_map(|message| {
+        let mut role = match message.role.as_str() {
+          "user" => Some(ChatMessageRole::User),
+          "ai" => Some(ChatMessageRole::Ai),
+          "system" => Some(ChatMessageRole::System),
+          _ => None,
+        };
+
+        Some(ChatMessage::new(role.take()?, message.content))
+      })
+      .collect();
+
+    Ok(message_history)
   }
 
-  async fn store_message(&self, chatmate_id: &Id, message: &ChatMessage) -> Result<Id, EpisError> {
-    todo!()
+  async fn store_message(
+    &self,
+    chatmate_id: &Id,
+    chat_message: &ChatMessage,
+  ) -> Result<Id, EpisError> {
+    query!("SELECT * FROM chatmate WHERE id = $1", chatmate_id.as_ref())
+      .fetch_one(self.pool())
+      .await
+      .inspect_err(|error| warn!(%error, "Getting chatmate failed"))
+      .map_err(|_| EpisError::RepoError)?;
+
+    let role = match chat_message.role() {
+      ChatMessageRole::User => "user",
+      ChatMessageRole::Ai => "ai",
+      ChatMessageRole::System => "system",
+    };
+
+    let message = query!(
+      "INSERT INTO message (chatmate_id, content, role) VALUES ($1, $2, $3) RETURNING id",
+      chatmate_id.as_ref(),
+      chat_message.message(),
+      role,
+    )
+    .fetch_one(self.pool())
+    .await
+    .inspect_err(|error| warn!(%error, "Storing message failed"))
+    .map_err(|_| EpisError::RepoError)?;
+
+    Ok(message.id.into())
   }
 
   async fn store_learned_vocab(
     &self,
-    user_id: &String,
+    chatmate_id: &Id,
     learned_vocab_data_list: &[LearnedVocabData],
   ) -> Result<(), EpisError> {
-    todo!()
+    // FIXME: Batch upsert when sqlx supports it, this is very slow
+    // https://github.com/launchbadge/sqlx/issues/294
+    for learned_vocab_data in learned_vocab_data_list {
+      match learned_vocab_data.status() {
+        LearnedVocabStatus::New => {
+          query!(
+            // NOTE: For now, on vocab conflict we do nothing. In future, we may want to change
+            // usage_count, etc.
+            "INSERT INTO learned_vocab (chatmate_id, vocab) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+            chatmate_id.as_ref(),
+            learned_vocab_data.vocab().as_ref() as &str,
+          )
+          .execute(self.pool())
+          .await
+          .inspect_err(|error| warn!(%error, "Storing new learned vocab failed"))
+          .map_err(|_| EpisError::RepoError)?;
+        }
+        LearnedVocabStatus::Reviewed => {
+          query!(
+            "UPDATE learned_vocab SET last_used = now(), usage_count = usage_count + 1, streak = streak + 1 WHERE chatmate_id = $1 AND vocab = $2",
+            chatmate_id.as_ref(),
+            learned_vocab_data.vocab().as_ref() as &str,
+          )
+          .execute(self.pool())
+          .await
+          .inspect_err(|error| warn!(%error, "Storing reviewed vocab failed"))
+          .map_err(|_| EpisError::RepoError)?;
+        }
+        LearnedVocabStatus::Reset => {
+          query!(
+            "UPDATE learned_vocab SET last_used = now(), usage_count = usage_count + 1, streak = 0 WHERE chatmate_id = $1 AND vocab = $2",
+            chatmate_id.as_ref(),
+            learned_vocab_data.vocab().as_ref() as &str,
+          )
+          .execute(self.pool())
+          .await
+          .inspect_err(|error| warn!(%error, "Storing reset vocab failed"))
+          .map_err(|_| EpisError::RepoError)?;
+        }
+      }
+    }
+
+    Ok(())
   }
 
   async fn fetch_due_vocab(
     &self,
-    user_id: &String,
+    chatmate_id: &Id,
     limit: Option<u8>,
   ) -> Result<Vec<String>, EpisError> {
-    todo!()
-  }
+    let result = query!(
+      r#"WITH due_words AS (
+            SELECT vocab, EXTRACT(EPOCH FROM(now() - (last_used + ((2 ^ (streak - 1)) * INTERVAL '1 day')))) AS due
+            FROM learned_vocab
+            WHERE chatmate_id = $1
+        )
+        SELECT vocab
+        FROM due_words
+        WHERE due > 0
+        ORDER BY due DESC
+        LIMIT $2"#,
+      chatmate_id.as_ref(),
+      limit.unwrap_or(DEFAULT_PAGE_SIZE) as i16
+    )
+    .fetch_all(self.pool())
+    .await
+    .inspect_err(|error| warn!(%error, "Fetching due vocab failed"))
+    .map_err(|_| EpisError::RepoError)?;
 
-  async fn get_chatmate_by_id(&self, chatmate_id: &Id) -> Result<Option<ChatMate>, EpisError> {
-    todo!()
+    let due_vocab = result
+      .into_iter()
+      .map(|word_record| word_record.vocab)
+      .collect::<Vec<_>>();
+
+    Ok(due_vocab)
   }
 }

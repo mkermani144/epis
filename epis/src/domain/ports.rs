@@ -45,7 +45,7 @@ pub trait EpisRepository: Clone + Send + Sync + 'static {
   /// - If any repo error occurs, return [EpisError::RepoError]
   fn fetch_due_vocab(
     &self,
-    user_id: &UserId,
+    chatmate_id: &Id,
     limit: Option<u8>,
   ) -> impl Future<Output = Result<Vec<String>, EpisError>> + Send;
 
@@ -55,7 +55,7 @@ pub trait EpisRepository: Clone + Send + Sync + 'static {
   /// - If any repo error occurs, return [EpisError::RepoError]
   fn store_learned_vocab(
     &self,
-    user_id: &UserId,
+    chatmate_id: &Id,
     learned_vocab_data_list: &[LearnedVocabData],
   ) -> impl Future<Output = Result<(), EpisError>> + Send;
 
