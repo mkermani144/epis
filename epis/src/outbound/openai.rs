@@ -63,18 +63,17 @@ impl From<&ChatMessage> for EasyInputMessage {
 /// Deserialized learned material returned by API
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(deny_unknown_fields)]
+#[allow(clippy::missing_docs_in_private_items)]
 pub struct ApiLearnedMaterial {
-  /// List of learned vocab
   vocab: Vec<String>,
 }
 
 /// Deserialized generation API response
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(deny_unknown_fields)]
+#[allow(clippy::missing_docs_in_private_items)]
 pub struct ApiLingooAiResponse {
-  /// The text output
   response: String,
-  /// List of learned vocab
   learned_material: ApiLearnedMaterial,
 }
 
@@ -164,7 +163,7 @@ impl AiGateway for OpenAi {
       .text(ResponseTextParam {
         format: TextResponseFormatConfiguration::JsonSchema(ResponseFormatJsonSchema {
           description: None,
-          name: "lingoo_ai_response".to_string(),
+          name: "ai_response".to_string(),
           strict: Some(true),
           schema: Some(schema_value),
         }),
