@@ -119,7 +119,6 @@ impl AiGateway for OpenAi {
       ))
       .model(model)
       .build()
-      // TODO: Either handle more cases, or remove the [SttError] type
       .map_err(|error| {
         warn!(%error, "Cannot build transcription request");
         EpisError::ProviderError
@@ -158,6 +157,7 @@ impl AiGateway for OpenAi {
 
     let request = CreateResponseArgs::default()
       // TODO: Set max tokens based on data
+      // https://github.com/mkermani144/epis/issues/10
       .max_output_tokens(10000u32)
       .model(model)
       .text(ResponseTextParam {

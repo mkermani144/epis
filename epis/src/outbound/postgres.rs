@@ -226,6 +226,7 @@ impl EpisRepository for Postgres {
   ) -> Result<(), EpisError> {
     // FIXME: Batch upsert when sqlx supports it, this is very slow
     // https://github.com/launchbadge/sqlx/issues/294
+    // https://github.com/mkermani144/epis/issues/11
     for learned_vocab_data in learned_vocab_data_list {
       match learned_vocab_data.status() {
         LearnedVocabStatus::New => {
