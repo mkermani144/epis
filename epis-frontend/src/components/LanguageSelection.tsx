@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
+import ISO639 from "iso-639-1";
 import { handshakeChatmate } from "../lib/api";
 import { Button } from "./ui/button";
 
@@ -85,7 +86,7 @@ export function LanguageSelection({
               disabled={loading}
               className="bg-gray-100 rounded-lg p-6 hover:bg-gray-200 transition-colors cursor-pointer border-2 border-transparent hover:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <p className="text-xl font-semibold text-gray-800">{language}</p>
+              <p className="text-xl font-semibold text-gray-800">{ISO639.getName(language.toLowerCase())}</p>
             </button>
           ))}
         </div>
