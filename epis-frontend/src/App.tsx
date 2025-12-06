@@ -145,15 +145,17 @@ function App() {
                 ← Back to Chatmates
               </Button>
             </div>
-            <div
-              className="flex items-center justify-center"
-              onMouseDown={handleMouseDown}
-              onMouseUp={handleMouseUp}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-            >
-              <VoiceCircle state={state} />
-            </div>
+            {isConnected && (
+              <div
+                className="flex items-center justify-center"
+                onMouseDown={handleMouseDown}
+                onMouseUp={handleMouseUp}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+              >
+                <VoiceCircle state={state} />
+              </div>
+            )}
 
             <StatusText state={state} isConnected={isConnected} />
           </div>
