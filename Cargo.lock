@@ -778,9 +778,6 @@ dependencies = [
  "clerk-rs",
  "derive-getters",
  "derive_more",
- "epis-core",
- "epis-stt",
- "epis-tts",
  "figment",
  "hound",
  "inquire",
@@ -801,33 +798,6 @@ dependencies = [
  "utoipa-axum",
  "utoipa-scalar",
  "uuid",
-]
-
-[[package]]
-name = "epis-core"
-version = "0.1.0"
-dependencies = [
- "derive_more",
- "thiserror 2.0.17",
-]
-
-[[package]]
-name = "epis-stt"
-version = "0.1.0"
-dependencies = [
- "derive_more",
- "hound",
- "thiserror 2.0.17",
-]
-
-[[package]]
-name = "epis-tts"
-version = "0.1.0"
-dependencies = [
- "derive_more",
- "epis-core",
- "hound",
- "thiserror 2.0.17",
 ]
 
 [[package]]
