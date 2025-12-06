@@ -29,6 +29,7 @@ async function playAudio(
       onStateChange("idle");
     };
 
+    onStateChange("responding");
     await audio.play();
     console.log("Playing AI response audio (32-bit float WAV, 24kHz)");
   } catch (error) {
