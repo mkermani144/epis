@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { VoiceCircle, StatusText } from "./components/VoiceCircle";
 import { ChatmateList } from "./components/ChatmateList";
 import { LanguageSelection } from "./components/LanguageSelection";
@@ -40,28 +40,114 @@ function App() {
   );
   const { sessionClaims, getToken } = useAuth();
 
-  const handleMouseDown = () => {
+  // Threshold to distinguish quick tap from long press (1000ms)
+  const TAP_THRESHOLD_MS = 1000;
+  const pressStartTimeRef = useRef<number | null>(null);
+  const longPressTimeoutRef = useRef<number | null>(null);
+  const recordingStartedByTimeoutRef = useRef<boolean>(false);
+
+  const cancelLongPress = () => {
+    if (longPressTimeoutRef.current !== null) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+    recordingStartedByTimeoutRef.current = false;
+  };
+
+  const handlePressStart = () => {
+    // If already recording, track press for potential stop on release
+    if (state === "recording") {
+      pressStartTimeRef.current = Date.now();
+      return;
+    }
+
+    // If idle, start tracking press time
     if (state === "idle") {
+      pressStartTimeRef.current = Date.now();
+      recordingStartedByTimeoutRef.current = false;
+
+      // Set up long press detection: if held > threshold, start recording
+      longPressTimeoutRef.current = window.setTimeout(() => {
+        if (pressStartTimeRef.current !== null && state === "idle") {
+          recordingStartedByTimeoutRef.current = true;
+          startRecording();
+        }
+        longPressTimeoutRef.current = null;
+      }, TAP_THRESHOLD_MS);
+    }
+  };
+
+  const handlePressEnd = () => {
+    if (pressStartTimeRef.current === null) {
+      return;
+    }
+
+    const pressDuration = Date.now() - pressStartTimeRef.current;
+    const currentState = state;
+    const wasStartedByTimeout = recordingStartedByTimeoutRef.current;
+
+    // Cancel any pending long press timeout
+    cancelLongPress();
+    pressStartTimeRef.current = null;
+
+    // If recording was started by timeout (long press), stop on release
+    // Check both the ref and state to handle async state updates
+    if (wasStartedByTimeout || currentState === "recording") {
+      if (currentState === "recording") {
+        stopRecording();
+      } else if (wasStartedByTimeout) {
+        // State hasn't updated yet, but recording was started
+        // Use a small delay to check again
+        setTimeout(() => {
+          if (state === "recording") {
+            stopRecording();
+          }
+        }, 10);
+      }
+      return;
+    }
+
+    // If idle, only start recording if it was a quick tap
+    if (currentState === "idle" && pressDuration < TAP_THRESHOLD_MS) {
+      // Quick tap: start recording and keep recording (toggle on)
       startRecording();
     }
+  };
+
+  const handleMouseDown = () => {
+    handlePressStart();
   };
 
   const handleMouseUp = () => {
+    handlePressEnd();
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // Prevent mouse events from firing on touch devices
+    e.preventDefault();
+    handlePressStart();
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    // Prevent mouse events from firing on touch devices
+    e.preventDefault();
+    handlePressEnd();
+  };
+
+  const handleTouchCancel = (e: React.TouchEvent) => {
+    // Handle touch cancellation (e.g., scrolling)
+    e.preventDefault();
+    cancelLongPress();
+    pressStartTimeRef.current = null;
+    // If recording, stop it on cancel
     if (state === "recording") {
       stopRecording();
     }
   };
 
-  const handleTouchStart = () => {
-    if (state === "idle") {
-      startRecording();
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (state === "recording") {
-      stopRecording();
-    }
+  const handleMouseLeave = () => {
+    // If mouse leaves while pressing, treat as release
+    handlePressEnd();
   };
 
   const handleSelectChatmate = (chatmateId: string) => {
@@ -150,8 +236,10 @@ function App() {
                 className="flex items-center justify-center"
                 onMouseDown={handleMouseDown}
                 onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseLeave}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
               >
                 <VoiceCircle state={state} />
               </div>

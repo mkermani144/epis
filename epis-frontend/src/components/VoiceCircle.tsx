@@ -33,7 +33,7 @@ export function StatusText({
   return (
     <>
       <div className="mt-8 text-sm text-gray-600">
-        {state === "idle" && "Tap and hold to record"}
+        {state === "idle" && "Tap or hold to record"}
         {state === "recording" && "Recording... Release to send"}
         {state === "waiting" && "Processing..."}
         {state === "responding" && "Playing response..."}
@@ -45,4 +45,3 @@ export function StatusText({
     </>
   );
 }
-
