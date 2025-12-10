@@ -99,7 +99,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <header className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
-        <h1 className="text-4xl font-bold text-gray-800">Epis Lingoo</h1>
+        <h1 className="text-4xl font-bold text-gray-800">Epis</h1>
         <div className="flex items-center gap-2">
           <SignedOut>
             <SignInButton mode="modal">

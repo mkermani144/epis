@@ -5,5 +5,4 @@ pub mod config;
 pub mod conversation;
 pub mod entities;
 pub mod http;
-pub mod lingoo;
 pub mod postgres;

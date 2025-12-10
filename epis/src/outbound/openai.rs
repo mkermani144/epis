@@ -72,7 +72,7 @@ pub struct ApiLearnedMaterial {
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(deny_unknown_fields)]
 #[allow(clippy::missing_docs_in_private_items)]
-pub struct ApiLingooAiResponse {
+pub struct ApiResponse {
   response: String,
   learned_material: ApiLearnedMaterial,
 }
@@ -152,7 +152,7 @@ impl AiGateway for OpenAi {
         .collect::<Vec<_>>(),
     );
 
-    let schema = schema_for!(ApiLingooAiResponse);
+    let schema = schema_for!(ApiResponse);
     let schema_value = serde_json::to_value(schema).map_err(|_| EpisError::ProviderError)?;
 
     let request = CreateResponseArgs::default()
@@ -188,7 +188,7 @@ impl AiGateway for OpenAi {
       })?;
 
     if let Some(output_text) = response.output_text() {
-      let ai_reply: ApiLingooAiResponse = serde_json::from_str(&output_text).map_err(|error| {
+      let ai_reply: ApiResponse = serde_json::from_str(&output_text).map_err(|error| {
         warn!(%error, "Cannot deserialize llm output");
         EpisError::ProviderError
       })?;
