@@ -152,19 +152,16 @@ impl EpisRepository for Postgres {
     chatmate_id: &Id,
     limit: Option<u8>,
   ) -> Result<Vec<ChatMessage>, EpisError> {
-    query!(
-      "SELECT * FROM chatmate WHERE id = $1 LIMIT $2",
-      chatmate_id.as_ref(),
-      limit.unwrap_or(DEFAULT_PAGE_SIZE) as i16
-    )
-    .fetch_one(self.pool())
-    .await
-    .inspect_err(|error| warn!(%error, "Getting chatmate failed"))
-    .map_err(|_| EpisError::RepoError)?;
+    query!("SELECT * FROM chatmate WHERE id = $1", chatmate_id.as_ref(),)
+      .fetch_one(self.pool())
+      .await
+      .inspect_err(|error| warn!(%error, "Getting chatmate failed"))
+      .map_err(|_| EpisError::RepoError)?;
 
     let messages = query!(
-      "SELECT * FROM (SELECT content, role, created_at FROM message WHERE chatmate_id = $1 ORDER BY created_at DESC) ORDER BY created_at ASC",
+      "SELECT * FROM (SELECT content, role, created_at FROM message WHERE chatmate_id = $1 ORDER BY created_at DESC LIMIT $2) ORDER BY created_at ASC",
       chatmate_id.as_ref(),
+      limit.unwrap_or(DEFAULT_PAGE_SIZE) as i16
     )
     .fetch_all(self.pool())
     .await
