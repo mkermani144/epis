@@ -83,19 +83,6 @@ impl<AG: AiGateway, UM: UserManagement, ER: EpisRepository> RealtimeAiAgentServi
       return Err(EpisError::NoCredit);
     }
 
-    let (audio_bytes, audio_format) = audio_message.into_parts();
-
-    let transcription_response = self
-      .ai_gateway
-      .transcribe(
-        &self.models.transcription,
-        audio_bytes,
-        audio_format.clone(),
-      )
-      .await
-      .inspect_err(|error| warn!(%error, "Error during trascription"))
-      .map_err(|_| EpisError::ProviderError)?;
-
     if let Some(chatmate) = self
       .epis_repo
       .get_chatmate_by_id(context.chatmate_id())
@@ -103,6 +90,28 @@ impl<AG: AiGateway, UM: UserManagement, ER: EpisRepository> RealtimeAiAgentServi
       .inspect_err(|error| warn!(%error, "Error while getting chatmate by id"))
       .map_err(|_| EpisError::RepoError)?
     {
+      let message_history = self
+        .epis_repo
+        .get_chat_message_history(chatmate.id(), None)
+        .await
+        .inspect_err(|error| warn!(%error, "Error while getting chat message history"))
+        .map_err(|_| EpisError::RepoError)?;
+
+      let (audio_bytes, audio_format) = audio_message.into_parts();
+
+      let transcription_response = self
+        .ai_gateway
+        .transcribe(
+          &self.models.transcription,
+          audio_bytes,
+          audio_format.clone(),
+          message_history
+            .last()
+            .map(|message| message.message().as_str()),
+        )
+        .await
+        .inspect_err(|error| warn!(%error, "Error during trascription"))
+        .map_err(|_| EpisError::ProviderError)?;
       // TODO: Handle the case CEFR level is not yet identified, for now the default is A1
       // https://github.com/mkermani144/epis/issues/6
       let user_cefr_level = self
@@ -121,13 +130,6 @@ impl<AG: AiGateway, UM: UserManagement, ER: EpisRepository> RealtimeAiAgentServi
         .map_err(|_| EpisError::RepoError)?;
 
       let instructions = generate_instructions(chatmate.language(), &user_cefr_level, &due_vocab);
-
-      let message_history = self
-        .epis_repo
-        .get_chat_message_history(chatmate.id(), None)
-        .await
-        .inspect_err(|error| warn!(%error, "Error while getting chat message history"))
-        .map_err(|_| EpisError::RepoError)?;
 
       let mut llm_input = Vec::new();
       llm_input.push(ChatMessage::new(ChatMessageRole::System, instructions));

@@ -79,7 +79,7 @@ pub trait EpisRepository: Clone + Send + Sync + 'static {
     message: &ChatMessage,
   ) -> impl Future<Output = Result<Id, EpisError>> + Send;
 
-  /// Get a list of previous messages in a chat up to a limit
+  /// Get a list of the last previous messages in a chat up to a limit, in ascending order
   ///
   /// # Errors
   /// - If any repo error occurs, return [EpisError::RepoError]
@@ -227,6 +227,7 @@ pub trait AiGateway: Clone + Send + Sync + 'static {
     model: &str,
     audio_bytes: SimpleBytes,
     audio_format: EpisAudioMessageFormat,
+    instructions: Option<&str>,
   ) -> impl Future<Output = Result<TranscriptionResponse, EpisError>> + Send;
 
   /// Convert text to speech with optional instructions

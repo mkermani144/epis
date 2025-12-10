@@ -111,6 +111,7 @@ impl AiGateway for OpenAi {
     model: &str,
     audio_bytes: Vec<u8>,
     audio_format: EpisAudioMessageFormat,
+    instructions: Option<&str>,
   ) -> Result<TranscriptionResponse, EpisError> {
     let request = CreateTranscriptionRequestArgs::default()
       .file(AudioInput::from_vec_u8(
@@ -118,6 +119,7 @@ impl AiGateway for OpenAi {
         audio_bytes,
       ))
       .model(model)
+      .prompt(instructions.unwrap_or(""))
       .build()
       .map_err(|error| {
         warn!(%error, "Cannot build transcription request");
@@ -167,7 +169,7 @@ impl AiGateway for OpenAi {
           strict: Some(true),
           schema: Some(schema_value),
         }),
-        verbosity: Some(Verbosity::Medium),
+        verbosity: Some(Verbosity::Low),
       })
       .reasoning(Reasoning {
         effort: Some(ReasoningEffort::Low),

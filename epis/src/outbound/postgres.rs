@@ -163,7 +163,7 @@ impl EpisRepository for Postgres {
     .map_err(|_| EpisError::RepoError)?;
 
     let messages = query!(
-      "SELECT id, content, role FROM message WHERE chatmate_id = $1",
+      "SELECT * FROM (SELECT content, role, created_at FROM message WHERE chatmate_id = $1 ORDER BY created_at DESC) ORDER BY created_at ASC",
       chatmate_id.as_ref(),
     )
     .fetch_all(self.pool())
