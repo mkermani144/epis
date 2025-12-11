@@ -1,24 +1,29 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO message (conversation_id, content, role) VALUES ($1, $2, $3) RETURNING id",
+  "query": "INSERT INTO chatmate (user_id, language) VALUES ($1, $2) RETURNING id, language",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
         "name": "id",
         "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "language",
+        "type_info": "Text"
       }
     ],
     "parameters": {
       "Left": [
-        "Uuid",
         "Text",
         "Text"
       ]
     },
     "nullable": [
+      false,
       false
     ]
   },
-  "hash": "afc5f264e8f69bb56a415e61aa6af908a5d59f75e9a0e1c2218025486c41523e"
+  "hash": "531f81c21d55806fdc3a6bbc4238e21a8d2629f3ad111b4bc9f06065839ae4ed"
 }

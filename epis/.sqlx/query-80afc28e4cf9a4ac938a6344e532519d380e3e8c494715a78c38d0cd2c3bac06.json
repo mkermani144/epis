@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, content, role FROM message WHERE conversation_id = $1",
+  "query": "SELECT id, language FROM chatmate WHERE user_id = $1 ORDER BY created_at ASC LIMIT $2",
   "describe": {
     "columns": [
       {
@@ -10,25 +10,20 @@
       },
       {
         "ordinal": 1,
-        "name": "content",
-        "type_info": "Text"
-      },
-      {
-        "ordinal": 2,
-        "name": "role",
+        "name": "language",
         "type_info": "Text"
       }
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "Text",
+        "Int8"
       ]
     },
     "nullable": [
       false,
-      false,
       false
     ]
   },
-  "hash": "71d76ebb6d7011f2898579bde078fca285c64c301ec91ee74dbbef0b56236128"
+  "hash": "80afc28e4cf9a4ac938a6344e532519d380e3e8c494715a78c38d0cd2c3bac06"
 }

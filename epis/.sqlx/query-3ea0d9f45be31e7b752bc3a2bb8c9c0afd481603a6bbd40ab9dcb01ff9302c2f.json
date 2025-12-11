@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE learned_vocab SET last_used = now(), usage_count = usage_count + 1, streak = 0 WHERE chatmate_id = $1 AND vocab = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        {
+          "Custom": {
+            "name": "citext",
+            "kind": "Simple"
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3ea0d9f45be31e7b752bc3a2bb8c9c0afd481603a6bbd40ab9dcb01ff9302c2f"
+}

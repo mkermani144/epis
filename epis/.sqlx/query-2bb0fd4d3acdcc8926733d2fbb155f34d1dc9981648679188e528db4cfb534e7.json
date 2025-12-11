@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM conversation WHERE id = $1",
+  "query": "SELECT * FROM chatmate WHERE id = $1",
   "describe": {
     "columns": [
       {
@@ -10,28 +10,18 @@
       },
       {
         "ordinal": 1,
-        "name": "title",
+        "name": "user_id",
         "type_info": "Text"
       },
       {
         "ordinal": 2,
-        "name": "category",
+        "name": "language",
         "type_info": "Text"
       },
       {
         "ordinal": 3,
         "name": "created_at",
         "type_info": "Timestamptz"
-      },
-      {
-        "ordinal": 4,
-        "name": "updated_at",
-        "type_info": "Timestamptz"
-      },
-      {
-        "ordinal": 5,
-        "name": "user_id",
-        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -41,12 +31,10 @@
     },
     "nullable": [
       false,
-      true,
-      false,
       false,
       false,
       false
     ]
   },
-  "hash": "cc1dfbc1a7af0b56082bb033a46e12959392a397165e8bdc6350f104cf22866a"
+  "hash": "2bb0fd4d3acdcc8926733d2fbb155f34d1dc9981648679188e528db4cfb534e7"
 }

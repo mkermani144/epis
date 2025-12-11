@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE conversation SET title = $1 WHERE id = $2 RETURNING id",
+  "query": "INSERT INTO message (chatmate_id, content, role) VALUES ($1, $2, $3) RETURNING id",
   "describe": {
     "columns": [
       {
@@ -11,13 +11,14 @@
     ],
     "parameters": {
       "Left": [
+        "Uuid",
         "Text",
-        "Uuid"
+        "Text"
       ]
     },
     "nullable": [
       false
     ]
   },
-  "hash": "1ac6284f99ed9bc7b0c583479ef376dccedbacb96595c1f8d05c6608a42fd066"
+  "hash": "7553ac0277cc9b215826f41041400da1ee2ef486128db0541d38e14b4c98e449"
 }
