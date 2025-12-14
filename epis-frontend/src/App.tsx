@@ -13,6 +13,7 @@ import {
   useAuth,
 } from "@clerk/clerk-react";
 import { Button } from "./components/ui/button";
+import { H1, P } from "./components/ui/typography";
 import { fetchChatmates } from "./lib/api";
 
 type View = "list" | "language-selection" | "chat";
@@ -183,9 +184,9 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       <header className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
-        <h1 className="text-4xl font-bold text-gray-800">Epis</h1>
+        <H1 className="text-foreground">Epis</H1>
         <div className="flex items-center gap-2">
           <SignedOut>
             <SignInButton mode="modal">
@@ -196,8 +197,8 @@ function App() {
             </SignUpButton>
           </SignedOut>
           <SignedIn>
-            <div className="flex items-center gap-2 border-2 border-solid border-slate-300 rounded cursor-default p-1 px-2">
-              <p>{(sessionClaims?.credit as string | undefined) ?? "?"} ⚡️</p>
+            <div className="flex items-center gap-2 border-2 border-solid border-border rounded cursor-default p-1 px-2">
+              <P className="m-0">{(sessionClaims?.credit as string | undefined) ?? "?"} ⚡️</P>
               <UserButton />
             </div>
           </SignedIn>

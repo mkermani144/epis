@@ -3,6 +3,8 @@ import { useAuth } from "@clerk/clerk-react";
 import ISO639 from "iso-639-1";
 import { handshakeChatmate } from "../lib/api";
 import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { P } from "./ui/typography";
 
 const AVAILABLE_LANGUAGES = ["En", "Es", "Tr"] as const;
 
@@ -55,47 +57,52 @@ export function LanguageSelection({
   if (availableLanguages.length === 0) {
     return (
       <div className="w-full max-w-2xl mx-auto p-6">
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <p className="text-lg text-gray-600 mb-4">
-            All available languages have been added.
-          </p>
-          <Button onClick={onCancel} variant="outline">
-            Go Back
-          </Button>
-        </div>
+        <Card>
+          <CardContent className="text-center pt-6">
+            <P className="text-muted-foreground mb-4">
+              All available languages have been added.
+            </P>
+            <Button onClick={onCancel} variant="outline">
+              Go Back
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
     <div className="w-full max-w-2xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow-md p-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-          Select a Language
-        </h2>
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-            {error}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-center">Select a Language</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <div className="mb-4 p-3 bg-destructive/10 border border-destructive text-destructive rounded">
+              {error}
+            </div>
+          )}
+          <div className="grid grid-cols-1 gap-4 mb-6">
+            {availableLanguages.map((language) => (
+              <Button
+                key={language}
+                onClick={() => handleLanguageClick(language)}
+                disabled={loading}
+                variant="outline"
+                className="h-auto p-6 hover:bg-accent"
+              >
+                <P className="text-lg font-semibold">{ISO639.getName(language.toLowerCase())}</P>
+              </Button>
+            ))}
           </div>
-        )}
-        <div className="grid grid-cols-1 gap-4 mb-6">
-          {availableLanguages.map((language) => (
-            <button
-              key={language}
-              onClick={() => handleLanguageClick(language)}
-              disabled={loading}
-              className="bg-gray-100 rounded-lg p-6 hover:bg-gray-200 transition-colors cursor-pointer border-2 border-transparent hover:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <p className="text-xl font-semibold text-gray-800">{ISO639.getName(language.toLowerCase())}</p>
-            </button>
-          ))}
-        </div>
-        <div className="flex justify-center">
-          <Button onClick={onCancel} variant="outline" disabled={loading}>
-            Cancel
-          </Button>
-        </div>
-      </div>
+          <div className="flex justify-center">
+            <Button onClick={onCancel} variant="outline" disabled={loading}>
+              Cancel
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
