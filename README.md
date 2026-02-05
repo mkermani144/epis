@@ -2,6 +2,9 @@
 
 Epis is an extensible assistant designed to help you learn anything.
 
+## 🚨 The Shutdown of Epis
+After [Iran internet blackout](https://en.wikipedia.org/wiki/2026_Internet_blackout_in_Iran) and related events, I decided to kill this project. This was a tough decision, as I spent months exclusively on it, as my fulltime job. But it's hard to risk your time and energy on a startup in a technically and psychologically constraining environment. 
+
 ## Features
 
 - **Extensible LLM Provider Support**: Easily swap or extend large language model backends (currently supports [Ollama](https://github.com/ollama/ollama)).
